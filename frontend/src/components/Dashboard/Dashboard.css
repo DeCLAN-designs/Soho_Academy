@@ -1,0 +1,166 @@
+.dashboardLayout {
+    width: 100%;
+    min-height: 100vh;
+    padding: 1rem;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        'sidebar topbar'
+        'sidebar content';
+    gap: 1rem;
+    align-items: start;
+}
+
+.dashboardSidebar {
+    grid-area: sidebar;
+    min-height: 0;
+}
+
+.dashboardTopBar {
+    grid-area: topbar;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    padding: 1rem;
+}
+
+.dashboardMain {
+    grid-area: content;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    padding: 1rem;
+    display: grid;
+    gap: 1rem;
+    min-height: 0;
+}
+
+.dashboardSection h2 {
+    margin: 0;
+    color: #680121;
+}
+
+.dashboardSection p {
+    margin: 0.42rem 0 0;
+    color: #525252;
+}
+
+.dashboardCards {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.dashboardCard {
+    border: 1px solid #d9d9d9;
+    border-radius: 10px;
+    padding: 0.85rem;
+    background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dashboardCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #680121, #0e9ec3);
+    transition: width 0.3s ease;
+    width: 0;
+}
+
+.dashboardCard:hover::before {
+    width: 100%;
+}
+
+.dashboardCard p {
+    margin: 0;
+    color: #374151;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Security Features */
+.dashboardCard::after {
+    content: '🔒';
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 0.8rem;
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.dashboardCard:hover::after {
+    opacity: 0.6;
+}
+
+/* Security Badge */
+.dashboardCard:first-child::before {
+    content: '🛡️';
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Data Protection */
+.dashboardCard:nth-child(2)::before {
+    content: '🔐';
+}
+
+.dashboardCard:nth-child(3)::before {
+    content: '🛡️';
+}
+
+/* Access Control */
+.dashboardCard:nth-child(4)::before {
+    content: '🔑';
+}
+
+/* Session Security */
+.dashboardCard:nth-child(5)::before {
+    content: '⏰';
+}
+
+/* Encryption Indicators */
+.dashboardCard:nth-child(6)::before {
+    content: '🔐';
+}
+
+/* Security Overlay */
+.dashboardCard::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(104, 1, 33, 0.02);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.dashboardCard:hover::after {
+    background: rgba(104, 1, 33, 0.05);
+}
+
+@media (max-width: 900px) {
+    .dashboardLayout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas:
+            'topbar'
+            'sidebar'
+            'content';
+    }
+}

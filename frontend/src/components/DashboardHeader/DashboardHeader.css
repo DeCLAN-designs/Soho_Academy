@@ -1,0 +1,76 @@
+.dashboardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.dashboardHeader h1 {
+    margin: 0;
+    color: #680121;
+}
+
+.dashboardHeader__role {
+    margin: 0 0 0.32rem;
+    color: #0e9ec3;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.dashboardHeader__subtitle {
+    margin: 0.42rem 0 0;
+    color: #5a5a5a;
+}
+
+.dashboardHeader__actions {
+    display: grid;
+    justify-items: end;
+    gap: 0.62rem;
+}
+
+.dashboardHeader__chips {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.42rem;
+    max-width: 320px;
+}
+
+.dashboardHeader__chip {
+    background: #edf9fc;
+    color: #05637b;
+    border: 1px solid #bce6f0;
+    border-radius: 999px;
+    padding: 0.24rem 0.55rem;
+    font-size: 0.77rem;
+}
+
+.dashboardHeader__logout {
+    border: 0;
+    border-radius: 8px;
+    padding: 0.5rem 0.9rem;
+    background: #dc3545;
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+}
+
+@media (max-width: 700px) {
+    .dashboardHeader {
+        display: grid;
+        gap: 0.8rem;
+    }
+
+    .dashboardHeader__actions {
+        justify-items: start;
+    }
+
+    .dashboardHeader__chips {
+        justify-content: flex-start;
+    }
+}
