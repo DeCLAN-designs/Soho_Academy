@@ -1,0 +1,492 @@
+{
+  "info": {
+    "name": "Soho Transport API",
+    "description": "Collection for Soho Transport Management System backend APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Simple service health endpoint."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"status\": \"OK\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"driver@example.com\",\n  \"firstName\": \"Simon\",\n  \"lastName\": \"Mwangi\",\n  \"phoneNumber\": \"0712345678\",\n  \"numberPlate\": \"KDA123A\",\n  \"role\": \"Driver\",\n  \"password\": \"secret123\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "register"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Registration successful.\",\n  \"data\": {\n    \"email\": \"driver@example.com\",\n    \"role\": \"Driver\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const payload = pm.response.json();",
+                  "if (payload?.data?.accessToken) {",
+                  "  pm.environment.set('accessToken', payload.data.accessToken);",
+                  "}",
+                  "if (payload?.data?.refreshToken) {",
+                  "  pm.environment.set('refreshToken', payload.data.refreshToken);",
+                  "}",
+                  "if (payload?.data?.email) {",
+                  "  pm.environment.set('userEmail', payload.data.email);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"driver@example.com\",\n  \"password\": \"secret123\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "login"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Login successful.\",\n  \"data\": {\n    \"email\": \"driver@example.com\",\n    \"firstName\": \"Simon\",\n    \"lastName\": \"Mwangi\",\n    \"role\": \"Driver\",\n    \"numberPlate\": \"KDA123A\",\n    \"token\": \"<jwt>\",\n    \"accessToken\": \"<jwt>\",\n    \"refreshToken\": \"<jwt>\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            },
+            "description": "Can also work when refresh cookie is present; body field is optional."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/refresh",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "refresh"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Token refreshed successfully.\",\n  \"data\": {\n    \"email\": \"driver@example.com\",\n    \"firstName\": \"Simon\",\n    \"lastName\": \"Mwangi\",\n    \"role\": \"Driver\",\n    \"numberPlate\": \"KDA123A\",\n    \"token\": \"<jwt>\",\n    \"accessToken\": \"<jwt>\",\n    \"refreshToken\": \"<jwt>\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Number Plates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/number-plates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "number-plates"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Number plates retrieved successfully.\",\n  \"data\": {\n    \"numberPlates\": [\"KDA123A\", \"KDB456B\"]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Authenticated User",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Authenticated user retrieved.\",\n  \"data\": {\n    \"sub\": \"12\",\n    \"email\": \"driver@example.com\",\n    \"firstName\": \"Simon\",\n    \"lastName\": \"Mwangi\",\n    \"role\": \"Driver\",\n    \"numberPlate\": \"KDA123A\",\n    \"iat\": 1700000000,\n    \"exp\": 1700000900\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Logout successful.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Fuel & Maintenance (Driver)",
+      "item": [
+        {
+          "name": "List Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/fuel-maintenance/requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fuel-maintenance", "requests"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Fuel and maintenance requests retrieved successfully.\",\n  \"data\": {\n    \"requests\": [\n      {\n        \"id\": 1,\n        \"requestDate\": \"2026-02-20\",\n        \"numberPlate\": \"KDA123A\",\n        \"currentMileage\": 143250,\n        \"requestType\": \"Fuel\",\n        \"requestedBy\": \"Simon Mwangi\",\n        \"category\": \"Fuels & Oils\",\n        \"description\": \"Refuel before morning route\",\n        \"amount\": 12000,\n        \"confirmedBy\": \"Erick\",\n        \"createdByUserId\": 12,\n        \"createdAt\": \"2026-02-20T10:00:00.000Z\",\n        \"updatedAt\": \"2026-02-20T10:00:00.000Z\"\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestDate\": \"2026-02-20\",\n  \"numberPlate\": \"KDA123A\",\n  \"currentMileage\": 143250,\n  \"requestType\": \"Fuel\",\n  \"requestedBy\": \"Simon Mwangi\",\n  \"category\": \"Fuels & Oils\",\n  \"description\": \"Refuel before route start\",\n  \"amount\": 12000,\n  \"confirmedBy\": \"Erick\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/fuel-maintenance/requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fuel-maintenance", "requests"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Fuel and maintenance request created successfully.\",\n  \"data\": {\n    \"request\": {\n      \"id\": 1,\n      \"requestDate\": \"2026-02-20\",\n      \"numberPlate\": \"KDA123A\",\n      \"currentMileage\": 143250,\n      \"requestType\": \"Fuel\",\n      \"requestedBy\": \"Simon Mwangi\",\n      \"category\": \"Fuels & Oils\",\n      \"description\": \"Refuel before route start\",\n      \"amount\": 12000,\n      \"confirmedBy\": \"Erick\",\n      \"createdByUserId\": 12,\n      \"createdAt\": \"2026-02-20T10:10:00.000Z\",\n      \"updatedAt\": \"2026-02-20T10:10:00.000Z\"\n    }\n  }\n}"
+            },
+            {
+              "name": "403 Driver Plate Mismatch",
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": false,\n  \"message\": \"Drivers can only submit requests for their assigned number plate.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Students (School Admin)",
+      "item": [
+        {
+          "name": "Get Dashboard Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Student data retrieved successfully.\",\n  \"data\": {\n    \"students\": [],\n    \"admissions\": [],\n    \"withdrawals\": [],\n    \"parentContactChanges\": [],\n    \"summary\": {\n      \"totalStudents\": 0,\n      \"activeStudents\": 0,\n      \"withdrawnStudents\": 0\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Admission",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"admissionNumber\": \"ADM-2026-001\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"className\": \"Grade 5\",\n  \"grade\": \"5\",\n  \"parentContact\": \"0711111111\",\n  \"admissionDate\": \"2026-01-15\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/students/admissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students", "admissions"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Student admission created successfully.\",\n  \"data\": {\n    \"student\": {\n      \"id\": 1,\n      \"admissionNumber\": \"ADM-2026-001\",\n      \"firstName\": \"Jane\",\n      \"lastName\": \"Doe\",\n      \"className\": \"Grade 5\",\n      \"grade\": \"5\",\n      \"parentContact\": \"0711111111\",\n      \"admissionDate\": \"2026-01-15\",\n      \"status\": \"active\",\n      \"withdrawalDate\": null,\n      \"withdrawalReason\": null,\n      \"createdAt\": \"2026-02-20T09:00:00.000Z\",\n      \"updatedAt\": \"2026-02-20T09:00:00.000Z\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Parent Contact",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentContact\": \"0722222222\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/students/{{studentId}}/parent-contact",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students", "{{studentId}}", "parent-contact"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Parent contact updated successfully.\",\n  \"data\": {\n    \"student\": {\n      \"id\": 1,\n      \"parentContact\": \"0722222222\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Withdraw Student",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"withdrawalDate\": \"2026-02-20\",\n  \"withdrawalReason\": \"Transferred\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/students/{{studentId}}/withdrawal",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students", "{{studentId}}", "withdrawal"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Student withdrawal recorded successfully.\",\n  \"data\": {\n    \"student\": {\n      \"id\": 1,\n      \"status\": \"withdrawn\",\n      \"withdrawalDate\": \"2026-02-20\",\n      \"withdrawalReason\": \"Transferred\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Master Data",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"className\": \"Grade 6\",\n  \"grade\": \"6\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/students/{{studentId}}/master-data",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "students", "{{studentId}}", "master-data"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Student master data updated successfully.\",\n  \"data\": {\n    \"student\": {\n      \"id\": 1,\n      \"className\": \"Grade 6\",\n      \"grade\": \"6\"\n    }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "studentId", "value": "1" },
+    { "key": "userEmail", "value": "" }
+  ]
+}
