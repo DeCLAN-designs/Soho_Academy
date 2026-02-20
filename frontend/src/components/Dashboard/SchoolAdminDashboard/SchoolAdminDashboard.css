@@ -1,0 +1,179 @@
+.schoolAdminPanel {
+    display: grid;
+    gap: 1rem;
+}
+
+.schoolAdminStats {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.schoolAdminStatCard {
+    border: 1px solid #d7e5ea;
+    background: #f9fcfd;
+    border-radius: 10px;
+    padding: 0.9rem;
+}
+
+.schoolAdminStatCard p {
+    margin: 0;
+    color: #5d7280;
+    font-size: 0.86rem;
+}
+
+.schoolAdminStatCard strong {
+    display: block;
+    margin-top: 0.32rem;
+    color: #18495d;
+    font-size: 1.2rem;
+}
+
+.schoolAdminLists {
+    display: grid;
+    gap: 0.9rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.schoolAdminLists h3,
+.schoolAdminForm h3,
+.schoolAdminRecords h3 {
+    margin: 0 0 0.6rem;
+    color: #18495d;
+}
+
+.schoolAdminLists ul,
+.schoolAdminRecords ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid #d7e5ea;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.schoolAdminLists li,
+.schoolAdminRecords li {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.72rem 0.85rem;
+    border-bottom: 1px solid #edf3f6;
+}
+
+.schoolAdminLists li:last-child,
+.schoolAdminRecords li:last-child {
+    border-bottom: 0;
+}
+
+.schoolAdminLists li span:first-child,
+.schoolAdminRecords li span:first-child {
+    font-weight: 600;
+    color: #24353f;
+}
+
+.schoolAdminLists li span,
+.schoolAdminRecords li span {
+    color: #526670;
+    font-size: 0.9rem;
+}
+
+.schoolAdminForm {
+    border: 1px solid #d7e5ea;
+    border-radius: 10px;
+    background: #fff;
+    padding: 0.9rem;
+    display: grid;
+    gap: 0.8rem;
+}
+
+.schoolAdminGrid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.schoolAdminGrid label {
+    display: grid;
+    gap: 0.38rem;
+    color: #3f5863;
+    font-size: 0.9rem;
+}
+
+.schoolAdminGrid input,
+.schoolAdminGrid select {
+    border: 1px solid #c8d8de;
+    border-radius: 8px;
+    padding: 0.5rem 0.6rem;
+    font: inherit;
+}
+
+.schoolAdminFullWidth {
+    grid-column: 1 / -1;
+}
+
+.schoolAdminForm button {
+    width: fit-content;
+    border: 0;
+    border-radius: 8px;
+    padding: 0.55rem 0.9rem;
+    background: #0e9ec3;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+}
+
+.schoolAdminForm button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.schoolAdminStatus {
+    margin: 0;
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    background: #eef3f5;
+    color: #36525e;
+}
+
+.schoolAdminStatus--error {
+    background: #ffe8ea;
+    color: #9f1a2e;
+}
+
+.schoolAdminStatus--success {
+    background: #ebf7ee;
+    color: #1f7a31;
+}
+
+@media (max-width: 900px) {
+    .schoolAdminLists {
+        grid-template-columns: 1fr;
+    }
+
+    .schoolAdminGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .schoolAdminPanel {
+        gap: 0.75rem;
+    }
+
+    .schoolAdminStats {
+        grid-template-columns: 1fr;
+    }
+
+    .schoolAdminGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .schoolAdminForm button {
+        width: 100%;
+    }
+
+    .schoolAdminLists li,
+    .schoolAdminRecords li {
+        padding: 0.65rem 0.7rem;
+    }
+}

@@ -128,7 +128,10 @@ const login = async (req, res) => {
       message: "Login successful.",
       data: {
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
         role: user.role,
+        numberPlate: user.numberPlate || null,
         token: user.accessToken,
         accessToken: user.accessToken,
         refreshToken: user.refreshToken,
@@ -171,7 +174,10 @@ const refresh = async (req, res) => {
       message: "Token refreshed successfully.",
       data: {
         email: session.email,
+        firstName: session.firstName,
+        lastName: session.lastName,
         role: session.role,
+        numberPlate: session.numberPlate || null,
         token: session.accessToken,
         accessToken: session.accessToken,
         refreshToken: session.refreshToken,

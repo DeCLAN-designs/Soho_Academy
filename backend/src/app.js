@@ -6,6 +6,8 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 
 const authRoutes = require("./routes/auth.routes.js");
+const fuelMaintenanceRoutes = require("./routes/fuelMaintenance.routes.js");
+const studentRoutes = require("./routes/student.routes.js");
 
 const app = express();
 const frontendOrigin =
@@ -33,6 +35,8 @@ app.use(cookieParser());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/fuel-maintenance", fuelMaintenanceRoutes);
+app.use("/api/students", studentRoutes);
 
 // Health check
 app.get("/health", (_, res) => {

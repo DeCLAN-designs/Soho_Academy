@@ -1,4 +1,9 @@
 import type { DashboardRoleConfig } from '../dashboard.types'
+import DriverAttendanceMenuItem from './DriverMenuItems/Attendance/Attendance'
+import DriverCompliantsReportsMenuItem from './DriverMenuItems/Compliants&Reports/Compliants&Reports'
+import DriverDashboardMenuItem from './DriverMenuItems/Dashboard/Dashboard'
+import DriverFuelMaintenanceMenuItem from './DriverMenuItems/Fuel & Maintenance/Fuel&Maintence'
+import './DriverDashboard.css'
 
 type DriverDashboardProps = {
     activeSection: string
@@ -9,14 +14,17 @@ export const driverDashboardConfig: DashboardRoleConfig = {
     subtitle: 'Run assigned routes, attendance, and incidents.',
     quickActions: ['Start Route', 'End Route', 'Report Incident'],
     navigation: [
-        { id: 'overview', label: 'Overview' },
-        { id: 'routes', label: 'Routes' },
-        { id: 'boarding', label: 'Boarding' },
-        { id: 'incidents', label: 'Incidents' },
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'attendance', label: 'Attendance' },
+        { id: 'fuelMaintenance', label: 'Fuel & Maintenance' },
+        { id: 'incidents', label: 'Incidents & Accidents' },
+        { id: 'compliantsReports', label: 'Compliants & Reports' },
+        { id: 'myActivity', label: 'My Activity' },
+        { id: 'profile', label: 'Profile' },
     ],
     sections: {
-        overview: {
-            heading: 'Driver Overview',
+        dashboard: {
+            heading: 'Driver Dashboard',
             description: 'Track route progress and student safety.',
             cards: [
                 'Current route progress',
@@ -24,31 +32,58 @@ export const driverDashboardConfig: DashboardRoleConfig = {
                 'Expected arrival time',
             ],
         },
-        routes: {
-            heading: 'Assigned Routes',
-            description: 'Review today routes and stop sequence.',
-            cards: [
-                'Morning route stop order',
-                'Evening route stop order',
-                'Route notes from manager',
-            ],
-        },
-        boarding: {
-            heading: 'Boarding & Drop-off',
-            description: 'Confirm each child at pickup and drop-off.',
+        attendance: {
+            heading: 'Attendance',
+            description: 'Mark and review student attendance at every stop.',
             cards: [
                 'Boarding attendance list',
-                'Drop-off completion list',
-                'Missed boarding log',
+                'Drop-off confirmation list',
+                'Missed student attendance log',
+            ],
+        },
+        fuelMaintenance: {
+            heading: 'Fuel & Maintenance',
+            description: 'Monitor fuel usage and bus service readiness.',
+            cards: [
+                'Fuel refill history',
+                'Current fuel level trend',
+                'Scheduled maintenance checklist',
             ],
         },
         incidents: {
-            heading: 'Incidents',
-            description: 'Create and review incident records.',
+            heading: 'Incidents & Accidents',
+            description: 'Capture transport incidents with required safety details.',
             cards: [
                 'Open incident reports',
-                'Resolved incidents',
-                'Safety checklist reminders',
+                'Resolved incident archive',
+                'Accident escalation contacts',
+            ],
+        },
+        compliantsReports: {
+            heading: 'Compliants & Reports',
+            description: 'Review compliants tasks and route reporting summaries.',
+            cards: [
+                'Daily compliants checklist',
+                'Route completion report',
+                'Safety audit status',
+            ],
+        },
+        myActivity: {
+            heading: 'My Activity',
+            description: 'Review your recent transport actions and timeline history.',
+            cards: [
+                'Recent attendance updates',
+                'Recent incident entries',
+                'Latest route actions',
+            ],
+        },
+        profile: {
+            heading: 'Driver Profile',
+            description: 'Maintain personal details and assigned route preferences.',
+            cards: [
+                'Contact details',
+                'License and permit validity',
+                'Route preference settings',
             ],
         },
     },
@@ -57,13 +92,28 @@ export const driverDashboardConfig: DashboardRoleConfig = {
 const DriverDashboard = ({ activeSection }: DriverDashboardProps) => {
     const defaultSection = driverDashboardConfig.navigation[0].id
     const section = driverDashboardConfig.sections[activeSection] || driverDashboardConfig.sections[defaultSection]
+    const sectionId = driverDashboardConfig.sections[activeSection] ? activeSection : defaultSection
+
+    const getSectionWidget = () => {
+        switch (sectionId) {
+            case 'dashboard':
+                return <DriverDashboardMenuItem />
+            case 'attendance':
+                return <DriverAttendanceMenuItem />
+            case 'fuelMaintenance':
+                return <DriverFuelMaintenanceMenuItem />
+            case 'compliantsReports':
+                return <DriverCompliantsReportsMenuItem />
+            default:
+                return null
+        }
+    }
+
+    const sectionWidget = getSectionWidget()
 
     return (
         <>
-            <div className="dashboardSection">
-                <h2>{section.heading}</h2>
-                <p>{section.description}</p>
-            </div>
+            {sectionWidget ? <div className="driverDashboardSectionPanel">{sectionWidget}</div> : null}
 
             <div className="dashboardCards">
                 {section.cards.map((card) => (

@@ -1,0 +1,35 @@
+.driverMenuCompliantsReports {
+    border: 1px solid #c7ccd2;
+    border-radius: 12px;
+    background: #f8f8fa;
+    padding: 0.9rem 1rem;
+}
+
+.driverMenuCompliantsReports__title {
+    margin: 0;
+    color: #670122;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.driverMenuCompliantsReports__description {
+    margin: 0.45rem 0 0;
+    color: #59606b;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+    .driverMenuCompliantsReports {
+        padding: 0.72rem 0.8rem;
+        border-radius: 10px;
+    }
+
+    .driverMenuCompliantsReports__title {
+        font-size: 1rem;
+    }
+
+    .driverMenuCompliantsReports__description {
+        font-size: 0.9rem;
+    }
+}

@@ -1,3 +1,16 @@
+.page {
+    min-height: 100vh;
+    padding: 1.4rem;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle at 0% 0%, rgba(14, 158, 195, 0.2), transparent 40%),
+        radial-gradient(circle at 100% 100%, rgba(104, 1, 33, 0.2), transparent 42%),
+        #f7f7f7;
+}
+
 .register {
     --primary: #680121;
     --secondary: #0e9ec3;
@@ -201,7 +214,98 @@
 }
 
 @media (max-width: 700px) {
+    .page {
+        padding: 1rem;
+    }
+    
+    .register {
+        width: 100%;
+        max-width: 420px;
+        padding: 1.25rem;
+        border-radius: 12px;
+    }
+    
+    .header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .kicker {
+        font-size: 0.85rem;
+    }
+    
     .form {
         grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .form label {
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    .form input,
+    .form select {
+        padding: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .form button {
+        padding: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .switchAuth {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .page {
+        padding: 0.75rem;
+    }
+    
+    .register {
+        width: 100%;
+        max-width: none;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 0.5rem;
+    }
+    
+    .header {
+        margin-bottom: 0.75rem;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .kicker {
+        font-size: 0.8rem;
+    }
+    
+    .form {
+        gap: 0.75rem;
+    }
+    
+    .form label {
+        font-size: 0.85rem;
+        margin-bottom: 0.35rem;
+    }
+    
+    .form input,
+    .form select {
+        padding: 0.65rem;
+        font-size: 0.9rem;
+    }
+    
+    .form button {
+        padding: 0.65rem;
+        font-size: 0.9rem;
+    }
+    
+    .switchAuth {
+        font-size: 0.8rem;
+        margin: 0.75rem 0 0;
     }
 }

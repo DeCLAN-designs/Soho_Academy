@@ -1,29 +1,24 @@
 import styles from './Login.module.css'
 import { useState } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import type { ChangeEvent, FormEvent } from 'react'
-import { authApi } from '../../../lib/api'
+import { useAuth } from '../../../contexts/AuthContext'
 
-type LoginProps = {
-    onSwitchToRegister: () => void
-    onLoginSuccess: (token: string, role: string) => void
-}
-
-type LoginFormData = {
-    email: string
-    password: string
-}
-
-const initialFormData: LoginFormData = {
-    email: '',
-    password: '',
-}
-
-const Login = ({ onSwitchToRegister, onLoginSuccess }: LoginProps) => {
-    const [formData, setFormData] = useState<LoginFormData>(initialFormData)
+const Login = () => {
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+    })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
     const [successMessage, setSuccessMessage] = useState('')
     const [showPassword, setShowPassword] = useState(false)
+    
+    const { login } = useAuth()
+    const navigate = useNavigate()
+    const location = useLocation()
+    
+    const from = location.state?.from?.pathname || '/dashboard'
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = event.target
@@ -40,10 +35,10 @@ const Login = ({ onSwitchToRegister, onLoginSuccess }: LoginProps) => {
         setSuccessMessage('')
 
         try {
-            const response = await authApi.login(formData)
-            setSuccessMessage(response.message || 'Login successful. Redirecting...')
-            window.setTimeout(() => {
-                onLoginSuccess(response.data?.token || '', response.data?.role || '')
+            await login(formData.email, formData.password)
+            setSuccessMessage('Login successful. Redirecting...')
+            setTimeout(() => {
+                navigate(from, { replace: true })
             }, 500)
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'Failed to connect to the backend.')
@@ -53,64 +48,66 @@ const Login = ({ onSwitchToRegister, onLoginSuccess }: LoginProps) => {
     }
 
     return (
-        <section className={styles.login}>
-            <header className={styles.header}>
-                <p className={styles.kicker}>Welcome Back</p>
-                <h1>Login</h1>
-                <p>Use your account credentials to access transport tools.</p>
-            </header>
+        <main className={styles.page}>
+            <section className={styles.login}>
+                <header className={styles.header}>
+                    <p className={styles.kicker}>Welcome Back</p>
+                    <h1>Login</h1>
+                    <p>Use your account credentials to access transport tools.</p>
+                </header>
 
-            <form className={styles.form} onSubmit={handleSubmit}>
-                <label>
-                    <span>Email</span>
-                    <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="Enter your email"
-                        disabled={isSubmitting}
-                        required
-                    />
-                </label>
-
-                <label>
-                    <span>Password</span>
-                    <div className={styles.passwordField}>
+                <form className={styles.form} onSubmit={handleSubmit}>
+                    <label>
+                        <span>Email</span>
                         <input
-                            type={showPassword ? 'text' : 'password'}
-                            name="password"
-                            value={formData.password}
+                            type="email"
+                            name="email"
+                            value={formData.email}
                             onChange={handleChange}
-                            placeholder="Enter password"
+                            placeholder="Enter your email"
                             disabled={isSubmitting}
                             required
                         />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className={styles.passwordToggle}
-                        >
-                            {showPassword ? '👁️' : '🙈'}
-                        </button>
-                    </div>
-                </label>
+                    </label>
 
-                <button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Signing In...' : 'Sign In'}
-                </button>
-            </form>
+                    <label>
+                        <span>Password</span>
+                        <div className={styles.passwordField}>
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                placeholder="Enter password"
+                                disabled={isSubmitting}
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className={styles.passwordToggle}
+                            >
+                                {showPassword ? '👁️' : '🙈'}
+                            </button>
+                        </div>
+                    </label>
 
-            <p className={styles.switchAuth}>
-                Don't have an account?{' '}
-                <button type="button" onClick={onSwitchToRegister} className={styles.linkButton}>
-                    Register here
-                </button>
-            </p>
+                    <button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? 'Signing In...' : 'Sign In'}
+                    </button>
+                </form>
 
-            {errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
-            {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
-        </section>
+                <p className={styles.switchAuth}>
+                    Don't have an account?{' '}
+                    <Link to="/register" className={styles.linkButton}>
+                        Register here
+                    </Link>
+                </p>
+
+                {errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
+                {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
+            </section>
+        </main>
     )
 }
 

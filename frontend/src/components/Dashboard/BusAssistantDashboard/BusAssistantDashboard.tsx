@@ -62,11 +62,6 @@ const BusAssistantDashboard = ({ activeSection }: BusAssistantDashboardProps) =>
 
     return (
         <>
-            <div className="dashboardSection">
-                <h2>{section.heading}</h2>
-                <p>{section.description}</p>
-            </div>
-
             <div className="dashboardCards">
                 {section.cards.map((card) => (
                     <article key={card} className="dashboardCard">

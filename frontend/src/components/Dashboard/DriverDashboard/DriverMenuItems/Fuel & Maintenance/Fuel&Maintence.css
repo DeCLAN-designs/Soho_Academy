@@ -1,0 +1,197 @@
+.driverMenuFuelMaintenance {
+    border: 1px solid #c7ccd2;
+    border-radius: 12px;
+    background: #f8f8fa;
+    padding: 0.9rem 1rem;
+}
+
+.driverMenuFuelMaintenance__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+}
+
+.driverMenuFuelMaintenance__tab {
+    border: 1px solid #b7dbe7;
+    border-radius: 999px;
+    background: #e9f6fb;
+    color: #0f7f9f;
+    font: inherit;
+    font-size: 0.88rem;
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+}
+
+.driverMenuFuelMaintenance__tab--active {
+    background: #0e9ec3;
+    color: #ffffff;
+    border-color: #0e9ec3;
+}
+
+.driverMenuFuelMaintenance__title {
+    margin: 0;
+    color: #670122;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.driverMenuFuelMaintenance__description {
+    margin: 0.45rem 0 0.8rem;
+    color: #59606b;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.driverMenuFuelMaintenance__form {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.driverMenuFuelMaintenance__grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.driverMenuFuelMaintenance__grid label {
+    display: grid;
+    gap: 0.35rem;
+    color: #3f5863;
+    font-size: 0.9rem;
+}
+
+.driverMenuFuelMaintenance__grid input,
+.driverMenuFuelMaintenance__grid select,
+.driverMenuFuelMaintenance__grid textarea {
+    border: 1px solid #c8d8de;
+    border-radius: 8px;
+    padding: 0.52rem 0.62rem;
+    font: inherit;
+    color: #22323a;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+
+.driverMenuFuelMaintenance__grid textarea {
+    resize: vertical;
+    min-height: 92px;
+}
+
+.driverMenuFuelMaintenance__grid input:disabled,
+.driverMenuFuelMaintenance__grid select:disabled,
+.driverMenuFuelMaintenance__grid textarea:disabled {
+    background: #f1f4f7;
+    color: #6b7781;
+    cursor: not-allowed;
+}
+
+.driverMenuFuelMaintenance__fullWidth,
+.driverMenuFuelMaintenance__amountField {
+    grid-column: 1 / -1;
+}
+
+.driverMenuFuelMaintenance__form button {
+    width: fit-content;
+    border: 0;
+    border-radius: 8px;
+    padding: 0.55rem 0.95rem;
+    background: #0e9ec3;
+    color: #ffffff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.driverMenuFuelMaintenance__form button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.driverMenuFuelMaintenance__historyList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.7rem;
+}
+
+.driverMenuFuelMaintenance__historyItem {
+    border: 1px solid #d7e5ea;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 0.7rem 0.8rem;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.driverMenuFuelMaintenance__historyItem > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.9rem;
+}
+
+.driverMenuFuelMaintenance__historyItem strong {
+    color: #20343d;
+}
+
+.driverMenuFuelMaintenance__historyItem span,
+.driverMenuFuelMaintenance__historyItem p {
+    color: #536872;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.driverMenuFuelMaintenance__status {
+    margin: 0.65rem 0 0;
+    border-radius: 8px;
+    padding: 0.58rem 0.75rem;
+    font-size: 0.9rem;
+}
+
+.driverMenuFuelMaintenance__status--error {
+    background: #ffe8ea;
+    color: #9f1a2e;
+}
+
+.driverMenuFuelMaintenance__status--success {
+    background: #ebf7ee;
+    color: #1f7a31;
+}
+
+@media (max-width: 900px) {
+    .driverMenuFuelMaintenance__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .driverMenuFuelMaintenance__form button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .driverMenuFuelMaintenance {
+        padding: 0.72rem 0.8rem;
+        border-radius: 10px;
+    }
+
+    .driverMenuFuelMaintenance__tabs {
+        margin-bottom: 0.7rem;
+    }
+
+    .driverMenuFuelMaintenance__tab {
+        width: 100%;
+        text-align: center;
+    }
+
+    .driverMenuFuelMaintenance__title {
+        font-size: 1rem;
+    }
+
+    .driverMenuFuelMaintenance__description {
+        font-size: 0.9rem;
+    }
+
+    .driverMenuFuelMaintenance__grid {
+        gap: 0.65rem;
+    }
+}

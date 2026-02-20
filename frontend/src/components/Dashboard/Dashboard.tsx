@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react'
 import type { ReactElement } from 'react'
-import { authApi } from '../../lib/api'
-import DashboardHeader from '../DashboardHeader/DashboardHeader'
-import SideBar from '../SideBar/SideBar'
+import { useOutletContext } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 import BusAssistantDashboard, {
     busAssistantDashboardConfig,
 } from './BusAssistantDashboard/BusAssistantDashboard'
 import DriverDashboard, { driverDashboardConfig } from './DriverDashboard/DriverDashboard'
 import ParentDashboard, { parentDashboardConfig } from './ParentDashboard/ParentDashboard'
+import SchoolAdminDashboard, {
+    schoolAdminDashboardConfig,
+} from './SchoolAdminDashboard/SchoolAdminDashboard'
 import TransportManagerDashboard, {
     transportManagerDashboardConfig,
 } from './TransportManagerDashboard/TransportManagerDashboard'
@@ -15,8 +16,7 @@ import type { DashboardRoleConfig } from './dashboard.types'
 import './Dashboard.css'
 
 type DashboardProps = {
-    role: string
-    onLogout: () => void
+    role?: string
 }
 
 type RoleDashboardContentProps = {
@@ -26,6 +26,11 @@ type RoleDashboardContentProps = {
 type RoleDashboardEntry = {
     config: DashboardRoleConfig
     Component: (props: RoleDashboardContentProps) => ReactElement
+}
+
+type LayoutOutletContext = {
+    activeSection?: string
+    role?: string
 }
 
 const FALLBACK_CONFIG: DashboardRoleConfig = {
@@ -48,11 +53,6 @@ const FallbackDashboard = ({ activeSection }: RoleDashboardContentProps) => {
 
     return (
         <>
-            <div className="dashboardSection">
-                <h2>{section.heading}</h2>
-                <p>{section.description}</p>
-            </div>
-
             <div className="dashboardCards">
                 {section.cards.map((card) => (
                     <article key={card} className="dashboardCard">
@@ -81,46 +81,28 @@ const ROLE_DASHBOARD_MAP: Record<string, RoleDashboardEntry> = {
         config: transportManagerDashboardConfig,
         Component: TransportManagerDashboard,
     },
+    'School Admin': {
+        config: schoolAdminDashboardConfig,
+        Component: SchoolAdminDashboard,
+    },
 }
 
-const Dashboard = ({ role, onLogout }: DashboardProps) => {
+const Dashboard = ({ role: propRole }: DashboardProps) => {
+    const { user } = useAuth()
+    const outletContext = useOutletContext<LayoutOutletContext>()
+    const role = propRole || outletContext?.role || user?.role || ''
+    
     const roleDashboard = ROLE_DASHBOARD_MAP[role]
     const config = roleDashboard?.config || FALLBACK_CONFIG
     const RoleDashboard = roleDashboard?.Component || FallbackDashboard
-    const [activeSection, setActiveSection] = useState(config.navigation[0].id)
-
-    useEffect(() => {
-        setActiveSection(config.navigation[0].id)
-    }, [role, config])
-
-    const handleLogout = async () => {
-        try {
-            await authApi.logout()
-        } catch (error) {
-            console.error('Logout error:', error)
-        } finally {
-            onLogout()
-        }
-    }
+    const activeSection = outletContext?.activeSection || config.navigation[0].id
 
     return (
-        <div className="dashboardLayout">
-            <div className="dashboardSidebar">
-                <SideBar role={role} items={config.navigation} activeItem={activeSection} onSelect={setActiveSection} />
-            </div>
-
-            <div className="dashboardTopBar">
-                <DashboardHeader
-                    role={role}
-                    title={config.title}
-                    subtitle={config.subtitle}
-                    quickActions={config.quickActions}
-                    onLogout={handleLogout}
-                />
-            </div>
-
+        <div className="dashboardContent">
             <section className="dashboardMain">
-                <RoleDashboard activeSection={activeSection} />
+                <div className="dashboardPanel">
+                    <RoleDashboard activeSection={activeSection} />
+                </div>
             </section>
         </div>
     )

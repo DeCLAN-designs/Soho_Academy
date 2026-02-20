@@ -10,6 +10,7 @@ const ALLOWED_ROLES = Object.freeze([
   "Driver",
   "Bus Assistant",
   "Transport Manager",
+  "School Admin",
 ]);
 
 /**

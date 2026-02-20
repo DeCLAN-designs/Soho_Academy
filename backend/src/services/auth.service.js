@@ -9,7 +9,17 @@ const {
 } = require("../utils/token.js");
 
 const SALT_ROUNDS = 10;
+const ALLOWED_ROLES = Object.freeze([
+  "Parent",
+  "Driver",
+  "Bus Assistant",
+  "Transport Manager",
+  "School Admin",
+]);
 const ROLES_REQUIRING_NUMBER_PLATE = new Set(["Driver", "Bus Assistant"]);
+const USERS_ROLE_ENUM_SQL = ALLOWED_ROLES.map((role) =>
+  `'${role.replace(/'/g, "''")}'`
+).join(", ");
 const SCHEMA_PATH = path.join(__dirname, "../migration/schema.sql");
 const rawSchemaSql = fs.readFileSync(SCHEMA_PATH, "utf8");
 
@@ -46,7 +56,7 @@ const usersTableSql =
       phoneNumber VARCHAR(20) NOT NULL UNIQUE,
       numberPlate VARCHAR(20),
       password VARCHAR(255) NOT NULL,
-      role ENUM('Parent', 'Driver', 'Bus Assistant', 'Transport Manager') NOT NULL,
+      role ENUM(${USERS_ROLE_ENUM_SQL}) NOT NULL,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
@@ -128,6 +138,36 @@ const dropUniqueIndexOnNumberPlate = async () => {
   }
 };
 
+const ensureUsersRoleEnum = async () => {
+  const [rows] = await pool.query(
+    `
+      SELECT COLUMN_TYPE
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'users'
+        AND COLUMN_NAME = 'role'
+      LIMIT 1
+    `
+  );
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  const columnType = String(rows[0].COLUMN_TYPE || "").toLowerCase();
+  const isMissingRole = ALLOWED_ROLES.some(
+    (role) => !columnType.includes(`'${role.toLowerCase()}'`)
+  );
+
+  if (!isMissingRole) {
+    return;
+  }
+
+  await pool.query(
+    `ALTER TABLE users MODIFY COLUMN role ENUM(${USERS_ROLE_ENUM_SQL}) NOT NULL`
+  );
+};
+
 const ensureUsersTable = () => {
   if (!ensureUsersTablePromise) {
     ensureUsersTablePromise = (async () => {
@@ -135,6 +175,7 @@ const ensureUsersTable = () => {
       await pool.query(numberPlatesTableSql);
       await ensureEmailColumn();
       await ensureNumberPlateColumn();
+      await ensureUsersRoleEnum();
       await dropUniqueIndexOnNumberPlate();
     })();
   }
@@ -251,7 +292,7 @@ const loginUser = async ({ email, password }) => {
 
   const [users] = await pool.query(
     `
-      SELECT id, email, role, password
+      SELECT id, email, firstName, lastName, role, numberPlate, password
       FROM users
       WHERE email = ?
       LIMIT 1
@@ -276,12 +317,18 @@ const loginUser = async ({ email, password }) => {
   const tokenPayload = {
     sub: String(user.id),
     email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
     role: user.role,
+    numberPlate: user.numberPlate || null,
   };
 
   return {
     email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
     role: user.role,
+    numberPlate: user.numberPlate || null,
     accessToken: createAccessToken(tokenPayload),
     refreshToken: createRefreshToken(tokenPayload),
   };
@@ -300,7 +347,7 @@ const refreshSession = async (refreshToken) => {
 
   const [users] = await pool.query(
     `
-      SELECT id, email, role
+      SELECT id, email, firstName, lastName, role, numberPlate
       FROM users
       WHERE email = ?
       LIMIT 1
@@ -316,12 +363,18 @@ const refreshSession = async (refreshToken) => {
   const newPayload = {
     sub: String(user.id),
     email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
     role: user.role,
+    numberPlate: user.numberPlate || null,
   };
 
   return {
     email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
     role: user.role,
+    numberPlate: user.numberPlate || null,
     accessToken: createAccessToken(newPayload),
     refreshToken: createRefreshToken(newPayload),
   };
@@ -332,4 +385,5 @@ module.exports = {
   loginUser,
   refreshSession,
   listNumberPlates,
+  ensureUsersTable,
 };
