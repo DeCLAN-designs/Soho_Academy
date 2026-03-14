@@ -1,6 +1,14 @@
 const { body, param, validationResult } = require("express-validator");
 
 const NUMERIC_ONLY_REGEX = /^\d+$/;
+const ALLOWED_GRADES = Object.freeze(["1", "2", "3", "4", "5", "6", "7", "8", "9"]);
+const ALLOWED_STREAMS = Object.freeze([
+  "Peace",
+  "Joy",
+  "Hope",
+  "Grace",
+  "Humble",
+]);
 
 const studentIdParamValidator = [
   param("studentId")
@@ -37,22 +45,22 @@ const createStudentAdmissionValidator = [
     .trim()
     .isLength({ max: 255 })
     .withMessage("lastName is too long."),
-  body("className")
-    .exists({ checkFalsy: true })
-    .withMessage("className is required.")
-    .bail()
-    .isString()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage("className is too long."),
   body("grade")
     .exists({ checkFalsy: true })
     .withMessage("grade is required.")
     .bail()
     .isString()
     .trim()
-    .isLength({ max: 50 })
-    .withMessage("grade is too long."),
+    .isIn(ALLOWED_GRADES)
+    .withMessage("grade must be between 1 and 9."),
+  body("stream")
+    .exists({ checkFalsy: true })
+    .withMessage("stream is required.")
+    .bail()
+    .isString()
+    .trim()
+    .isIn(ALLOWED_STREAMS)
+    .withMessage("stream must be one of: Peace, Joy, Hope, Grace, Humble."),
   body("parentContact")
     .exists({ checkFalsy: true })
     .withMessage("parentContact is required.")
@@ -101,8 +109,8 @@ const MASTER_DATA_FIELDS = [
   "admissionNumber",
   "firstName",
   "lastName",
-  "className",
   "grade",
+  "stream",
   "admissionDate",
 ];
 
@@ -126,18 +134,18 @@ const updateStudentMasterDataValidator = [
     .trim()
     .isLength({ max: 255 })
     .withMessage("lastName is too long."),
-  body("className")
-    .optional({ checkFalsy: true })
-    .isString()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage("className is too long."),
   body("grade")
     .optional({ checkFalsy: true })
     .isString()
     .trim()
-    .isLength({ max: 50 })
-    .withMessage("grade is too long."),
+    .isIn(ALLOWED_GRADES)
+    .withMessage("grade must be between 1 and 9."),
+  body("stream")
+    .optional({ checkFalsy: true })
+    .isString()
+    .trim()
+    .isIn(ALLOWED_STREAMS)
+    .withMessage("stream must be one of: Peace, Joy, Hope, Grace, Humble."),
   body("admissionDate")
     .optional({ checkFalsy: true })
     .isISO8601()
@@ -149,7 +157,7 @@ const updateStudentMasterDataValidator = [
 
     if (!hasAtLeastOneField) {
       throw new Error(
-        "At least one master data field is required (admissionNumber, firstName, lastName, className, grade, admissionDate)."
+        "At least one master data field is required (admissionNumber, firstName, lastName, grade, stream, admissionDate)."
       );
     }
 

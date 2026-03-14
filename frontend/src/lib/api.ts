@@ -55,8 +55,8 @@ export type StudentRecord = {
   admissionNumber: string;
   firstName: string;
   lastName: string;
-  className: string;
   grade: string;
+  stream: string;
   parentContact: string;
   admissionDate: string | null;
   status: "active" | "withdrawn";
@@ -92,8 +92,8 @@ export type CreateStudentAdmissionPayload = {
   admissionNumber: string;
   firstName: string;
   lastName: string;
-  className: string;
   grade: string;
+  stream: string;
   parentContact: string;
   admissionDate?: string;
 };
@@ -111,8 +111,8 @@ export type UpdateStudentMasterDataPayload = {
   admissionNumber?: string;
   firstName?: string;
   lastName?: string;
-  className?: string;
   grade?: string;
+  stream?: string;
   admissionDate?: string;
 };
 

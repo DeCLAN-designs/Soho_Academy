@@ -33,8 +33,8 @@ const studentsTableSql =
       admissionNumber VARCHAR(50) NOT NULL UNIQUE,
       firstName VARCHAR(255) NOT NULL,
       lastName VARCHAR(255) NOT NULL,
-      className VARCHAR(100) NOT NULL,
-      grade VARCHAR(50) NOT NULL,
+      grade VARCHAR(100) NOT NULL,
+      stream VARCHAR(50) NOT NULL,
       parentContact VARCHAR(20) NOT NULL,
       admissionDate DATE NOT NULL,
       status ENUM('active', 'withdrawn') NOT NULL DEFAULT 'active',
@@ -66,6 +66,32 @@ const parentContactChangesTableSql =
 
 const todayAsIsoDate = () => new Date().toISOString().slice(0, 10);
 
+const migrateStudentsTableColumns = async () => {
+  const [rows] = await pool.query(
+    `
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'students'
+        AND COLUMN_NAME IN ('className', 'grade', 'stream')
+    `
+  );
+
+  const columnNames = new Set(rows.map((row) => row.COLUMN_NAME));
+  const hasLegacyClassName = columnNames.has("className");
+  const hasGrade = columnNames.has("grade");
+  const hasStream = columnNames.has("stream");
+
+  if (hasLegacyClassName && hasGrade && !hasStream) {
+    await pool.query(
+      "ALTER TABLE students CHANGE COLUMN grade stream VARCHAR(50) NOT NULL"
+    );
+    await pool.query(
+      "ALTER TABLE students CHANGE COLUMN className grade VARCHAR(100) NOT NULL"
+    );
+  }
+};
+
 const normalizeDate = (dateValue) => {
   if (!dateValue) {
     return null;
@@ -85,8 +111,8 @@ const mapStudentRow = (row) => ({
   admissionNumber: row.admissionNumber,
   firstName: row.firstName,
   lastName: row.lastName,
-  className: row.className,
   grade: row.grade,
+  stream: row.stream,
   parentContact: row.parentContact,
   admissionDate: normalizeDate(row.admissionDate),
   status: row.status,
@@ -111,6 +137,7 @@ const ensureStudentsTables = () => {
     ensureStudentsTablesPromise = (async () => {
       await ensureUsersTable();
       await pool.query(studentsTableSql);
+      await migrateStudentsTableColumns();
       await pool.query(parentContactChangesTableSql);
     })();
   }
@@ -126,8 +153,8 @@ const fetchStudentById = async (studentId, db = pool) => {
         admissionNumber,
         firstName,
         lastName,
-        className,
         grade,
+        stream,
         parentContact,
         admissionDate,
         status,
@@ -160,8 +187,8 @@ const listStudentsDashboardData = async () => {
           admissionNumber,
           firstName,
           lastName,
-          className,
           grade,
+          stream,
           parentContact,
           admissionDate,
           status,
@@ -218,8 +245,8 @@ const createStudentAdmission = async (payload) => {
     admissionNumber: String(payload.admissionNumber || "").trim().toUpperCase(),
     firstName: String(payload.firstName || "").trim(),
     lastName: String(payload.lastName || "").trim(),
-    className: String(payload.className || "").trim(),
     grade: String(payload.grade || "").trim(),
+    stream: String(payload.stream || "").trim(),
     parentContact: String(payload.parentContact || "").trim(),
     admissionDate: String(payload.admissionDate || "").trim() || todayAsIsoDate(),
   };
@@ -241,8 +268,8 @@ const createStudentAdmission = async (payload) => {
         admissionNumber,
         firstName,
         lastName,
-        className,
         grade,
+        stream,
         parentContact,
         admissionDate,
         status,
@@ -255,8 +282,8 @@ const createStudentAdmission = async (payload) => {
       normalized.admissionNumber,
       normalized.firstName,
       normalized.lastName,
-      normalized.className,
       normalized.grade,
+      normalized.stream,
       normalized.parentContact,
       normalized.admissionDate,
     ]
@@ -374,8 +401,8 @@ const MASTER_DATA_FIELD_TO_COLUMN = Object.freeze({
   admissionNumber: "admissionNumber",
   firstName: "firstName",
   lastName: "lastName",
-  className: "className",
   grade: "grade",
+  stream: "stream",
   admissionDate: "admissionDate",
 });
 

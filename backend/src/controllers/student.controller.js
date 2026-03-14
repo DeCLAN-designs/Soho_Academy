@@ -74,8 +74,8 @@ const admitStudent = async (req, res) => {
     admissionNumber,
     firstName,
     lastName,
-    className,
     grade,
+    stream,
     parentContact,
     admissionDate,
   } = req.body || {};
@@ -85,8 +85,8 @@ const admitStudent = async (req, res) => {
       admissionNumber,
       firstName,
       lastName,
-      className,
       grade,
+      stream,
       parentContact,
       admissionDate,
     });

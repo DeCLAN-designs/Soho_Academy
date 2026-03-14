@@ -14,12 +14,15 @@ type SchoolAdminDashboardProps = {
     activeSection: string
 }
 
+const gradeOptions = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
+const streamOptions = ['Peace', 'Joy', 'Hope', 'Grace', 'Humble'] as const
+
 const initialAdmissionForm: CreateStudentAdmissionPayload = {
     admissionNumber: '',
     firstName: '',
     lastName: '',
-    className: '',
     grade: '',
+    stream: '',
     parentContact: '',
     admissionDate: '',
 }
@@ -40,8 +43,8 @@ const initialMasterForm = {
     admissionNumber: '',
     firstName: '',
     lastName: '',
-    className: '',
     grade: '',
+    stream: '',
     admissionDate: '',
 }
 
@@ -68,10 +71,10 @@ export const schoolAdminDashboardConfig: DashboardRoleConfig = {
         },
         admissions: {
             heading: 'New Admissions',
-            description: 'Add newly admitted students with class, grade, and parent contact.',
+            description: 'Add newly admitted students with grade, stream, and parent contact.',
             cards: [
                 'Admission number uniqueness check',
-                'Class and grade assignment',
+                'Grade and stream assignment',
                 'Parent contact captured on admission',
             ],
         },
@@ -95,9 +98,9 @@ export const schoolAdminDashboardConfig: DashboardRoleConfig = {
         },
         masterData: {
             heading: 'Student Master Data',
-            description: 'Maintain class, grade, and admission-related student profile data.',
+            description: 'Maintain grade, stream, and admission-related student profile data.',
             cards: [
-                'Edit class and grade placement',
+                'Edit grade and stream placement',
                 'Correct admission profile fields',
                 'Keep student directory current',
             ],
@@ -120,7 +123,7 @@ const formatDate = (value: string | null) => {
 }
 
 const getStudentLabel = (student: StudentRecord) =>
-    `${student.admissionNumber} - ${student.firstName} ${student.lastName}`
+    `${student.admissionNumber} - ${student.firstName} ${student.lastName} `
 
 const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
     const defaultSection = schoolAdminDashboardConfig.navigation[0].id
@@ -266,11 +269,11 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
         if (masterForm.lastName.trim()) {
             payload.lastName = masterForm.lastName.trim()
         }
-        if (masterForm.className.trim()) {
-            payload.className = masterForm.className.trim()
-        }
         if (masterForm.grade.trim()) {
             payload.grade = masterForm.grade.trim()
+        }
+        if (masterForm.stream.trim()) {
+            payload.stream = masterForm.stream.trim()
         }
         if (masterForm.admissionDate.trim()) {
             payload.admissionDate = masterForm.admissionDate.trim()
@@ -316,12 +319,12 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                 <div>
                     <h3>Recent Admissions</h3>
                     <ul>
-                        {activeStudents.slice(0, 5).map((student) => (
-                            <li key={student.id}>
-                                <span>{getStudentLabel(student)}</span>
-                                <span>{student.className} / {student.grade}</span>
-                            </li>
-                        ))}
+	                        {activeStudents.slice(0, 5).map((student) => (
+	                            <li key={student.id}>
+	                                <span>{getStudentLabel(student)}</span>
+	                                <span>{student.grade} {student.stream}</span>
+	                            </li>
+	                        ))}
                         {activeStudents.length === 0 ? <li>No active admissions found.</li> : null}
                     </ul>
                 </div>
@@ -343,7 +346,7 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
     )
 
     const renderAdmissionsContent = () => (
-        <div className="schoolAdminPanel">
+        <div className="schoolAdminPanel schoolAdminPanel--split">
             <form className="schoolAdminForm" onSubmit={handleAdmissionSubmit}>
                 <h3>Add New Admission</h3>
                 <div className="schoolAdminGrid">
@@ -351,6 +354,7 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                         Admission Number
                         <input
                             name="admissionNumber"
+                            placeholder="OA/001/2025"
                             value={admissionForm.admissionNumber}
                             onChange={(event) =>
                                 setAdmissionForm((current) => ({
@@ -365,6 +369,7 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                         First Name
                         <input
                             name="firstName"
+                            placeholder="John"
                             value={admissionForm.firstName}
                             onChange={(event) =>
                                 setAdmissionForm((current) => ({ ...current, firstName: event.target.value }))
@@ -376,6 +381,7 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                         Last Name
                         <input
                             name="lastName"
+                            placeholder="Doe"
                             value={admissionForm.lastName}
                             onChange={(event) =>
                                 setAdmissionForm((current) => ({ ...current, lastName: event.target.value }))
@@ -384,26 +390,40 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                         />
                     </label>
                     <label>
-                        Class
-                        <input
-                            name="className"
-                            value={admissionForm.className}
-                            onChange={(event) =>
-                                setAdmissionForm((current) => ({ ...current, className: event.target.value }))
-                            }
-                            required
-                        />
-                    </label>
-                    <label>
                         Grade
-                        <input
+                        <select
                             name="grade"
                             value={admissionForm.grade}
                             onChange={(event) =>
                                 setAdmissionForm((current) => ({ ...current, grade: event.target.value }))
                             }
                             required
-                        />
+                        >
+                            <option value="">Select grade</option>
+                            {gradeOptions.map((grade) => (
+                                <option key={grade} value={grade}>
+                                    {grade}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <label>
+                        Stream
+                        <select
+                            name="stream"
+                            value={admissionForm.stream}
+                            onChange={(event) =>
+                                setAdmissionForm((current) => ({ ...current, stream: event.target.value }))
+                            }
+                            required
+                        >
+                            <option value="">Select stream</option>
+                            {streamOptions.map((stream) => (
+                                <option key={stream} value={stream}>
+                                    {stream}
+                                </option>
+                            ))}
+                        </select>
                     </label>
                     <label>
                         Parent Contact
@@ -440,13 +460,13 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
             <div className="schoolAdminRecords">
                 <h3>Active Admissions</h3>
                 <ul>
-                    {activeStudents.map((student) => (
-                        <li key={student.id}>
-                            <span>{getStudentLabel(student)}</span>
-                            <span>{student.className} / {student.grade}</span>
-                            <span>{student.parentContact}</span>
-                        </li>
-                    ))}
+	                    {activeStudents.map((student) => (
+	                        <li key={student.id}>
+	                            <span>{getStudentLabel(student)}</span>
+	                            <span>{student.grade} {student.stream}</span>
+	                            <span>{student.parentContact}</span>
+	                        </li>
+	                    ))}
                     {activeStudents.length === 0 ? <li>No active admissions available.</li> : null}
                 </ul>
             </div>
@@ -454,7 +474,7 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
     )
 
     const renderContactChangesContent = () => (
-        <div className="schoolAdminPanel">
+        <div className="schoolAdminPanel schoolAdminPanel--split">
             <form className="schoolAdminForm" onSubmit={handleParentContactSubmit}>
                 <h3>Update Parent Contact</h3>
                 <div className="schoolAdminGrid">
@@ -516,7 +536,7 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
     )
 
     const renderWithdrawalsContent = () => (
-        <div className="schoolAdminPanel">
+        <div className="schoolAdminPanel schoolAdminPanel--split">
             <form className="schoolAdminForm" onSubmit={handleWithdrawalSubmit}>
                 <h3>Record Student Withdrawal</h3>
                 <div className="schoolAdminGrid">
@@ -587,7 +607,7 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
     )
 
     const renderMasterDataContent = () => (
-        <div className="schoolAdminPanel">
+        <div className="schoolAdminPanel schoolAdminPanel--split">
             <form className="schoolAdminForm" onSubmit={handleMasterDataSubmit}>
                 <h3>Update Student Master Data</h3>
                 <div className="schoolAdminGrid">
@@ -606,8 +626,8 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                                     admissionNumber: selectedStudent?.admissionNumber || '',
                                     firstName: selectedStudent?.firstName || '',
                                     lastName: selectedStudent?.lastName || '',
-                                    className: selectedStudent?.className || '',
                                     grade: selectedStudent?.grade || '',
+                                    stream: selectedStudent?.stream || '',
                                     admissionDate: selectedStudent?.admissionDate || '',
                                 })
                             }}
@@ -652,22 +672,36 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                         />
                     </label>
                     <label>
-                        Class
-                        <input
-                            value={masterForm.className}
-                            onChange={(event) =>
-                                setMasterForm((current) => ({ ...current, className: event.target.value }))
-                            }
-                        />
-                    </label>
-                    <label>
                         Grade
-                        <input
+                        <select
                             value={masterForm.grade}
                             onChange={(event) =>
                                 setMasterForm((current) => ({ ...current, grade: event.target.value }))
                             }
-                        />
+                        >
+                            <option value="">Select grade</option>
+                            {gradeOptions.map((grade) => (
+                                <option key={grade} value={grade}>
+                                    {grade}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <label>
+                        Stream
+                        <select
+                            value={masterForm.stream}
+                            onChange={(event) =>
+                                setMasterForm((current) => ({ ...current, stream: event.target.value }))
+                            }
+                        >
+                            <option value="">Select stream</option>
+                            {streamOptions.map((stream) => (
+                                <option key={stream} value={stream}>
+                                    {stream}
+                                </option>
+                            ))}
+                        </select>
                     </label>
                     <label>
                         Admission Date
@@ -692,13 +726,13 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
             <div className="schoolAdminRecords">
                 <h3>Student Master Data List</h3>
                 <ul>
-                    {students.map((student) => (
-                        <li key={student.id}>
-                            <span>{getStudentLabel(student)}</span>
-                            <span>{student.className} / {student.grade}</span>
-                            <span>{student.status}</span>
-                        </li>
-                    ))}
+	                    {students.map((student) => (
+	                        <li key={student.id}>
+	                            <span>{getStudentLabel(student)}</span>
+	                            <span>{student.grade} {student.stream}</span>
+	                            <span>{student.status}</span>
+	                        </li>
+	                    ))}
                     {students.length === 0 ? <li>No students found in master data.</li> : null}
                 </ul>
             </div>
