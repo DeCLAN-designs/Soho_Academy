@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { busAssistantDashboardConfig } from '../Dashboard/BusAssistantDashboard/BusAssistantDashboard'
 import { transportManagerDashboardConfig } from '../Dashboard/TransportManagerDashboard/TransportManagerDashboard'
@@ -10,6 +10,14 @@ import type { DashboardRoleConfig } from '../Dashboard/dashboard.types'
 import DashboardHeader from '../DashboardHeader/DashboardHeader'
 import SideBar, { getSidebarNavigationItems } from '../SideBar/SideBar'
 import './Layout.css'
+
+const ROLE_BASE_PATH: Record<string, string> = {
+  'Parent': 'parent',
+  'Driver': 'driver',
+  'Bus Assistant': 'bus-assistant',
+  'Transport Manager': 'transport-manager',
+  'School Admin': 'school-admin',
+}
 
 const ROLE_CONFIG_MAP: Record<string, DashboardRoleConfig> = {
   Parent: parentDashboardConfig,
@@ -38,8 +46,10 @@ export const Layout: React.FC = () => {
   const [activeSection, setActiveSection] = useState('overview')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const contentRef = useRef<HTMLElement | null>(null)
+  const navigate = useNavigate()
+  const location = useLocation()
   const role = user?.role || ''
-
+  
   const roleConfig = ROLE_CONFIG_MAP[role] || FALLBACK_HEADER_CONFIG
   const currentSection =
     roleConfig.sections[activeSection] ||
@@ -62,6 +72,25 @@ export const Layout: React.FC = () => {
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false)
   }
+
+  // Sync active section with URL
+  useEffect(() => {
+    const pathSegments = location.pathname.split('/').filter(Boolean)
+    const basePath = ROLE_BASE_PATH[role]
+    
+    if (pathSegments.length >= 2 && pathSegments[0] === basePath) {
+      const sectionFromUrl = pathSegments[1]
+      const validSection = getSidebarNavigationItems(role).find(item => item.id === sectionFromUrl)
+      
+      if (validSection && sectionFromUrl !== activeSection) {
+        setActiveSection(sectionFromUrl)
+      }
+    } else {
+      // Set default section if URL doesn't match
+      const firstSection = getSidebarNavigationItems(role)[0]?.id || 'overview'
+      setActiveSection(firstSection)
+    }
+  }, [location.pathname, role, activeSection])
 
   useEffect(() => {
     const firstSection = getSidebarNavigationItems(role)[0]?.id || 'overview'
@@ -125,6 +154,9 @@ export const Layout: React.FC = () => {
           onSelect={(section) => {
             setActiveSection(section)
             closeMobileMenu()
+            // Navigate to the specific route
+            const basePath = ROLE_BASE_PATH[role]
+            navigate(`/${basePath}/${section}`)
           }}
         />
       </aside>
