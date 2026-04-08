@@ -1,35 +1,455 @@
 .driverMenuCompliantsReports {
-    border: 1px solid #c7ccd2;
-    border-radius: 12px;
-    background: #f8f8fa;
-    padding: 0.9rem 1rem;
+    --complaint-primary: #670122;
+    --complaint-accent: #0e9ec3;
+    --complaint-border: #d8dee8;
+    --complaint-ink: #213039;
+    --complaint-muted: #56656f;
+    --complaint-surface: #ffffff;
+    --complaint-surface-alt: #f8f9fc;
+
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--complaint-border);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top right, rgba(103, 1, 34, 0.06), transparent 24%),
+        linear-gradient(180deg, var(--complaint-surface) 0%, var(--complaint-surface-alt) 100%);
+    box-shadow: 0 18px 40px rgba(25, 35, 45, 0.06);
+    padding: clamp(0.95rem, 1.4vw, 1.2rem);
+    display: grid;
+    gap: 1rem;
+}
+
+.driverMenuCompliantsReports__form,
+.driverMenuCompliantsReports__history {
+    display: grid;
+    gap: 1rem;
+}
+
+.driverMenuCompliantsReports__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.driverMenuCompliantsReports__tab {
+    border: 1px solid rgba(103, 1, 34, 0.16);
+    border-radius: 999px;
+    background: rgba(103, 1, 34, 0.05);
+    color: var(--complaint-primary);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 0.52rem 0.9rem;
+    cursor: pointer;
+    transition:
+        transform 0.18s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.driverMenuCompliantsReports__tab:hover {
+    transform: translateY(-1px);
+    border-color: rgba(103, 1, 34, 0.28);
+    box-shadow: 0 8px 18px rgba(103, 1, 34, 0.08);
+}
+
+.driverMenuCompliantsReports__tab:focus-visible,
+.driverMenuCompliantsReports button:focus-visible,
+.driverMenuCompliantsReports input:focus-visible,
+.driverMenuCompliantsReports select:focus-visible,
+.driverMenuCompliantsReports textarea:focus-visible,
+.driverMenuCompliantsReports a:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(103, 1, 34, 0.12);
+}
+
+.driverMenuCompliantsReports__tab--active {
+    background: var(--complaint-primary);
+    color: #ffffff;
+    border-color: var(--complaint-primary);
+}
+
+.driverMenuCompliantsReports__header,
+.driverMenuCompliantsReports__attachmentHeader,
+.driverMenuCompliantsReports__historyTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.9rem;
 }
 
 .driverMenuCompliantsReports__title {
     margin: 0;
-    color: #670122;
-    font-size: 1.1rem;
-    font-weight: 700;
+    color: var(--complaint-primary);
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.2;
 }
 
 .driverMenuCompliantsReports__description {
-    margin: 0.45rem 0 0;
-    color: #59606b;
-    font-size: 0.95rem;
-    line-height: 1.4;
+    margin: 0.35rem 0 0;
+    max-width: 62ch;
+    color: var(--complaint-muted);
+    line-height: 1.55;
+}
+
+.driverMenuCompliantsReports__grid {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    align-items: start;
+}
+
+.driverMenuCompliantsReports__grid label {
+    display: grid;
+    gap: 0.38rem;
+    color: #31444d;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.driverMenuCompliantsReports__grid input,
+.driverMenuCompliantsReports__grid select,
+.driverMenuCompliantsReports__grid textarea {
+    width: 100%;
+    min-height: 48px;
+    box-sizing: border-box;
+    border: 1px solid #cad2dd;
+    border-radius: 14px;
+    background: #ffffff;
+    color: var(--complaint-ink);
+    font: inherit;
+    padding: 0.72rem 0.82rem;
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease;
+}
+
+.driverMenuCompliantsReports__grid input::placeholder,
+.driverMenuCompliantsReports__grid textarea::placeholder {
+    color: #83909a;
+}
+
+.driverMenuCompliantsReports__grid textarea {
+    min-height: 148px;
+    resize: vertical;
+}
+
+.driverMenuCompliantsReports__grid input:focus,
+.driverMenuCompliantsReports__grid select:focus,
+.driverMenuCompliantsReports__grid textarea:focus {
+    outline: none;
+    border-color: rgba(103, 1, 34, 0.45);
+    box-shadow: 0 0 0 3px rgba(103, 1, 34, 0.08);
+}
+
+.driverMenuCompliantsReports__grid input:disabled,
+.driverMenuCompliantsReports__grid select:disabled,
+.driverMenuCompliantsReports__grid textarea:disabled {
+    background: #f4f5f8;
+    color: #76818a;
+    cursor: not-allowed;
+}
+
+.driverMenuCompliantsReports__fullWidth {
+    grid-column: 1 / -1;
+}
+
+.driverMenuCompliantsReports__attachmentPanel {
+    border: 1px dashed rgba(103, 1, 34, 0.26);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(103, 1, 34, 0.03) 0%, rgba(103, 1, 34, 0.015) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    padding: 0.98rem;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.driverMenuCompliantsReports__attachmentHeader h4,
+.driverMenuCompliantsReports__metaGrid h4,
+.driverMenuCompliantsReports__detailBlock h4 {
+    margin: 0;
+    color: var(--complaint-primary);
+    font-size: 0.92rem;
+}
+
+.driverMenuCompliantsReports__attachmentHeader p {
+    margin: 0.2rem 0 0;
+    color: var(--complaint-muted);
+    font-size: 0.88rem;
+}
+
+.driverMenuCompliantsReports__attachmentPanel input[type='file'] {
+    width: 100%;
+    min-height: auto;
+    padding: 0.7rem;
+    border: 1px dashed rgba(103, 1, 34, 0.2);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--complaint-muted);
+}
+
+.driverMenuCompliantsReports__attachmentPanel input[type='file']::file-selector-button {
+    margin-right: 0.8rem;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(103, 1, 34, 0.1);
+    color: var(--complaint-primary);
+    font: inherit;
+    font-weight: 700;
+    padding: 0.58rem 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.driverMenuCompliantsReports__attachmentPanel input[type='file']::file-selector-button:hover {
+    background: rgba(103, 1, 34, 0.14);
+    transform: translateY(-1px);
+}
+
+.driverMenuCompliantsReports__attachmentPreview,
+.driverMenuCompliantsReports__attachmentLink {
+    width: min(100%, 340px);
+    border: 1px solid var(--complaint-border);
+    border-radius: 16px;
+    overflow: hidden;
+    background: #ffffff;
+    display: grid;
+    text-decoration: none;
+    color: inherit;
+}
+
+.driverMenuCompliantsReports__attachmentPreview img,
+.driverMenuCompliantsReports__attachmentLink img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background: #edf1f5;
+}
+
+.driverMenuCompliantsReports__attachmentPreview span,
+.driverMenuCompliantsReports__attachmentLink span {
+    padding: 0.78rem 0.82rem;
+    color: var(--complaint-muted);
+    font-size: 0.84rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.driverMenuCompliantsReports__attachmentLink {
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.driverMenuCompliantsReports__attachmentLink:hover {
+    transform: translateY(-2px);
+    border-color: rgba(103, 1, 34, 0.22);
+    box-shadow: 0 12px 24px rgba(103, 1, 34, 0.08);
+}
+
+.driverMenuCompliantsReports button[type='submit'],
+.driverMenuCompliantsReports__ghostButton {
+    width: fit-content;
+    border-radius: 12px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.driverMenuCompliantsReports button[type='submit'] {
+    border: 0;
+    background: linear-gradient(135deg, var(--complaint-primary) 0%, #8f1839 100%);
+    color: #ffffff;
+    padding: 0.78rem 1.08rem;
+    box-shadow: 0 10px 22px rgba(103, 1, 34, 0.14);
+}
+
+.driverMenuCompliantsReports button[type='submit']:hover:not(:disabled),
+.driverMenuCompliantsReports__ghostButton:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.driverMenuCompliantsReports__ghostButton {
+    border: 1px solid rgba(103, 1, 34, 0.22);
+    background: rgba(103, 1, 34, 0.05);
+    color: var(--complaint-primary);
+    padding: 0.6rem 0.88rem;
+}
+
+.driverMenuCompliantsReports button:disabled,
+.driverMenuCompliantsReports__ghostButton:disabled {
+    opacity: 0.68;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.driverMenuCompliantsReports__status {
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 0.7rem 0.84rem;
+    font-weight: 600;
+}
+
+.driverMenuCompliantsReports__status--error {
+    background: #ffe9ec;
+    border-color: #ffd2d9;
+    color: #9c1732;
+}
+
+.driverMenuCompliantsReports__status--success {
+    background: #eef9f0;
+    border-color: #d9efdd;
+    color: #166633;
+}
+
+.driverMenuCompliantsReports__emptyText {
+    margin: 0;
+    color: var(--complaint-muted);
+    line-height: 1.5;
+}
+
+.driverMenuCompliantsReports__historyList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.driverMenuCompliantsReports__historyItem {
+    border: 1px solid var(--complaint-border);
+    border-radius: 18px;
+    background: #ffffff;
+    padding: 1rem;
+    display: grid;
+    gap: 0.9rem;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.04);
+}
+
+.driverMenuCompliantsReports__historyTop > div {
+    min-width: 0;
+}
+
+.driverMenuCompliantsReports__historyTop strong {
+    display: block;
+    color: var(--complaint-ink);
+    overflow-wrap: anywhere;
+}
+
+.driverMenuCompliantsReports__historyTop span {
+    color: var(--complaint-muted);
+    font-size: 0.88rem;
+    overflow-wrap: anywhere;
+}
+
+.driverMenuCompliantsReports__badge {
+    width: fit-content;
+    align-self: flex-start;
+    border-radius: 999px;
+    background: rgba(14, 158, 195, 0.12);
+    border: 1px solid rgba(14, 158, 195, 0.2);
+    color: #0f6f8a;
+    padding: 0.2rem 0.58rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.driverMenuCompliantsReports__metaGrid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.driverMenuCompliantsReports__metaGrid div,
+.driverMenuCompliantsReports__detailBlock {
+    height: 100%;
+    border: 1px solid #edf1f5;
+    border-radius: 16px;
+    background: #fafbfd;
+    padding: 0.86rem;
+}
+
+.driverMenuCompliantsReports__metaGrid p,
+.driverMenuCompliantsReports__detailBlock p {
+    margin: 0.35rem 0 0;
+    color: var(--complaint-muted);
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 900px) {
+    .driverMenuCompliantsReports__header,
+    .driverMenuCompliantsReports__attachmentHeader,
+    .driverMenuCompliantsReports__historyTop {
+        flex-direction: column;
+    }
+
+    .driverMenuCompliantsReports button[type='submit'],
+    .driverMenuCompliantsReports__ghostButton,
+    .driverMenuCompliantsReports__attachmentPreview,
+    .driverMenuCompliantsReports__attachmentLink {
+        width: 100%;
+    }
 }
 
 @media (max-width: 640px) {
     .driverMenuCompliantsReports {
-        padding: 0.72rem 0.8rem;
-        border-radius: 10px;
+        padding: 0.82rem;
+        border-radius: 16px;
     }
 
-    .driverMenuCompliantsReports__title {
-        font-size: 1rem;
+    .driverMenuCompliantsReports__tabs {
+        gap: 0.45rem;
     }
 
-    .driverMenuCompliantsReports__description {
-        font-size: 0.9rem;
+    .driverMenuCompliantsReports__tab {
+        width: 100%;
+        text-align: center;
+    }
+
+    .driverMenuCompliantsReports__attachmentPanel,
+    .driverMenuCompliantsReports__historyItem,
+    .driverMenuCompliantsReports__metaGrid div,
+    .driverMenuCompliantsReports__detailBlock {
+        padding: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .driverMenuCompliantsReports__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .driverMenuCompliantsReports__attachmentHeader {
+        gap: 0.7rem;
+    }
+
+    .driverMenuCompliantsReports__attachmentPreview img,
+    .driverMenuCompliantsReports__attachmentLink img {
+        height: 160px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .driverMenuCompliantsReports__tab,
+    .driverMenuCompliantsReports button[type='submit'],
+    .driverMenuCompliantsReports__ghostButton,
+    .driverMenuCompliantsReports__attachmentLink,
+    .driverMenuCompliantsReports__attachmentPanel input[type='file']::file-selector-button {
+        transition: none;
     }
 }

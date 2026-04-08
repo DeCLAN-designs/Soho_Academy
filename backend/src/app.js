@@ -6,7 +6,9 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 
 const authRoutes = require("./routes/auth.routes.js");
+const complaintRoutes = require("./routes/complaint.routes.js");
 const fuelMaintenanceRoutes = require("./routes/fuelMaintenance.routes.js");
+const incidentRoutes = require("./routes/incident.routes.js");
 const parentRoutes = require("./routes/parent.routes.js");
 const studentRoutes = require("./routes/student.routes.js");
 
@@ -48,7 +50,9 @@ app.use("/api", (_req, res, next) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/complaints", complaintRoutes);
 app.use("/api/fuel-maintenance", fuelMaintenanceRoutes);
+app.use("/api/incidents", incidentRoutes);
 app.use("/api/parent", parentRoutes);
 app.use("/api/students", studentRoutes);
 

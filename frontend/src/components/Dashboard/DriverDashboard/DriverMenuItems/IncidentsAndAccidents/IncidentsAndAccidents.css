@@ -1,0 +1,505 @@
+.driverIncidentReport {
+    --incident-primary: #670122;
+    --incident-accent: #0e9ec3;
+    --incident-border: #d7dde6;
+    --incident-ink: #213039;
+    --incident-muted: #58656f;
+    --incident-surface: #ffffff;
+    --incident-surface-alt: #f7f8fb;
+
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--incident-border);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top right, rgba(103, 1, 34, 0.05), transparent 26%),
+        linear-gradient(180deg, var(--incident-surface) 0%, var(--incident-surface-alt) 100%);
+    box-shadow: 0 18px 40px rgba(25, 35, 45, 0.06);
+    padding: clamp(0.95rem, 1.4vw, 1.2rem);
+    display: grid;
+    gap: 1rem;
+}
+
+.driverIncidentReport__form,
+.driverIncidentReport__history {
+    display: grid;
+    gap: 1rem;
+}
+
+.driverIncidentReport__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.driverIncidentReport__tab {
+    border: 1px solid rgba(103, 1, 34, 0.16);
+    border-radius: 999px;
+    background: rgba(103, 1, 34, 0.06);
+    color: var(--incident-primary);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 0.52rem 0.9rem;
+    cursor: pointer;
+    transition:
+        transform 0.18s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.driverIncidentReport__tab:hover {
+    transform: translateY(-1px);
+    border-color: rgba(103, 1, 34, 0.28);
+    box-shadow: 0 8px 18px rgba(103, 1, 34, 0.08);
+}
+
+.driverIncidentReport__tab:focus-visible,
+.driverIncidentReport button:focus-visible,
+.driverIncidentReport input:focus-visible,
+.driverIncidentReport textarea:focus-visible,
+.driverIncidentReport a:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(103, 1, 34, 0.12);
+}
+
+.driverIncidentReport__tab--active {
+    background: var(--incident-primary);
+    color: #ffffff;
+    border-color: var(--incident-primary);
+}
+
+.driverIncidentReport__intro,
+.driverIncidentReport__historyHeader,
+.driverIncidentReport__uploadHeader,
+.driverIncidentReport__historyTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.9rem;
+}
+
+.driverIncidentReport__title {
+    margin: 0;
+    color: var(--incident-primary);
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.driverIncidentReport__description {
+    margin: 0.35rem 0 0;
+    max-width: 62ch;
+    color: var(--incident-muted);
+    line-height: 1.55;
+}
+
+.driverIncidentReport__plateCard {
+    min-width: 180px;
+    border: 1px solid rgba(103, 1, 34, 0.14);
+    border-radius: 16px;
+    background: rgba(103, 1, 34, 0.05);
+    padding: 0.9rem 1rem;
+    display: grid;
+    gap: 0.24rem;
+}
+
+.driverIncidentReport__plateCard span {
+    color: var(--incident-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.driverIncidentReport__plateCard strong {
+    color: var(--incident-primary);
+    font-size: 1.08rem;
+    overflow-wrap: anywhere;
+}
+
+.driverIncidentReport__grid {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    align-items: start;
+}
+
+.driverIncidentReport__grid label {
+    display: grid;
+    gap: 0.38rem;
+    color: #31444d;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.driverIncidentReport__grid input,
+.driverIncidentReport__grid textarea {
+    width: 100%;
+    min-height: 48px;
+    box-sizing: border-box;
+    border: 1px solid #c9d2dd;
+    border-radius: 14px;
+    background: #ffffff;
+    color: var(--incident-ink);
+    font: inherit;
+    padding: 0.72rem 0.82rem;
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease;
+}
+
+.driverIncidentReport__grid input::placeholder,
+.driverIncidentReport__grid textarea::placeholder {
+    color: #83909a;
+}
+
+.driverIncidentReport__grid textarea {
+    min-height: 118px;
+    resize: vertical;
+}
+
+.driverIncidentReport__grid input:focus,
+.driverIncidentReport__grid textarea:focus {
+    outline: none;
+    border-color: rgba(103, 1, 34, 0.45);
+    box-shadow: 0 0 0 3px rgba(103, 1, 34, 0.08);
+}
+
+.driverIncidentReport__grid input:disabled,
+.driverIncidentReport__grid textarea:disabled {
+    background: #f4f5f8;
+    color: #76818a;
+    cursor: not-allowed;
+}
+
+.driverIncidentReport__fullWidth {
+    grid-column: 1 / -1;
+}
+
+.driverIncidentReport__uploadPanel {
+    border: 1px dashed rgba(103, 1, 34, 0.28);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(103, 1, 34, 0.03) 0%, rgba(103, 1, 34, 0.015) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    padding: 0.98rem;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.driverIncidentReport__uploadHeader h4,
+.driverIncidentReport__gallerySection h4,
+.driverIncidentReport__detailGrid h4 {
+    margin: 0;
+    color: var(--incident-primary);
+    font-size: 0.92rem;
+}
+
+.driverIncidentReport__uploadHeader p {
+    margin: 0.2rem 0 0;
+    color: var(--incident-muted);
+    font-size: 0.88rem;
+}
+
+.driverIncidentReport__uploadPanel input[type='file'] {
+    width: 100%;
+    min-height: auto;
+    padding: 0.7rem;
+    border: 1px dashed rgba(103, 1, 34, 0.2);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--incident-muted);
+}
+
+.driverIncidentReport__uploadPanel input[type='file']::file-selector-button {
+    margin-right: 0.8rem;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(103, 1, 34, 0.1);
+    color: var(--incident-primary);
+    font: inherit;
+    font-weight: 700;
+    padding: 0.58rem 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.driverIncidentReport__uploadPanel input[type='file']::file-selector-button:hover {
+    background: rgba(103, 1, 34, 0.14);
+    transform: translateY(-1px);
+}
+
+.driverIncidentReport__previewGrid,
+.driverIncidentReport__gallery {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.driverIncidentReport__previewCard,
+.driverIncidentReport__galleryItem {
+    border: 1px solid var(--incident-border);
+    border-radius: 16px;
+    overflow: hidden;
+    background: #ffffff;
+    text-decoration: none;
+    color: inherit;
+    display: grid;
+}
+
+.driverIncidentReport__previewCard img,
+.driverIncidentReport__galleryItem img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    background: #edf1f5;
+}
+
+.driverIncidentReport__previewCard div,
+.driverIncidentReport__galleryItem span {
+    padding: 0.74rem 0.8rem;
+}
+
+.driverIncidentReport__previewCard strong {
+    display: block;
+    color: var(--incident-ink);
+    font-size: 0.88rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.driverIncidentReport__previewCard span,
+.driverIncidentReport__galleryItem span {
+    display: block;
+    color: var(--incident-muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.driverIncidentReport__galleryItem {
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.driverIncidentReport__galleryItem:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(103, 1, 34, 0.08);
+    border-color: rgba(103, 1, 34, 0.2);
+}
+
+.driverIncidentReport button[type='submit'],
+.driverIncidentReport__ghostButton {
+    width: fit-content;
+    border-radius: 12px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.driverIncidentReport button[type='submit'] {
+    border: 0;
+    background: linear-gradient(135deg, var(--incident-primary) 0%, #8b1537 100%);
+    color: #ffffff;
+    padding: 0.78rem 1.08rem;
+    box-shadow: 0 10px 22px rgba(103, 1, 34, 0.14);
+}
+
+.driverIncidentReport button[type='submit']:hover:not(:disabled),
+.driverIncidentReport__ghostButton:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.driverIncidentReport__ghostButton {
+    border: 1px solid rgba(103, 1, 34, 0.2);
+    background: rgba(103, 1, 34, 0.05);
+    color: var(--incident-primary);
+    padding: 0.6rem 0.88rem;
+}
+
+.driverIncidentReport button:disabled,
+.driverIncidentReport__ghostButton:disabled {
+    opacity: 0.68;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.driverIncidentReport__status {
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 0.7rem 0.84rem;
+    font-weight: 600;
+}
+
+.driverIncidentReport__status--error {
+    background: #ffe9ec;
+    border-color: #ffd2d9;
+    color: #9c1732;
+}
+
+.driverIncidentReport__status--success {
+    background: #eef9f0;
+    border-color: #d9efdd;
+    color: #166633;
+}
+
+.driverIncidentReport__emptyHint {
+    margin: 0;
+    color: var(--incident-muted);
+    line-height: 1.5;
+}
+
+.driverIncidentReport__historyList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.driverIncidentReport__historyItem {
+    border: 1px solid var(--incident-border);
+    border-radius: 18px;
+    background: #ffffff;
+    padding: 1rem;
+    display: grid;
+    gap: 0.9rem;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.04);
+}
+
+.driverIncidentReport__historyTop > div {
+    min-width: 0;
+}
+
+.driverIncidentReport__historyTop strong {
+    display: block;
+    color: var(--incident-ink);
+    overflow-wrap: anywhere;
+}
+
+.driverIncidentReport__historyTop span {
+    color: var(--incident-muted);
+    font-size: 0.88rem;
+    overflow-wrap: anywhere;
+}
+
+.driverIncidentReport__badge {
+    width: fit-content;
+    align-self: flex-start;
+    border-radius: 999px;
+    background: rgba(14, 158, 195, 0.12);
+    border: 1px solid rgba(14, 158, 195, 0.2);
+    color: #0f6f8a;
+    padding: 0.2rem 0.58rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.driverIncidentReport__detailGrid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.driverIncidentReport__detailGrid div {
+    height: 100%;
+    border: 1px solid #edf1f5;
+    border-radius: 16px;
+    background: #fafbfd;
+    padding: 0.84rem;
+}
+
+.driverIncidentReport__detailGrid p {
+    margin: 0.35rem 0 0;
+    color: var(--incident-muted);
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+.driverIncidentReport__gallerySection {
+    display: grid;
+    gap: 0.75rem;
+    border: 1px solid #edf1f5;
+    border-radius: 16px;
+    background: #fafbfd;
+    padding: 0.9rem;
+}
+
+@media (max-width: 900px) {
+    .driverIncidentReport__intro,
+    .driverIncidentReport__historyHeader,
+    .driverIncidentReport__uploadHeader,
+    .driverIncidentReport__historyTop {
+        flex-direction: column;
+    }
+
+    .driverIncidentReport button[type='submit'],
+    .driverIncidentReport__ghostButton {
+        width: 100%;
+    }
+
+    .driverIncidentReport__plateCard {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .driverIncidentReport {
+        padding: 0.82rem;
+        border-radius: 16px;
+    }
+
+    .driverIncidentReport__tabs {
+        gap: 0.45rem;
+    }
+
+    .driverIncidentReport__tab {
+        width: 100%;
+        text-align: center;
+    }
+
+    .driverIncidentReport__uploadPanel,
+    .driverIncidentReport__historyItem,
+    .driverIncidentReport__detailGrid div,
+    .driverIncidentReport__gallerySection {
+        padding: 0.8rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .driverIncidentReport__grid,
+    .driverIncidentReport__detailGrid,
+    .driverIncidentReport__previewGrid,
+    .driverIncidentReport__gallery {
+        grid-template-columns: 1fr;
+    }
+
+    .driverIncidentReport__previewCard img,
+    .driverIncidentReport__galleryItem img {
+        height: 170px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .driverIncidentReport__tab,
+    .driverIncidentReport button[type='submit'],
+    .driverIncidentReport__ghostButton,
+    .driverIncidentReport__galleryItem,
+    .driverIncidentReport__uploadPanel input[type='file']::file-selector-button {
+        transition: none;
+    }
+}

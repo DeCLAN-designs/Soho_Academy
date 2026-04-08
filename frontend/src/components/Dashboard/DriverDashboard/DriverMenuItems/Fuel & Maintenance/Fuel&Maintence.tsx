@@ -13,6 +13,7 @@ import './Fuel&Maintence.css'
 
 type FuelMaintenanceFormState = {
     requestDate: string
+    requestTime: string
     numberPlate: string
     currentMileage: string
     requestType: FuelMaintenanceRequestType
@@ -43,12 +44,18 @@ const CATEGORIES: FuelMaintenanceCategory[] = [
     'Inspection / Speed Governors',
 ]
 
-const CONFIRMED_BY_OPTIONS = ['Erick', 'Douglas', 'James'] as const
-
 const today = () => new Date().toISOString().slice(0, 10)
+
+const currentTime = () => {
+    const now = new Date()
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    return `${hours}:${minutes}`
+}
 
 const createInitialFormState = (): FuelMaintenanceFormState => ({
     requestDate: today(),
+    requestTime: currentTime(),
     numberPlate: '',
     currentMileage: '',
     requestType: 'Fuel',
@@ -56,7 +63,7 @@ const createInitialFormState = (): FuelMaintenanceFormState => ({
     category: 'Fuels & Oils',
     description: '',
     amount: '',
-    confirmedBy: CONFIRMED_BY_OPTIONS[0],
+    confirmedBy: '',
 })
 
 const formatDate = (value: string) => {
@@ -67,6 +74,21 @@ const formatDate = (value: string) => {
     }
 
     return date.toLocaleDateString()
+}
+
+const formatDisplayTime = (value: string) => {
+    if (!value) {
+        return ''
+    }
+
+    return value.slice(0, 5)
+}
+
+const formatDateTime = (date: string, time: string) => {
+    const formattedDate = formatDate(date)
+    const formattedTime = formatDisplayTime(time)
+
+    return [formattedDate, formattedTime].filter(Boolean).join(' at ')
 }
 
 const DriverFuelMaintenanceMenuItem = () => {
@@ -80,12 +102,18 @@ const DriverFuelMaintenanceMenuItem = () => {
     const [successMessage, setSuccessMessage] = useState('')
 
     const assignedNumberPlate = user?.numberPlate || ''
+    const loggedInDriverName = [user?.firstName, user?.lastName]
+        .filter((namePart) => Boolean(namePart && namePart.trim()))
+        .join(' ')
+        .trim()
     const needsAmount = form.requestType === 'Fuel'
 
     const loadHistory = async (withLoader = true) => {
         if (withLoader) {
             setIsLoadingHistory(true)
         }
+
+        setErrorMessage('')
 
         try {
             const response = await fuelMaintenanceApi.getRequests()
@@ -107,8 +135,9 @@ const DriverFuelMaintenanceMenuItem = () => {
         setForm((currentFormState) => ({
             ...currentFormState,
             numberPlate: assignedNumberPlate,
+            requestedBy: loggedInDriverName,
         }))
-    }, [assignedNumberPlate])
+    }, [assignedNumberPlate, loggedInDriverName])
 
     const handleChange = (
         event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -141,10 +170,10 @@ const DriverFuelMaintenanceMenuItem = () => {
         try {
             const payload: CreateFuelMaintenanceRequestPayload = {
                 requestDate: form.requestDate,
+                requestTime: form.requestTime,
                 numberPlate: assignedNumberPlate,
                 currentMileage: Number(form.currentMileage),
                 requestType: form.requestType,
-                requestedBy: form.requestedBy.trim(),
                 category: form.category,
                 description: form.description.trim(),
                 confirmedBy: form.confirmedBy.trim(),
@@ -153,10 +182,12 @@ const DriverFuelMaintenanceMenuItem = () => {
 
             await fuelMaintenanceApi.createRequest(payload)
 
+            setErrorMessage('')
             setSuccessMessage('Fuel and maintenance request saved successfully.')
             setForm({
                 ...createInitialFormState(),
                 numberPlate: assignedNumberPlate,
+                requestedBy: loggedInDriverName,
             })
             await loadHistory(false)
         } catch (error) {
@@ -172,17 +203,6 @@ const DriverFuelMaintenanceMenuItem = () => {
                 <button
                     type="button"
                     className={
-                        activeView === 'history'
-                            ? 'driverMenuFuelMaintenance__tab driverMenuFuelMaintenance__tab--active'
-                            : 'driverMenuFuelMaintenance__tab'
-                    }
-                    onClick={() => setActiveView('history')}
-                >
-                    Fuel History
-                </button>
-                <button
-                    type="button"
-                    className={
                         activeView === 'request'
                             ? 'driverMenuFuelMaintenance__tab driverMenuFuelMaintenance__tab--active'
                             : 'driverMenuFuelMaintenance__tab'
@@ -191,11 +211,40 @@ const DriverFuelMaintenanceMenuItem = () => {
                 >
                     Fuel & Maintenance Request
                 </button>
+                <button
+                    type="button"
+                    className={
+                        activeView === 'history'
+                            ? 'driverMenuFuelMaintenance__tab driverMenuFuelMaintenance__tab--active'
+                            : 'driverMenuFuelMaintenance__tab'
+                    }
+                    onClick={() => setActiveView('history')}
+                >
+                    Fuel History
+                </button>
             </div>
 
             {activeView === 'history' ? (
                 <div className="driverMenuFuelMaintenance__history">
-                    <h3 className="driverMenuFuelMaintenance__title">Fuel History</h3>
+                    <div className="driverMenuFuelMaintenance__historyHeader">
+                        <div>
+                            <h3 className="driverMenuFuelMaintenance__title">Fuel History</h3>
+                            <p className="driverMenuFuelMaintenance__description">
+                                Review previously submitted fuel and maintenance requests with
+                                their recorded date and time.
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            className="driverMenuFuelMaintenance__ghostButton"
+                            onClick={() => void loadHistory(true)}
+                            disabled={isLoadingHistory}
+                        >
+                            {isLoadingHistory ? 'Refreshing...' : 'Refresh'}
+                        </button>
+                    </div>
+
                     {isLoadingHistory ? (
                         <Loader variant="section" label="Loading request history" />
                     ) : null}
@@ -208,18 +257,55 @@ const DriverFuelMaintenanceMenuItem = () => {
                         <ul className="driverMenuFuelMaintenance__historyList">
                             {historyRequests.map((requestRecord) => (
                                 <li key={requestRecord.id} className="driverMenuFuelMaintenance__historyItem">
-                                    <div>
-                                        <strong>{requestRecord.numberPlate}</strong>
-                                        <span>{formatDate(requestRecord.requestDate)} - {requestRecord.requestType}</span>
+                                    <div className="driverMenuFuelMaintenance__historyTop">
+                                        <div>
+                                            <strong>{requestRecord.requestedBy}</strong>
+                                            <span>
+                                                {formatDateTime(
+                                                    requestRecord.requestDate,
+                                                    requestRecord.requestTime
+                                                )}
+                                            </span>
+                                        </div>
+
+                                        <span className="driverMenuFuelMaintenance__badge">
+                                            {requestRecord.numberPlate}
+                                        </span>
                                     </div>
-                                    <div>
-                                        <span>Category: {requestRecord.category}</span>
-                                        <span>Mileage: {requestRecord.currentMileage}</span>
-                                        <span>Requested By: {requestRecord.requestedBy}</span>
-                                        <span>Confirmed By: {requestRecord.confirmedBy}</span>
-                                        {requestRecord.amount !== null ? <span>Amount: {requestRecord.amount}</span> : null}
+
+                                    <div className="driverMenuFuelMaintenance__metaGrid">
+                                        <div>
+                                            <h4>Request Type</h4>
+                                            <p>{requestRecord.requestType}</p> 
+                                        </div>
+
+                                        <div>
+                                            <h4>Category</h4>
+                                            <p>{requestRecord.category}</p>
+                                        </div>
+
+                                        <div>
+                                            <h4>Mileage</h4>
+                                            <p>{requestRecord.currentMileage}</p>
+                                        </div>
+
+                                        <div>
+                                            <h4>Confirmed By</h4>
+                                            <p>{requestRecord.confirmedBy}</p>
+                                        </div>
+
+                                        {requestRecord.amount !== null ? (
+                                            <div>
+                                                <h4>Amount</h4>
+                                                <p>{requestRecord.amount}</p>
+                                            </div>
+                                        ) : null}
                                     </div>
-                                    <p>{requestRecord.description}</p>
+
+                                    <div className="driverMenuFuelMaintenance__detailBlock">
+                                        <h4>Description</h4>
+                                        <p>{requestRecord.description}</p>
+                                    </div>
                                 </li>
                             ))}
                         </ul>
@@ -227,13 +313,33 @@ const DriverFuelMaintenanceMenuItem = () => {
                 </div>
             ) : (
                 <>
-                    <h3 className="driverMenuFuelMaintenance__title">Fuel & Maintenance Request</h3>
-                    <p className="driverMenuFuelMaintenance__description">
-                        Submit fuel, service, repair and maintenance, or compliance requests with full details.
-                    </p>
+                    <div className="driverMenuFuelMaintenance__intro">
+                        <div>
+                            <h3 className="driverMenuFuelMaintenance__title">Fuel & Maintenance Request</h3>
+                            <p className="driverMenuFuelMaintenance__description">
+                                Submit fuel, service, repair and maintenance, or compliance
+                                requests with full details.
+                            </p>
+                        </div>
+
+                        <div className="driverMenuFuelMaintenance__plateCard">
+                            <span>Assigned Bus</span>
+                            <strong>{assignedNumberPlate || 'Not assigned'}</strong>
+                        </div>
+                    </div>
 
                     <form className="driverMenuFuelMaintenance__form" onSubmit={handleSubmit}>
                         <div className="driverMenuFuelMaintenance__grid">
+                            <label>
+                                Requested By
+                                <input
+                                    type="text"
+                                    name="requestedBy"
+                                    value={form.requestedBy}
+                                    readOnly
+                                />
+                            </label>
+
                             <label>
                                 Date
                                 <input
@@ -247,11 +353,14 @@ const DriverFuelMaintenanceMenuItem = () => {
                             </label>
 
                             <label>
-                                Number Plate
+                                Time
                                 <input
-                                    type="text"
-                                    value={assignedNumberPlate || 'No assigned number plate'}
-                                    disabled
+                                    type="time"
+                                    name="requestTime"
+                                    value={form.requestTime}
+                                    onChange={handleChange}
+                                    disabled={isSubmitting}
+                                    required
                                 />
                             </label>
 
@@ -288,20 +397,6 @@ const DriverFuelMaintenanceMenuItem = () => {
                             </label>
 
                             <label>
-                                Requested By
-                                <input
-                                    type="text"
-                                    name="requestedBy"
-                                    value={form.requestedBy}
-                                    onChange={handleChange}
-                                    disabled={isSubmitting}
-                                    placeholder="Name of requester"
-                                    maxLength={255}
-                                    required
-                                />
-                            </label>
-
-                            <label>
                                 Category
                                 <select
                                     name="category"
@@ -331,7 +426,7 @@ const DriverFuelMaintenanceMenuItem = () => {
                                 />
                             </label>
 
-                            <label className="driverMenuFuelMaintenance__amountField">
+                            <label>
                                 Amount {needsAmount ? '(Required for Fuel)' : '(Optional)'}
                                 <input
                                     type="number"
@@ -348,19 +443,16 @@ const DriverFuelMaintenanceMenuItem = () => {
 
                             <label>
                                 Confirmed By
-                                <select
+                                <input
+                                    type="text"
                                     name="confirmedBy"
                                     value={form.confirmedBy}
                                     onChange={handleChange}
                                     disabled={isSubmitting}
+                                    placeholder="Enter approver or confirmer name"
+                                    maxLength={255}
                                     required
-                                >
-                                    {CONFIRMED_BY_OPTIONS.map((approverName) => (
-                                        <option key={approverName} value={approverName}>
-                                            {approverName}
-                                        </option>
-                                    ))}
-                                </select>
+                                />
                             </label>
                         </div>
 

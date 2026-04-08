@@ -3,6 +3,9 @@ import DriverAttendanceMenuItem from './DriverMenuItems/Attendance/Attendance'
 import DriverCompliantsReportsMenuItem from './DriverMenuItems/Compliants&Reports/Compliants&Reports'
 import DriverDashboardMenuItem from './DriverMenuItems/Dashboard/Dashboard'
 import DriverFuelMaintenanceMenuItem from './DriverMenuItems/Fuel & Maintenance/Fuel&Maintence'
+import DriverIncidentsAndAccidentsMenuItem from './DriverMenuItems/IncidentsAndAccidents/IncidentsAndAccidents'
+import DriverMyActivityMenuItem from './DriverMenuItems/MyActivity/MyActivity'
+import DriverProfileMenuItem from './DriverMenuItems/Profile/Profile'
 import './DriverDashboard.css'
 
 type DriverDashboardProps = {
@@ -12,7 +15,7 @@ type DriverDashboardProps = {
 export const driverDashboardConfig: DashboardRoleConfig = {
     title: 'Driver Dashboard',
     subtitle: 'Run assigned routes, attendance, and incidents.',
-    quickActions: ['Start Route', 'End Route', 'Report Incident'],
+    quickActions: [],
     navigation: [
         { id: 'dashboard', label: 'Dashboard' },
         { id: 'attendance', label: 'Attendance' },
@@ -26,65 +29,37 @@ export const driverDashboardConfig: DashboardRoleConfig = {
         dashboard: {
             heading: 'Driver Dashboard',
             description: 'Track route progress and student safety.',
-            cards: [
-                'Current route progress',
-                'Students onboard count',
-                'Expected arrival time',
-            ],
+            cards: [],
         },
         attendance: {
             heading: 'Attendance',
             description: 'Mark and review student attendance at every stop.',
-            cards: [
-                'Boarding attendance list',
-                'Drop-off confirmation list',
-                'Missed student attendance log',
-            ],
+            cards: [],
         },
         fuelMaintenance: {
             heading: 'Fuel & Maintenance',
             description: 'Monitor fuel usage and bus service readiness.',
-            cards: [
-                'Fuel refill history',
-                'Current fuel level trend',
-                'Scheduled maintenance checklist',
-            ],
+            cards: [],
         },
         incidents: {
             heading: 'Incidents & Accidents',
             description: 'Capture transport incidents with required safety details.',
-            cards: [
-                'Open incident reports',
-                'Resolved incident archive',
-                'Accident escalation contacts',
-            ],
+            cards: [],
         },
         compliantsReports: {
             heading: 'Compliants & Reports',
             description: 'Review compliants tasks and route reporting summaries.',
-            cards: [
-                'Daily compliants checklist',
-                'Route completion report',
-                'Safety audit status',
-            ],
+            cards: [],
         },
         myActivity: {
             heading: 'My Activity',
-            description: 'Review your recent transport actions and timeline history.',
-            cards: [
-                'Recent attendance updates',
-                'Recent incident entries',
-                'Latest route actions',
-            ],
+            description: 'Review your latest driver records and reporting history.',
+            cards: [],
         },
         profile: {
-            heading: 'Driver Profile',
-            description: 'Maintain personal details and assigned route preferences.',
-            cards: [
-                'Contact details',
-                'License and permit validity',
-                'Route preference settings',
-            ],
+            heading: 'Profile',
+            description: 'Review your current account and assigned vehicle details.',
+            cards: [],
         },
     },
 }
@@ -102,8 +77,14 @@ const DriverDashboard = ({ activeSection }: DriverDashboardProps) => {
                 return <DriverAttendanceMenuItem />
             case 'fuelMaintenance':
                 return <DriverFuelMaintenanceMenuItem />
+            case 'incidents':
+                return <DriverIncidentsAndAccidentsMenuItem />
             case 'compliantsReports':
                 return <DriverCompliantsReportsMenuItem />
+            case 'myActivity':
+                return <DriverMyActivityMenuItem />
+            case 'profile':
+                return <DriverProfileMenuItem />
             default:
                 return null
         }
@@ -115,13 +96,15 @@ const DriverDashboard = ({ activeSection }: DriverDashboardProps) => {
         <>
             {sectionWidget ? <div className="driverDashboardSectionPanel">{sectionWidget}</div> : null}
 
-            <div className="dashboardCards">
-                {section.cards.map((card) => (
-                    <article key={card} className="dashboardCard">
-                        <p>{card}</p>
-                    </article>
-                ))}
-            </div>
+            {section.cards.length > 0 ? (
+                <div className="dashboardCards">
+                    {section.cards.map((card) => (
+                        <article key={card} className="dashboardCard">
+                            <p>{card}</p>
+                        </article>
+                    ))}
+                </div>
+            ) : null}
         </>
     )
 }

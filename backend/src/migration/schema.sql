@@ -29,6 +29,7 @@ CREATE TABLE number_plates (
 CREATE TABLE fuel_maintenance_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
     requestDate DATE NOT NULL,
+    requestTime TIME NOT NULL,
     numberPlate VARCHAR(20) NOT NULL,
     currentMileage INT NOT NULL,
     requestType ENUM('Fuel', 'Service', 'Repair and Maintenance', 'Compliance') NOT NULL,
@@ -57,6 +58,98 @@ CREATE TABLE fuel_maintenance_requests (
         FOREIGN KEY (createdByUserId) REFERENCES users(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT
+);
+
+CREATE TABLE incident_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    incidentDate DATE NOT NULL,
+    incidentTime TIME NOT NULL,
+    pointOfIncident VARCHAR(255) NOT NULL,
+    childrenInvolved TEXT NOT NULL,
+    description TEXT NOT NULL,
+    actionTaken TEXT NOT NULL,
+    numberPlate VARCHAR(20) NOT NULL,
+    createdByUserId INT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_incident_report_plate
+        FOREIGN KEY (numberPlate) REFERENCES number_plates(plate_number)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_incident_report_created_by
+        FOREIGN KEY (createdByUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE uploads (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_key VARCHAR(255) NOT NULL,
+    file_url VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_uploads_file_key UNIQUE (file_key),
+    CONSTRAINT fk_uploads_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE incident_report_uploads (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    incident_report_id INT NOT NULL,
+    upload_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_incident_report_upload UNIQUE (incident_report_id, upload_id),
+    CONSTRAINT fk_incident_report_upload_report
+        FOREIGN KEY (incident_report_id) REFERENCES incident_reports(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_incident_report_upload_upload
+        FOREIGN KEY (upload_id) REFERENCES uploads(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+CREATE TABLE complaint_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    requestedBy VARCHAR(255) NOT NULL,
+    contactPhoneNumber VARCHAR(20) NOT NULL,
+    numberPlate VARCHAR(20) NOT NULL,
+    timing ENUM('Morning', 'Evening') NOT NULL,
+    tripNumber TINYINT NOT NULL,
+    complaintType ENUM('Learner', 'Driver', 'Bus', 'Community', 'Bus Assistant', 'Other') NOT NULL,
+    learnerName VARCHAR(255) NULL,
+    details TEXT NOT NULL,
+    createdByUserId INT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_complaint_trip_number CHECK (tripNumber BETWEEN 1 AND 5),
+    CONSTRAINT fk_complaint_report_plate
+        FOREIGN KEY (numberPlate) REFERENCES number_plates(plate_number)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_complaint_report_created_by
+        FOREIGN KEY (createdByUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE complaint_report_uploads (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    complaint_report_id INT NOT NULL,
+    upload_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_complaint_report_upload UNIQUE (complaint_report_id, upload_id),
+    CONSTRAINT fk_complaint_report_upload_report
+        FOREIGN KEY (complaint_report_id) REFERENCES complaint_reports(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_complaint_report_upload_upload
+        FOREIGN KEY (upload_id) REFERENCES uploads(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 );
 
 CREATE TABLE students (

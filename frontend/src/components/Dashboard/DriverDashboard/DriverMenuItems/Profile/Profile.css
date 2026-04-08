@@ -1,0 +1,234 @@
+.driverProfile {
+    --profile-primary: #670122;
+    --profile-border: #d8dee8;
+    --profile-ink: #213039;
+    --profile-muted: #56656f;
+    --profile-surface: #ffffff;
+    --profile-surface-alt: #f8f9fc;
+
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--profile-border);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top right, rgba(103, 1, 34, 0.06), transparent 24%),
+        linear-gradient(180deg, var(--profile-surface) 0%, var(--profile-surface-alt) 100%);
+    box-shadow: 0 18px 40px rgba(25, 35, 45, 0.06);
+    padding: clamp(0.95rem, 1.4vw, 1.2rem);
+    display: grid;
+    gap: 1rem;
+}
+
+.driverProfile__header,
+.driverProfile__identity,
+.driverProfile__actions,
+.driverProfile__hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.9rem;
+}
+
+.driverProfile__identity {
+    justify-content: flex-start;
+}
+
+.driverProfile__avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, rgba(103, 1, 34, 0.12) 0%, rgba(103, 1, 34, 0.05) 100%);
+    color: var(--profile-primary);
+    font-size: 1.2rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.driverProfile__title {
+    margin: 0;
+    color: var(--profile-primary);
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.driverProfile__description {
+    margin: 0.35rem 0 0;
+    max-width: 62ch;
+    color: var(--profile-muted);
+    line-height: 1.55;
+}
+
+.driverProfile__actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.driverProfile__roleBadge {
+    width: fit-content;
+    border-radius: 999px;
+    background: rgba(14, 158, 195, 0.12);
+    border: 1px solid rgba(14, 158, 195, 0.2);
+    color: #0f6f8a;
+    padding: 0.2rem 0.58rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.driverProfile__ghostButton {
+    width: fit-content;
+    border: 1px solid rgba(103, 1, 34, 0.22);
+    border-radius: 12px;
+    background: rgba(103, 1, 34, 0.05);
+    color: var(--profile-primary);
+    font: inherit;
+    font-weight: 700;
+    padding: 0.6rem 0.88rem;
+    cursor: pointer;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.driverProfile__ghostButton:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.driverProfile__ghostButton:disabled {
+    opacity: 0.68;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.driverProfile__status {
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 0.7rem 0.84rem;
+    font-weight: 600;
+}
+
+.driverProfile__status--error {
+    background: #ffe9ec;
+    border-color: #ffd2d9;
+    color: #9c1732;
+}
+
+.driverProfile__hero {
+    flex-wrap: wrap;
+}
+
+.driverProfile__plateCard,
+.driverProfile__syncCard,
+.driverProfile__infoCard {
+    border: 1px solid #edf1f5;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+.driverProfile__plateCard,
+.driverProfile__syncCard {
+    min-width: 220px;
+    padding: 0.9rem 1rem;
+    display: grid;
+    gap: 0.24rem;
+}
+
+.driverProfile__plateCard span,
+.driverProfile__syncCard span {
+    color: var(--profile-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.driverProfile__plateCard strong,
+.driverProfile__syncCard strong {
+    color: var(--profile-primary);
+    font-size: 1.02rem;
+    overflow-wrap: anywhere;
+}
+
+.driverProfile__grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.driverProfile__infoCard {
+    padding: 0.9rem;
+}
+
+.driverProfile__infoCard h4 {
+    margin: 0;
+    color: var(--profile-primary);
+    font-size: 0.92rem;
+}
+
+.driverProfile__infoCard p {
+    margin: 0.38rem 0 0;
+    color: var(--profile-muted);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+    .driverProfile__header,
+    .driverProfile__hero {
+        flex-direction: column;
+    }
+
+    .driverProfile__actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .driverProfile__ghostButton,
+    .driverProfile__plateCard,
+    .driverProfile__syncCard {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .driverProfile {
+        padding: 0.82rem;
+        border-radius: 16px;
+    }
+
+    .driverProfile__identity {
+        align-items: center;
+    }
+
+    .driverProfile__avatar,
+    .driverProfile__infoCard,
+    .driverProfile__plateCard,
+    .driverProfile__syncCard {
+        padding: 0.8rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .driverProfile__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .driverProfile__identity {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .driverProfile__ghostButton {
+        transition: none;
+    }
+}

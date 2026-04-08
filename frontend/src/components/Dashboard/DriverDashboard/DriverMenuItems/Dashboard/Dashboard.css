@@ -1,35 +1,328 @@
 .driverMenuDashboard {
-    border: 1px solid #c7ccd2;
-    border-radius: 12px;
-    background: #f8f8fa;
-    padding: 0.9rem 1rem;
+    --driver-dashboard-primary: #670122;
+    --driver-dashboard-border: #d8dee8;
+    --driver-dashboard-ink: #213039;
+    --driver-dashboard-muted: #56656f;
+    --driver-dashboard-surface: #ffffff;
+    --driver-dashboard-surface-alt: #f8f9fc;
+
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--driver-dashboard-border);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top right, rgba(103, 1, 34, 0.06), transparent 24%),
+        linear-gradient(180deg, var(--driver-dashboard-surface) 0%, var(--driver-dashboard-surface-alt) 100%);
+    box-shadow: 0 18px 40px rgba(25, 35, 45, 0.06);
+    padding: clamp(0.95rem, 1.4vw, 1.2rem);
+    display: grid;
+    gap: 1rem;
+}
+
+.driverMenuDashboard__header,
+.driverMenuDashboard__hero,
+.driverMenuDashboard__panelHeader,
+.driverMenuDashboard__activityTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.9rem;
 }
 
 .driverMenuDashboard__title {
     margin: 0;
-    color: #670122;
-    font-size: 1.1rem;
-    font-weight: 700;
+    color: var(--driver-dashboard-primary);
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.2;
 }
 
 .driverMenuDashboard__description {
-    margin: 0.45rem 0 0;
-    color: #59606b;
-    font-size: 0.95rem;
-    line-height: 1.4;
+    margin: 0.35rem 0 0;
+    max-width: 62ch;
+    color: var(--driver-dashboard-muted);
+    line-height: 1.55;
+}
+
+.driverMenuDashboard__ghostButton {
+    width: fit-content;
+    border: 1px solid rgba(103, 1, 34, 0.22);
+    border-radius: 12px;
+    background: rgba(103, 1, 34, 0.05);
+    color: var(--driver-dashboard-primary);
+    font: inherit;
+    font-weight: 700;
+    padding: 0.6rem 0.88rem;
+    cursor: pointer;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.driverMenuDashboard__ghostButton:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.driverMenuDashboard__ghostButton:disabled {
+    opacity: 0.68;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.driverMenuDashboard__status {
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 0.7rem 0.84rem;
+    font-weight: 600;
+}
+
+.driverMenuDashboard__status--error {
+    background: #ffe9ec;
+    border-color: #ffd2d9;
+    color: #9c1732;
+}
+
+.driverMenuDashboard__hero {
+    flex-wrap: wrap;
+}
+
+.driverMenuDashboard__identityCard,
+.driverMenuDashboard__plateCard,
+.driverMenuDashboard__syncCard,
+.driverMenuDashboard__statCard,
+.driverMenuDashboard__panel,
+.driverMenuDashboard__snapshotCard {
+    border: 1px solid #edf1f5;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+.driverMenuDashboard__identityCard,
+.driverMenuDashboard__plateCard,
+.driverMenuDashboard__syncCard {
+    min-width: 220px;
+    padding: 0.9rem 1rem;
+    display: grid;
+    gap: 0.24rem;
+    flex: 1 1 220px;
+}
+
+.driverMenuDashboard__identityCard span,
+.driverMenuDashboard__plateCard span,
+.driverMenuDashboard__syncCard span,
+.driverMenuDashboard__statCard span {
+    color: var(--driver-dashboard-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.driverMenuDashboard__identityCard strong,
+.driverMenuDashboard__plateCard strong,
+.driverMenuDashboard__syncCard strong {
+    color: var(--driver-dashboard-primary);
+    font-size: 1.02rem;
+    overflow-wrap: anywhere;
+}
+
+.driverMenuDashboard__identityCard p {
+    margin: 0.2rem 0 0;
+    color: var(--driver-dashboard-muted);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.driverMenuDashboard__stats {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.driverMenuDashboard__statCard {
+    padding: 0.9rem;
+}
+
+.driverMenuDashboard__statCard strong {
+    display: block;
+    margin-top: 0.4rem;
+    color: var(--driver-dashboard-primary);
+    font-size: 1.55rem;
+    line-height: 1;
+}
+
+.driverMenuDashboard__content {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+}
+
+.driverMenuDashboard__panel {
+    padding: 0.95rem;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.driverMenuDashboard__panelHeader h4 {
+    margin: 0;
+    color: var(--driver-dashboard-primary);
+    font-size: 0.98rem;
+}
+
+.driverMenuDashboard__panelHeader span {
+    color: var(--driver-dashboard-muted);
+    font-size: 0.84rem;
+}
+
+.driverMenuDashboard__emptyText {
+    margin: 0;
+    color: var(--driver-dashboard-muted);
+    line-height: 1.5;
+}
+
+.driverMenuDashboard__activityList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.driverMenuDashboard__activityItem {
+    border: 1px solid #edf1f5;
+    border-radius: 16px;
+    background: #fafbfd;
+    padding: 0.85rem;
+    display: grid;
+    gap: 0.7rem;
+}
+
+.driverMenuDashboard__activityTop > div:first-child {
+    min-width: 0;
+}
+
+.driverMenuDashboard__activityTop strong {
+    display: block;
+    color: var(--driver-dashboard-ink);
+    overflow-wrap: anywhere;
+}
+
+.driverMenuDashboard__activityTop span {
+    color: var(--driver-dashboard-muted);
+    font-size: 0.88rem;
+    overflow-wrap: anywhere;
+}
+
+.driverMenuDashboard__badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.45rem;
+}
+
+.driverMenuDashboard__kindBadge,
+.driverMenuDashboard__plateBadge {
+    width: fit-content;
+    border-radius: 999px;
+    padding: 0.2rem 0.58rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.driverMenuDashboard__kindBadge {
+    background: rgba(103, 1, 34, 0.08);
+    border: 1px solid rgba(103, 1, 34, 0.14);
+    color: var(--driver-dashboard-primary);
+}
+
+.driverMenuDashboard__plateBadge {
+    background: rgba(14, 158, 195, 0.12);
+    border: 1px solid rgba(14, 158, 195, 0.2);
+    color: #0f6f8a;
+}
+
+.driverMenuDashboard__activityItem p {
+    margin: 0;
+    color: var(--driver-dashboard-muted);
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+.driverMenuDashboard__snapshotGrid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.driverMenuDashboard__snapshotCard {
+    padding: 0.85rem;
+}
+
+.driverMenuDashboard__snapshotCard h5 {
+    margin: 0;
+    color: var(--driver-dashboard-primary);
+    font-size: 0.92rem;
+}
+
+.driverMenuDashboard__snapshotCard p {
+    margin: 0.38rem 0 0;
+    color: var(--driver-dashboard-muted);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+    .driverMenuDashboard__header,
+    .driverMenuDashboard__panelHeader,
+    .driverMenuDashboard__activityTop {
+        flex-direction: column;
+    }
+
+    .driverMenuDashboard__content {
+        grid-template-columns: 1fr;
+    }
+
+    .driverMenuDashboard__ghostButton {
+        width: 100%;
+    }
+
+    .driverMenuDashboard__badges {
+        justify-content: flex-start;
+    }
 }
 
 @media (max-width: 640px) {
     .driverMenuDashboard {
-        padding: 0.72rem 0.8rem;
-        border-radius: 10px;
+        padding: 0.82rem;
+        border-radius: 16px;
     }
 
-    .driverMenuDashboard__title {
-        font-size: 1rem;
+    .driverMenuDashboard__identityCard,
+    .driverMenuDashboard__plateCard,
+    .driverMenuDashboard__syncCard,
+    .driverMenuDashboard__statCard,
+    .driverMenuDashboard__panel,
+    .driverMenuDashboard__snapshotCard,
+    .driverMenuDashboard__activityItem {
+        padding: 0.8rem;
     }
+}
 
-    .driverMenuDashboard__description {
-        font-size: 0.9rem;
+@media (max-width: 520px) {
+    .driverMenuDashboard__stats,
+    .driverMenuDashboard__snapshotGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .driverMenuDashboard__ghostButton {
+        transition: none;
     }
 }

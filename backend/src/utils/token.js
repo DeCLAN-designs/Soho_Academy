@@ -4,7 +4,7 @@ const getAccessSecret = () => process.env.JWT_SECRET || "development_access_secr
 const getRefreshSecret = () =>
   process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || "development_refresh_secret";
 
-const getAccessExpiry = () => process.env.JWT_EXPIRES_IN || "15m";
+const getAccessExpiry = () => process.env.JWT_EXPIRES_IN || "8h";
 const getRefreshExpiry = () => process.env.JWT_REFRESH_EXPIRES_IN || "7d";
 
 const createAccessToken = (payload) =>

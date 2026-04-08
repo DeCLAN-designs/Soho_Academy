@@ -146,10 +146,10 @@ export type FuelMaintenanceCategory =
 
 export type CreateFuelMaintenanceRequestPayload = {
   requestDate: string;
+  requestTime: string;
   numberPlate: string;
   currentMileage: number;
   requestType: FuelMaintenanceRequestType;
-  requestedBy: string;
   category: FuelMaintenanceCategory;
   description: string;
   amount?: number;
@@ -159,6 +159,7 @@ export type CreateFuelMaintenanceRequestPayload = {
 export type FuelMaintenanceRequestRecord = {
   id: number;
   requestDate: string;
+  requestTime: string;
   numberPlate: string;
   currentMileage: number;
   requestType: FuelMaintenanceRequestType;
@@ -170,6 +171,85 @@ export type FuelMaintenanceRequestRecord = {
   createdByUserId: number;
   createdAt: string;
   updatedAt: string;
+};
+
+export type IncidentUploadRecord = {
+  id: number;
+  userId: number;
+  fileName: string;
+  fileKey: string;
+  fileUrl: string;
+  createdAt: string;
+};
+
+export type DriverIncidentReportRecord = {
+  id: number;
+  incidentDate: string;
+  incidentTime: string;
+  pointOfIncident: string;
+  childrenInvolved: string;
+  description: string;
+  actionTaken: string;
+  numberPlate: string;
+  createdByUserId: number;
+  createdAt: string;
+  updatedAt: string;
+  uploads: IncidentUploadRecord[];
+};
+
+export type ComplaintTiming = "Morning" | "Evening";
+
+export type ComplaintType =
+  | "Learner"
+  | "Driver"
+  | "Bus"
+  | "Community"
+  | "Bus Assistant"
+  | "Other";
+
+export type ComplaintAttachmentRecord = {
+  id: number;
+  userId: number;
+  fileName: string;
+  fileKey: string;
+  fileUrl: string;
+  createdAt: string;
+};
+
+export type DriverComplaintFormMeta = {
+  requestedBy: string;
+  contactPhoneNumber: string;
+  numberPlates: string[];
+  assignedNumberPlate: string | null;
+  timingOptions: ComplaintTiming[];
+  tripNumbers: number[];
+  complaintTypes: ComplaintType[];
+};
+
+export type DriverComplaintReportRecord = {
+  id: number;
+  requestedBy: string;
+  contactPhoneNumber: string;
+  numberPlate: string;
+  timing: ComplaintTiming;
+  tripNumber: number;
+  complaintType: ComplaintType;
+  learnerName: string | null;
+  details: string;
+  createdByUserId: number;
+  createdAt: string;
+  updatedAt: string;
+  attachment: ComplaintAttachmentRecord | null;
+};
+
+export type AuthenticatedUserRecord = {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  role: string;
+  numberPlate: string | null;
 };
 
 const toUrl = (path: string) => {
@@ -236,6 +316,41 @@ const post = async <TPayload, TResponse>(
     headers: buildHeaders(true),
     credentials: "include",
     body: JSON.stringify(payload),
+  });
+
+  const parsedPayload = await parsePayload(response);
+
+  if (!response.ok) {
+    const errorPayload =
+      parsedPayload && typeof parsedPayload === "object"
+        ? (parsedPayload as ErrorEnvelope)
+        : null;
+    const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+    const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
+    const message =
+      firstValidationMessage ||
+      readMessage(parsedPayload) ||
+      `Request failed with status ${response.status}.`;
+
+    throw new ApiError(message, response.status, errors);
+  }
+
+  if (!parsedPayload || typeof parsedPayload !== "object") {
+    throw new Error("Invalid response from server.");
+  }
+
+  return parsedPayload as ApiEnvelope<TResponse>;
+};
+
+const postFormData = async <TResponse>(
+  path: string,
+  payload: FormData
+): Promise<ApiEnvelope<TResponse>> => {
+  const response = await fetch(toUrl(path), {
+    method: "POST",
+    headers: buildHeaders(false),
+    credentials: "include",
+    body: payload,
   });
 
   const parsedPayload = await parsePayload(response);
@@ -338,6 +453,7 @@ export const authApi = {
         email: string;
         firstName: string;
         lastName: string;
+        phoneNumber: string;
         role: string;
         token: string;
         numberPlate: string | null;
@@ -353,6 +469,8 @@ export const authApi = {
     ),
   getNumberPlates: () =>
     get<{ numberPlates: string[] }>("/auth/number-plates"),
+  me: () =>
+    get<AuthenticatedUserRecord>("/auth/me"),
   logout: () =>
     post<{}, {}>("/auth/logout", {}),
 };
@@ -396,4 +514,17 @@ export const fuelMaintenanceApi = {
       "/fuel-maintenance/requests",
       payload
     ),
+};
+
+export const driverIncidentApi = {
+  getReports: () => get<{ reports: DriverIncidentReportRecord[] }>("/incidents/reports"),
+  createReport: (payload: FormData) =>
+    postFormData<{ report: DriverIncidentReportRecord }>("/incidents/reports", payload),
+};
+
+export const driverComplaintApi = {
+  getMeta: () => get<DriverComplaintFormMeta>("/complaints/meta"),
+  getReports: () => get<{ reports: DriverComplaintReportRecord[] }>("/complaints/reports"),
+  createReport: (payload: FormData) =>
+    postFormData<{ report: DriverComplaintReportRecord }>("/complaints/reports", payload),
 };

@@ -21,8 +21,6 @@ const REQUEST_CATEGORIES = Object.freeze([
   "Inspection / Speed Governors",
 ]);
 
-const CONFIRMED_BY_OPTIONS = Object.freeze(["Erick", "Douglas", "James"]);
-
 const SCHEMA_PATH = path.join(__dirname, "../migration/schema.sql");
 const rawSchemaSql = fs.readFileSync(SCHEMA_PATH, "utf8");
 
@@ -51,6 +49,7 @@ const fuelMaintenanceTableSql =
     CREATE TABLE IF NOT EXISTS fuel_maintenance_requests (
       id INT AUTO_INCREMENT PRIMARY KEY,
       requestDate DATE NOT NULL,
+      requestTime TIME NOT NULL,
       numberPlate VARCHAR(20) NOT NULL,
       currentMileage INT NOT NULL,
       requestType ENUM('Fuel', 'Service', 'Repair and Maintenance', 'Compliance') NOT NULL,
@@ -82,11 +81,48 @@ const fuelMaintenanceTableSql =
     )
   `;
 
+const ensureRequestTimeColumn = async () => {
+  const [rows] = await pool.query(
+    `
+      SELECT COLUMN_NAME, IS_NULLABLE
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'fuel_maintenance_requests'
+        AND COLUMN_NAME = 'requestTime'
+      LIMIT 1
+    `
+  );
+
+  if (rows.length === 0) {
+    await pool.query(
+      "ALTER TABLE fuel_maintenance_requests ADD COLUMN requestTime TIME NULL AFTER requestDate"
+    );
+    await pool.query(
+      "UPDATE fuel_maintenance_requests SET requestTime = '00:00:00' WHERE requestTime IS NULL"
+    );
+    await pool.query(
+      "ALTER TABLE fuel_maintenance_requests MODIFY COLUMN requestTime TIME NOT NULL AFTER requestDate"
+    );
+
+    return;
+  }
+
+  if (rows[0].IS_NULLABLE === "YES") {
+    await pool.query(
+      "UPDATE fuel_maintenance_requests SET requestTime = '00:00:00' WHERE requestTime IS NULL"
+    );
+    await pool.query(
+      "ALTER TABLE fuel_maintenance_requests MODIFY COLUMN requestTime TIME NOT NULL AFTER requestDate"
+    );
+  }
+};
+
 const ensureFuelMaintenanceTables = () => {
   if (!ensureFuelMaintenanceTablesPromise) {
     ensureFuelMaintenanceTablesPromise = (async () => {
       await ensureUsersTable();
       await pool.query(fuelMaintenanceTableSql);
+      await ensureRequestTimeColumn();
     })();
   }
 
@@ -96,6 +132,7 @@ const ensureFuelMaintenanceTables = () => {
 const mapFuelMaintenanceRow = (row) => ({
   id: row.id,
   requestDate: row.requestDate,
+  requestTime: row.requestTime,
   numberPlate: row.numberPlate,
   currentMileage: row.currentMileage,
   requestType: row.requestType,
@@ -114,10 +151,10 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
 
   const normalized = {
     requestDate: String(payload.requestDate || "").trim(),
+    requestTime: String(payload.requestTime || "").trim(),
     numberPlate: String(payload.numberPlate || "").trim().toUpperCase(),
     currentMileage: Number(payload.currentMileage),
     requestType: String(payload.requestType || "").trim(),
-    requestedBy: String(payload.requestedBy || "").trim(),
     category: String(payload.category || "").trim(),
     description: String(payload.description || "").trim(),
     amount:
@@ -135,16 +172,16 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
     throw invalidTypeError;
   }
 
+  if (!/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/.test(normalized.requestTime)) {
+    const invalidRequestTimeError = new Error("Invalid request time.");
+    invalidRequestTimeError.code = "INVALID_REQUEST_TIME";
+    throw invalidRequestTimeError;
+  }
+
   if (!REQUEST_CATEGORIES.includes(normalized.category)) {
     const invalidCategoryError = new Error("Invalid request category.");
     invalidCategoryError.code = "INVALID_REQUEST_CATEGORY";
     throw invalidCategoryError;
-  }
-
-  if (!CONFIRMED_BY_OPTIONS.includes(normalized.confirmedBy)) {
-    const invalidConfirmedByError = new Error("Invalid confirmedBy value.");
-    invalidConfirmedByError.code = "INVALID_CONFIRMED_BY";
-    throw invalidConfirmedByError;
   }
 
   if (normalized.requestType === "Fuel") {
@@ -167,7 +204,7 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
 
   const [creatorRows] = await pool.query(
     `
-      SELECT id, role, numberPlate
+      SELECT id, firstName, lastName, role, numberPlate
       FROM users
       WHERE id = ?
       LIMIT 1
@@ -182,6 +219,11 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
   }
 
   const creator = creatorRows[0];
+  const requestedBy = [creator.firstName, creator.lastName]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .join(" ")
+    .trim();
   const creatorNumberPlate = String(creator.numberPlate || "")
     .trim()
     .toUpperCase();
@@ -225,6 +267,7 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
     `
       INSERT INTO fuel_maintenance_requests (
         requestDate,
+        requestTime,
         numberPlate,
         currentMileage,
         requestType,
@@ -235,14 +278,15 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
         confirmedBy,
         createdByUserId
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       normalized.requestDate,
+      normalized.requestTime,
       normalized.numberPlate,
       normalized.currentMileage,
       normalized.requestType,
-      normalized.requestedBy,
+      requestedBy,
       normalized.category,
       normalized.description,
       normalized.amount,
@@ -256,6 +300,7 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
       SELECT
         id,
         requestDate,
+        requestTime,
         numberPlate,
         currentMileage,
         requestType,
@@ -285,6 +330,7 @@ const listFuelMaintenanceRequestsByUser = async ({ createdByUserId }) => {
       SELECT
         id,
         requestDate,
+        requestTime,
         numberPlate,
         currentMileage,
         requestType,
@@ -298,7 +344,7 @@ const listFuelMaintenanceRequestsByUser = async ({ createdByUserId }) => {
         updatedAt
       FROM fuel_maintenance_requests
       WHERE createdByUserId = ?
-      ORDER BY requestDate DESC, id DESC
+      ORDER BY requestDate DESC, requestTime DESC, id DESC
       LIMIT 200
     `,
     [createdByUserId]
@@ -310,7 +356,6 @@ const listFuelMaintenanceRequestsByUser = async ({ createdByUserId }) => {
 module.exports = {
   REQUEST_TYPES,
   REQUEST_CATEGORIES,
-  CONFIRMED_BY_OPTIONS,
   ensureFuelMaintenanceTables,
   createFuelMaintenanceRequest,
   listFuelMaintenanceRequestsByUser,

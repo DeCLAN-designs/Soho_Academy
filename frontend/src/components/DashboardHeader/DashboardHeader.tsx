@@ -25,13 +25,15 @@ const DashboardHeader = ({
 
             <div className="dashboardHeader__actions">
                 <p className="dashboardHeader__role">{role || 'Unknown role'}</p>
-                <ul className="dashboardHeader__chips">
-                    {quickActions.map((action) => (
-                        <li key={action} className="dashboardHeader__chip">
-                            {action}
-                        </li>
-                    ))}
-                </ul>
+                {quickActions.length > 0 ? (
+                    <ul className="dashboardHeader__chips">
+                        {quickActions.map((action) => (
+                            <li key={action} className="dashboardHeader__chip">
+                                {action}
+                            </li>
+                        ))}
+                    </ul>
+                ) : null}
             </div>
         </header>
     )

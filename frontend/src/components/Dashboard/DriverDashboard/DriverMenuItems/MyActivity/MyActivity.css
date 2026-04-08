@@ -1,0 +1,256 @@
+.driverMyActivity {
+    --activity-primary: #670122;
+    --activity-border: #d8dee8;
+    --activity-ink: #213039;
+    --activity-muted: #56656f;
+    --activity-surface: #ffffff;
+    --activity-surface-alt: #f8f9fc;
+
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--activity-border);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top right, rgba(103, 1, 34, 0.06), transparent 24%),
+        linear-gradient(180deg, var(--activity-surface) 0%, var(--activity-surface-alt) 100%);
+    box-shadow: 0 18px 40px rgba(25, 35, 45, 0.06);
+    padding: clamp(0.95rem, 1.4vw, 1.2rem);
+    display: grid;
+    gap: 1rem;
+}
+
+.driverMyActivity__header,
+.driverMyActivity__timelineTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.9rem;
+}
+
+.driverMyActivity__title {
+    margin: 0;
+    color: var(--activity-primary);
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.driverMyActivity__description {
+    margin: 0.35rem 0 0;
+    max-width: 62ch;
+    color: var(--activity-muted);
+    line-height: 1.55;
+}
+
+.driverMyActivity__ghostButton {
+    width: fit-content;
+    border: 1px solid rgba(103, 1, 34, 0.22);
+    border-radius: 12px;
+    background: rgba(103, 1, 34, 0.05);
+    color: var(--activity-primary);
+    font: inherit;
+    font-weight: 700;
+    padding: 0.6rem 0.88rem;
+    cursor: pointer;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.driverMyActivity__ghostButton:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.driverMyActivity__ghostButton:disabled {
+    opacity: 0.68;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.driverMyActivity__stats {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.driverMyActivity__statCard,
+.driverMyActivity__content {
+    border: 1px solid #edf1f5;
+    border-radius: 16px;
+    background: #ffffff;
+    padding: 0.9rem;
+}
+
+.driverMyActivity__statCard span {
+    display: block;
+    color: var(--activity-muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.driverMyActivity__statCard strong {
+    display: block;
+    margin-top: 0.4rem;
+    color: var(--activity-primary);
+    font-size: 1.55rem;
+    line-height: 1;
+}
+
+.driverMyActivity__status {
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 0.7rem 0.84rem;
+    font-weight: 600;
+}
+
+.driverMyActivity__status--error {
+    background: #ffe9ec;
+    border-color: #ffd2d9;
+    color: #9c1732;
+}
+
+.driverMyActivity__emptyText {
+    margin: 0;
+    color: var(--activity-muted);
+    line-height: 1.5;
+}
+
+.driverMyActivity__timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.driverMyActivity__timelineItem {
+    border: 1px solid var(--activity-border);
+    border-radius: 18px;
+    background: #ffffff;
+    padding: 1rem;
+    display: grid;
+    gap: 0.85rem;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.04);
+}
+
+.driverMyActivity__timelineTop > div:first-child {
+    min-width: 0;
+}
+
+.driverMyActivity__timelineTop strong {
+    display: block;
+    color: var(--activity-ink);
+    overflow-wrap: anywhere;
+}
+
+.driverMyActivity__timelineTop span {
+    color: var(--activity-muted);
+    font-size: 0.88rem;
+    overflow-wrap: anywhere;
+}
+
+.driverMyActivity__badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.45rem;
+}
+
+.driverMyActivity__kindBadge,
+.driverMyActivity__plateBadge {
+    width: fit-content;
+    border-radius: 999px;
+    padding: 0.2rem 0.58rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.driverMyActivity__kindBadge {
+    background: rgba(103, 1, 34, 0.08);
+    border: 1px solid rgba(103, 1, 34, 0.14);
+    color: var(--activity-primary);
+}
+
+.driverMyActivity__plateBadge {
+    background: rgba(14, 158, 195, 0.12);
+    border: 1px solid rgba(14, 158, 195, 0.2);
+    color: #0f6f8a;
+}
+
+.driverMyActivity__content h4 {
+    margin: 0;
+    color: var(--activity-primary);
+    font-size: 0.96rem;
+}
+
+.driverMyActivity__content p {
+    margin: 0.4rem 0 0;
+    color: var(--activity-muted);
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+.driverMyActivity__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+}
+
+.driverMyActivity__meta span {
+    border: 1px solid #edf1f5;
+    border-radius: 999px;
+    background: #fafbfd;
+    color: var(--activity-muted);
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.3;
+}
+
+@media (max-width: 900px) {
+    .driverMyActivity__header,
+    .driverMyActivity__timelineTop {
+        flex-direction: column;
+    }
+
+    .driverMyActivity__ghostButton {
+        width: 100%;
+    }
+
+    .driverMyActivity__badges {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    .driverMyActivity {
+        padding: 0.82rem;
+        border-radius: 16px;
+    }
+
+    .driverMyActivity__timelineItem,
+    .driverMyActivity__statCard,
+    .driverMyActivity__content {
+        padding: 0.8rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .driverMyActivity__stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .driverMyActivity__ghostButton {
+        transition: none;
+    }
+}

@@ -18,8 +18,6 @@ const REQUEST_CATEGORIES = Object.freeze([
   "Inspection / Speed Governors",
 ]);
 
-const CONFIRMED_BY_OPTIONS = Object.freeze(["Erick", "Douglas", "James"]);
-
 const normalizeNumberPlate = (value) =>
   typeof value === "string" ? value.trim().toUpperCase() : value;
 
@@ -30,6 +28,13 @@ const createFuelMaintenanceRequestValidator = [
     .bail()
     .isISO8601()
     .withMessage("requestDate must be a valid date (YYYY-MM-DD)."),
+
+  body("requestTime")
+    .exists({ checkFalsy: true })
+    .withMessage("requestTime is required.")
+    .bail()
+    .matches(/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/)
+    .withMessage("requestTime must be a valid time (HH:MM or HH:MM:SS)."),
 
   body("numberPlate")
     .exists({ checkFalsy: true })
@@ -57,15 +62,6 @@ const createFuelMaintenanceRequestValidator = [
     .withMessage(
       `requestType must be one of: ${REQUEST_TYPES.join(", ")}.`
     ),
-
-  body("requestedBy")
-    .exists({ checkFalsy: true })
-    .withMessage("requestedBy is required.")
-    .bail()
-    .isString()
-    .trim()
-    .isLength({ max: 255 })
-    .withMessage("requestedBy is too long."),
 
   body("category")
     .exists({ checkFalsy: true })
@@ -123,10 +119,8 @@ const createFuelMaintenanceRequestValidator = [
     .bail()
     .isString()
     .trim()
-    .isIn(CONFIRMED_BY_OPTIONS)
-    .withMessage(
-      `confirmedBy must be one of: ${CONFIRMED_BY_OPTIONS.join(", ")}.`
-    ),
+    .isLength({ max: 255 })
+    .withMessage("confirmedBy is too long."),
 ];
 
 const validate = (req, res, next) => {
@@ -149,7 +143,6 @@ const validate = (req, res, next) => {
 module.exports = {
   REQUEST_TYPES,
   REQUEST_CATEGORIES,
-  CONFIRMED_BY_OPTIONS,
   createFuelMaintenanceRequestValidator,
   validate,
 };

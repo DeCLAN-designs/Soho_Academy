@@ -40,13 +40,6 @@ const createRequest = async (req, res) => {
       });
     }
 
-    if (error && error.code === "INVALID_CONFIRMED_BY") {
-      return res.status(400).json({
-        success: false,
-        message: "confirmedBy must be one of: Erick, Douglas, James.",
-      });
-    }
-
     if (error && error.code === "DRIVER_NUMBER_PLATE_NOT_ASSIGNED") {
       return res.status(400).json({
         success: false,

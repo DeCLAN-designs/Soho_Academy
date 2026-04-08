@@ -292,7 +292,7 @@ const loginUser = async ({ email, password }) => {
 
   const [users] = await pool.query(
     `
-      SELECT id, email, firstName, lastName, role, numberPlate, password
+      SELECT id, email, firstName, lastName, phoneNumber, role, numberPlate, password
       FROM users
       WHERE email = ?
       LIMIT 1
@@ -327,6 +327,7 @@ const loginUser = async ({ email, password }) => {
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
+    phoneNumber: user.phoneNumber,
     role: user.role,
     numberPlate: user.numberPlate || null,
     accessToken: createAccessToken(tokenPayload),
@@ -347,7 +348,7 @@ const refreshSession = async (refreshToken) => {
 
   const [users] = await pool.query(
     `
-      SELECT id, email, firstName, lastName, role, numberPlate
+      SELECT id, email, firstName, lastName, phoneNumber, role, numberPlate
       FROM users
       WHERE email = ?
       LIMIT 1
@@ -373,6 +374,7 @@ const refreshSession = async (refreshToken) => {
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
+    phoneNumber: user.phoneNumber,
     role: user.role,
     numberPlate: user.numberPlate || null,
     accessToken: createAccessToken(newPayload),
@@ -380,10 +382,47 @@ const refreshSession = async (refreshToken) => {
   };
 };
 
+const getAuthenticatedUserById = async (userId) => {
+  await ensureUsersTable();
+
+  const normalizedUserId = Number(userId);
+
+  if (!Number.isInteger(normalizedUserId) || normalizedUserId <= 0) {
+    return null;
+  }
+
+  const [rows] = await pool.query(
+    `
+      SELECT id, email, firstName, lastName, phoneNumber, role, numberPlate
+      FROM users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [normalizedUserId]
+  );
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  const user = rows[0];
+
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phoneNumber: user.phoneNumber,
+    role: user.role,
+    numberPlate: user.numberPlate || null,
+  };
+};
+
 module.exports = {
   registerUser,
   loginUser,
   refreshSession,
+  getAuthenticatedUserById,
   listNumberPlates,
   ensureUsersTable,
 };
