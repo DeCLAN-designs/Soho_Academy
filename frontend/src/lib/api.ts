@@ -66,6 +66,18 @@ export type StudentRecord = {
   updatedAt: string;
 };
 
+export type ParentChildRecord = {
+  id: number;
+  admissionNumber: string;
+  firstName: string;
+  lastName: string;
+  grade: string;
+  stream: string;
+  status: "active" | "withdrawn";
+  admissionDate: string | null;
+  withdrawalDate: string | null;
+};
+
 export type ParentContactChangeRecord = {
   id: number;
   studentId: number;
@@ -290,6 +302,8 @@ const get = async <TResponse>(path: string): Promise<ApiEnvelope<TResponse>> => 
     method: "GET",
     headers: buildHeaders(false),
     credentials: "include",
+    // Avoid HTTP cache revalidation (304) for API endpoints.
+    cache: "no-store",
   });
 
   const parsedPayload = await parsePayload(response);
@@ -368,6 +382,10 @@ export const studentApi = {
       `/students/${studentId}/master-data`,
       payload
     ),
+};
+
+export const parentApi = {
+  getChildren: () => get<{ children: ParentChildRecord[] }>("/parent/children"),
 };
 
 export const fuelMaintenanceApi = {

@@ -1,78 +1,97 @@
 import './App.css'
 import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import Layout from './components/Layout/Layout'
 import Login from './components/Auth/Login/Login'
 import Register from './components/Auth/Register/Register'
 import Dashboard from './components/Dashboard/Dashboard'
 
+const FullPageLoading: React.FC = () => {
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      fontSize: '1.2rem',
+      color: '#666'
+    }}>
+      Loading...
+    </div>
+  )
+}
+
+const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth()
+
+  if (isLoading) {
+    return <FullPageLoading />
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <>{children}</>
+}
+
+const AuthAwareFallback: React.FC = () => {
+  const { isAuthenticated, isLoading } = useAuth()
+  const location = useLocation()
+
+  if (isLoading) {
+    return <FullPageLoading />
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  return <Navigate to="/dashboard" replace />
+}
+
+const AppRoutes: React.FC = () => {
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+      <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
+
+      {/* Auth aliases -> canonical routes */}
+      <Route path="/auth/login" element={<Navigate to="/login" replace />} />
+      <Route path="/auth/register" element={<Navigate to="/register" replace />} />
+      <Route path="/signin" element={<Navigate to="/login" replace />} />
+      <Route path="/signup" element={<Navigate to="/register" replace />} />
+      <Route path="/user/login" element={<Navigate to="/login" replace />} />
+      <Route path="/user/register" element={<Navigate to="/register" replace />} />
+
+      {/* Protected Routes */}
+      <Route path="/" element={
+        <ProtectedRoute>
+          <Layout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="dashboard/:sectionId" element={<Dashboard />} />
+
+        {/* Role/section routes (Layout keeps the URL in sync with the logged-in role) */}
+        <Route path=":roleSlug" element={<Dashboard />} />
+        <Route path=":roleSlug/:sectionId" element={<Dashboard />} />
+      </Route>
+
+      <Route path="*" element={<AuthAwareFallback />} />
+    </Routes>
+  )
+}
+
 const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/auth/login" element={<Login />} />
-          <Route path="/auth/register" element={<Register />} />
-          <Route path="/signin" element={<Login />} />
-          <Route path="/signup" element={<Register />} />
-          <Route path="/user/login" element={<Login />} />
-          <Route path="/user/register" element={<Register />} />
-          
-          {/* Protected Routes */}
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="home" element={<Dashboard />} />
-            <Route path="overview" element={<Dashboard />} />
-            
-            {/* Role-specific routes */}
-            <Route path="parent" element={<Dashboard role="Parent" />} />
-            <Route path="parent/dashboard" element={<Dashboard role="Parent" />} />
-            <Route path="parent/home" element={<Dashboard role="Parent" />} />
-            <Route path="parent/overview" element={<Dashboard role="Parent" />} />
-            
-            <Route path="driver" element={<Dashboard role="Driver" />} />
-            <Route path="driver/dashboard" element={<Dashboard role="Driver" />} />
-            <Route path="driver/home" element={<Dashboard role="Driver" />} />
-            <Route path="driver/overview" element={<Dashboard role="Driver" />} />
-            
-            <Route path="assistant" element={<Dashboard role="Bus Assistant" />} />
-            <Route path="assistant/dashboard" element={<Dashboard role="Bus Assistant" />} />
-            <Route path="assistant/home" element={<Dashboard role="Bus Assistant" />} />
-            <Route path="assistant/overview" element={<Dashboard role="Bus Assistant" />} />
-            
-            <Route path="manager" element={<Dashboard role="Transport Manager" />} />
-            <Route path="manager/dashboard" element={<Dashboard role="Transport Manager" />} />
-            <Route path="manager/home" element={<Dashboard role="Transport Manager" />} />
-            <Route path="manager/overview" element={<Dashboard role="Transport Manager" />} />
-
-            <Route path="school-admin" element={<Dashboard role="School Admin" />} />
-            <Route path="school-admin/dashboard" element={<Dashboard role="School Admin" />} />
-            <Route path="school-admin/home" element={<Dashboard role="School Admin" />} />
-            <Route path="school-admin/overview" element={<Dashboard role="School Admin" />} />
-            
-            {/* Additional descriptive routes */}
-            <Route path="transport/dashboard" element={<Dashboard />} />
-            <Route path="transport/management" element={<Dashboard />} />
-            <Route path="school/dashboard" element={<Dashboard />} />
-            <Route path="school/management" element={<Dashboard />} />
-            
-            {/* Catch all for protected routes */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Route>
-          
-          {/* Fallback for unauthenticated */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+        <AppRoutes />
       </AuthProvider>
     </BrowserRouter>
   )

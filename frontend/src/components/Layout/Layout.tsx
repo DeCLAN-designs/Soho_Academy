@@ -2,16 +2,23 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { busAssistantDashboardConfig } from '../Dashboard/BusAssistantDashboard/BusAssistantDashboard'
+import { transportManagerDashboardConfig } from '../Dashboard/TransportManagerDashboard/TransportManagerDashboard'
 import { driverDashboardConfig } from '../Dashboard/DriverDashboard/DriverDashboard'
 import { parentDashboardConfig } from '../Dashboard/ParentDashboard/ParentDashboard'
 import { schoolAdminDashboardConfig } from '../Dashboard/SchoolAdminDashboard/SchoolAdminDashboard'
-import { transportManagerDashboardConfig } from '../Dashboard/TransportManagerDashboard/TransportManagerDashboard'
 import type { DashboardRoleConfig } from '../Dashboard/dashboard.types'
 import DashboardHeader from '../DashboardHeader/DashboardHeader'
 import SideBar, { getSidebarNavigationItems } from '../SideBar/SideBar'
 import './Layout.css'
 
-const MOBILE_LAYOUT_BREAKPOINT = 768
+const ROLE_CONFIG_MAP: Record<string, DashboardRoleConfig> = {
+  Parent: parentDashboardConfig,
+  Driver: driverDashboardConfig,
+  'Bus Assistant': busAssistantDashboardConfig,
+  'Transport Manager': transportManagerDashboardConfig,
+  'School Admin': schoolAdminDashboardConfig,
+}
+
 const FALLBACK_HEADER_CONFIG: DashboardRoleConfig = {
   title: 'Dashboard',
   subtitle: 'Role not configured yet.',
@@ -26,20 +33,13 @@ const FALLBACK_HEADER_CONFIG: DashboardRoleConfig = {
   },
 }
 
-const ROLE_CONFIG_MAP: Record<string, DashboardRoleConfig> = {
-  Parent: parentDashboardConfig,
-  Driver: driverDashboardConfig,
-  'Bus Assistant': busAssistantDashboardConfig,
-  'Transport Manager': transportManagerDashboardConfig,
-  'School Admin': schoolAdminDashboardConfig,
-}
-
 export const Layout: React.FC = () => {
   const { user, logout } = useAuth()
   const [activeSection, setActiveSection] = useState('overview')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const contentRef = useRef<HTMLElement | null>(null)
   const role = user?.role || ''
+
   const roleConfig = ROLE_CONFIG_MAP[role] || FALLBACK_HEADER_CONFIG
   const currentSection =
     roleConfig.sections[activeSection] ||
@@ -83,7 +83,7 @@ export const Layout: React.FC = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth > MOBILE_LAYOUT_BREAKPOINT) {
+      if (window.innerWidth > 768) {
         setIsMobileMenuOpen(false)
       }
     }
@@ -114,7 +114,7 @@ export const Layout: React.FC = () => {
         <div className="mobile-overlay" onClick={closeMobileMenu}></div>
       )}
 
-      <aside
+      <aside 
         id="mobile-sidebar"
         className={`layout__sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}
       >

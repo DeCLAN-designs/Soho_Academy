@@ -349,108 +349,132 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
         <div className="schoolAdminPanel schoolAdminPanel--split">
             <form className="schoolAdminForm" onSubmit={handleAdmissionSubmit}>
                 <h3>Add New Admission</h3>
-                <div className="schoolAdminGrid">
-                    <label>
-                        Admission Number
-                        <input
-                            name="admissionNumber"
-                            placeholder="OA/001/2025"
-                            value={admissionForm.admissionNumber}
-                            onChange={(event) =>
-                                setAdmissionForm((current) => ({
-                                    ...current,
-                                    admissionNumber: event.target.value,
-                                }))
-                            }
-                            required
-                        />
-                    </label>
-                    <label>
-                        First Name
-                        <input
-                            name="firstName"
-                            placeholder="John"
-                            value={admissionForm.firstName}
-                            onChange={(event) =>
-                                setAdmissionForm((current) => ({ ...current, firstName: event.target.value }))
-                            }
-                            required
-                        />
-                    </label>
-                    <label>
-                        Last Name
-                        <input
-                            name="lastName"
-                            placeholder="Doe"
-                            value={admissionForm.lastName}
-                            onChange={(event) =>
-                                setAdmissionForm((current) => ({ ...current, lastName: event.target.value }))
-                            }
-                            required
-                        />
-                    </label>
-                    <label>
-                        Grade
-                        <select
-                            name="grade"
-                            value={admissionForm.grade}
-                            onChange={(event) =>
-                                setAdmissionForm((current) => ({ ...current, grade: event.target.value }))
-                            }
-                            required
-                        >
-                            <option value="">Select grade</option>
-                            {gradeOptions.map((grade) => (
-                                <option key={grade} value={grade}>
-                                    {grade}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                    <label>
-                        Stream
-                        <select
-                            name="stream"
-                            value={admissionForm.stream}
-                            onChange={(event) =>
-                                setAdmissionForm((current) => ({ ...current, stream: event.target.value }))
-                            }
-                            required
-                        >
-                            <option value="">Select stream</option>
-                            {streamOptions.map((stream) => (
-                                <option key={stream} value={stream}>
-                                    {stream}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                    <label>
-                        Parent Contact
-                        <input
-                            name="parentContact"
-                            value={admissionForm.parentContact}
-                            onChange={(event) =>
-                                setAdmissionForm((current) => ({
-                                    ...current,
-                                    parentContact: event.target.value.replace(/\D/g, ''),
-                                }))
-                            }
-                            required
-                        />
-                    </label>
-                    <label>
-                        Admission Date
-                        <input
-                            type="date"
-                            name="admissionDate"
-                            value={admissionForm.admissionDate}
-                            onChange={(event) =>
-                                setAdmissionForm((current) => ({ ...current, admissionDate: event.target.value }))
-                            }
-                        />
-                    </label>
-                </div>
+                <fieldset className="schoolAdminFieldset">
+                    <legend>Student Details</legend>
+                    <div className="schoolAdminGrid">
+                        <label>
+                            Admission Number
+                            <input
+                                name="admissionNumber"
+                                placeholder="OA/001/2025"
+                                value={admissionForm.admissionNumber}
+                                onChange={(event) =>
+                                    setAdmissionForm((current) => ({
+                                        ...current,
+                                        admissionNumber: event.target.value,
+                                    }))
+                                }
+                                required
+                            />
+                        </label>
+                        <label>
+                            First Name
+                            <input
+                                name="firstName"
+                                placeholder="John"
+                                value={admissionForm.firstName}
+                                onChange={(event) =>
+                                    setAdmissionForm((current) => ({
+                                        ...current,
+                                        firstName: event.target.value,
+                                    }))
+                                }
+                                required
+                            />
+                        </label>
+                        <label>
+                            Last Name
+                            <input
+                                name="lastName"
+                                placeholder="Doe"
+                                value={admissionForm.lastName}
+                                onChange={(event) =>
+                                    setAdmissionForm((current) => ({
+                                        ...current,
+                                        lastName: event.target.value,
+                                    }))
+                                }
+                                required
+                            />
+                        </label>
+                    </div>
+                </fieldset>
+
+                <fieldset className="schoolAdminFieldset">
+                    <legend>Placement</legend>
+                    <div className="schoolAdminGrid">
+                        <label>
+                            Grade
+                            <select
+                                name="grade"
+                                value={admissionForm.grade}
+                                onChange={(event) =>
+                                    setAdmissionForm((current) => ({ ...current, grade: event.target.value }))
+                                }
+                                required
+                            >
+                                <option value="">Select grade</option>
+                                {gradeOptions.map((grade) => (
+                                    <option key={grade} value={grade}>
+                                        {grade}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <label>
+                            Stream
+                            <select
+                                name="stream"
+                                value={admissionForm.stream}
+                                onChange={(event) =>
+                                    setAdmissionForm((current) => ({ ...current, stream: event.target.value }))
+                                }
+                                required
+                            >
+                                <option value="">Select stream</option>
+                                {streamOptions.map((stream) => (
+                                    <option key={stream} value={stream}>
+                                        {stream}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <fieldset className="schoolAdminFieldset">
+                    <legend>Contact & Date</legend>
+                    <div className="schoolAdminGrid">
+                        <label>
+                            Parent Contact
+                            <input
+                                name="parentContact"
+                                value={admissionForm.parentContact}
+                                onChange={(event) =>
+                                    setAdmissionForm((current) => ({
+                                        ...current,
+                                        parentContact: event.target.value.replace(/\D/g, ''),
+                                    }))
+                                }
+                                required
+                            />
+                        </label>
+                        <label>
+                            Admission Date
+                            <input
+                                type="date"
+                                name="admissionDate"
+                                value={admissionForm.admissionDate}
+                                onChange={(event) =>
+                                    setAdmissionForm((current) => ({
+                                        ...current,
+                                        admissionDate: event.target.value,
+                                    }))
+                                }
+                            />
+                        </label>
+                    </div>
+                </fieldset>
 
                 <button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Saving...' : 'Save Admission'}
@@ -477,38 +501,41 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
         <div className="schoolAdminPanel schoolAdminPanel--split">
             <form className="schoolAdminForm" onSubmit={handleParentContactSubmit}>
                 <h3>Update Parent Contact</h3>
-                <div className="schoolAdminGrid">
-                    <label>
-                        Student
-                        <select
-                            value={contactForm.studentId}
-                            onChange={(event) =>
-                                setContactForm((current) => ({ ...current, studentId: event.target.value }))
-                            }
-                            required
-                        >
-                            <option value="">Select student</option>
-                            {students.map((student) => (
-                                <option key={student.id} value={student.id}>
-                                    {getStudentLabel(student)}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                    <label>
-                        New Parent Contact
-                        <input
-                            value={contactForm.parentContact}
-                            onChange={(event) =>
-                                setContactForm((current) => ({
-                                    ...current,
-                                    parentContact: event.target.value.replace(/\D/g, ''),
-                                }))
-                            }
-                            required
-                        />
-                    </label>
-                </div>
+                <fieldset className="schoolAdminFieldset">
+                    <legend>Contact Change</legend>
+                    <div className="schoolAdminGrid">
+                        <label>
+                            Student
+                            <select
+                                value={contactForm.studentId}
+                                onChange={(event) =>
+                                    setContactForm((current) => ({ ...current, studentId: event.target.value }))
+                                }
+                                required
+                            >
+                                <option value="">Select student</option>
+                                {students.map((student) => (
+                                    <option key={student.id} value={student.id}>
+                                        {getStudentLabel(student)}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <label>
+                            New Parent Contact
+                            <input
+                                value={contactForm.parentContact}
+                                onChange={(event) =>
+                                    setContactForm((current) => ({
+                                        ...current,
+                                        parentContact: event.target.value.replace(/\D/g, ''),
+                                    }))
+                                }
+                                required
+                            />
+                        </label>
+                    </div>
+                </fieldset>
 
                 <button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Updating...' : 'Update Contact'}
@@ -539,51 +566,57 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
         <div className="schoolAdminPanel schoolAdminPanel--split">
             <form className="schoolAdminForm" onSubmit={handleWithdrawalSubmit}>
                 <h3>Record Student Withdrawal</h3>
-                <div className="schoolAdminGrid">
-                    <label>
-                        Active Student
-                        <select
-                            value={withdrawalForm.studentId}
-                            onChange={(event) =>
-                                setWithdrawalForm((current) => ({ ...current, studentId: event.target.value }))
-                            }
-                            required
-                        >
-                            <option value="">Select student</option>
-                            {activeStudents.map((student) => (
-                                <option key={student.id} value={student.id}>
-                                    {getStudentLabel(student)}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                    <label>
-                        Withdrawal Date
-                        <input
-                            type="date"
-                            value={withdrawalForm.withdrawalDate}
-                            onChange={(event) =>
-                                setWithdrawalForm((current) => ({
-                                    ...current,
-                                    withdrawalDate: event.target.value,
-                                }))
-                            }
-                        />
-                    </label>
-                    <label className="schoolAdminFullWidth">
-                        Withdrawal Reason
-                        <input
-                            value={withdrawalForm.withdrawalReason}
-                            onChange={(event) =>
-                                setWithdrawalForm((current) => ({
-                                    ...current,
-                                    withdrawalReason: event.target.value,
-                                }))
-                            }
-                            placeholder="Optional"
-                        />
-                    </label>
-                </div>
+                <fieldset className="schoolAdminFieldset">
+                    <legend>Withdrawal Details</legend>
+                    <div className="schoolAdminGrid">
+                        <label>
+                            Active Student
+                            <select
+                                value={withdrawalForm.studentId}
+                                onChange={(event) =>
+                                    setWithdrawalForm((current) => ({
+                                        ...current,
+                                        studentId: event.target.value,
+                                    }))
+                                }
+                                required
+                            >
+                                <option value="">Select student</option>
+                                {activeStudents.map((student) => (
+                                    <option key={student.id} value={student.id}>
+                                        {getStudentLabel(student)}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <label>
+                            Withdrawal Date
+                            <input
+                                type="date"
+                                value={withdrawalForm.withdrawalDate}
+                                onChange={(event) =>
+                                    setWithdrawalForm((current) => ({
+                                        ...current,
+                                        withdrawalDate: event.target.value,
+                                    }))
+                                }
+                            />
+                        </label>
+                        <label className="schoolAdminFullWidth">
+                            Withdrawal Reason
+                            <input
+                                value={withdrawalForm.withdrawalReason}
+                                onChange={(event) =>
+                                    setWithdrawalForm((current) => ({
+                                        ...current,
+                                        withdrawalReason: event.target.value,
+                                    }))
+                                }
+                                placeholder="Optional"
+                            />
+                        </label>
+                    </div>
+                </fieldset>
 
                 <button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Saving...' : 'Save Withdrawal'}
@@ -610,113 +643,134 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
         <div className="schoolAdminPanel schoolAdminPanel--split">
             <form className="schoolAdminForm" onSubmit={handleMasterDataSubmit}>
                 <h3>Update Student Master Data</h3>
-                <div className="schoolAdminGrid">
-                    <label>
-                        Student
-                        <select
-                            value={masterForm.studentId}
-                            onChange={(event) => {
-                                const nextStudentId = event.target.value
-                                const selectedStudent = nextStudentId
-                                    ? studentMap.get(Number(nextStudentId))
-                                    : null
+                <fieldset className="schoolAdminFieldset">
+                    <legend>Student</legend>
+                    <div className="schoolAdminGrid">
+                        <label className="schoolAdminFullWidth">
+                            Student
+                            <select
+                                value={masterForm.studentId}
+                                onChange={(event) => {
+                                    const nextStudentId = event.target.value
+                                    const selectedStudent = nextStudentId
+                                        ? studentMap.get(Number(nextStudentId))
+                                        : null
 
-                                setMasterForm({
-                                    studentId: nextStudentId,
-                                    admissionNumber: selectedStudent?.admissionNumber || '',
-                                    firstName: selectedStudent?.firstName || '',
-                                    lastName: selectedStudent?.lastName || '',
-                                    grade: selectedStudent?.grade || '',
-                                    stream: selectedStudent?.stream || '',
-                                    admissionDate: selectedStudent?.admissionDate || '',
-                                })
-                            }}
-                            required
-                        >
-                            <option value="">Select student</option>
-                            {students.map((student) => (
-                                <option key={student.id} value={student.id}>
-                                    {getStudentLabel(student)}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                    <label>
-                        Admission Number
-                        <input
-                            value={masterForm.admissionNumber}
-                            onChange={(event) =>
-                                setMasterForm((current) => ({
-                                    ...current,
-                                    admissionNumber: event.target.value,
-                                }))
-                            }
-                        />
-                    </label>
-                    <label>
-                        First Name
-                        <input
-                            value={masterForm.firstName}
-                            onChange={(event) =>
-                                setMasterForm((current) => ({ ...current, firstName: event.target.value }))
-                            }
-                        />
-                    </label>
-                    <label>
-                        Last Name
-                        <input
-                            value={masterForm.lastName}
-                            onChange={(event) =>
-                                setMasterForm((current) => ({ ...current, lastName: event.target.value }))
-                            }
-                        />
-                    </label>
-                    <label>
-                        Grade
-                        <select
-                            value={masterForm.grade}
-                            onChange={(event) =>
-                                setMasterForm((current) => ({ ...current, grade: event.target.value }))
-                            }
-                        >
-                            <option value="">Select grade</option>
-                            {gradeOptions.map((grade) => (
-                                <option key={grade} value={grade}>
-                                    {grade}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                    <label>
-                        Stream
-                        <select
-                            value={masterForm.stream}
-                            onChange={(event) =>
-                                setMasterForm((current) => ({ ...current, stream: event.target.value }))
-                            }
-                        >
-                            <option value="">Select stream</option>
-                            {streamOptions.map((stream) => (
-                                <option key={stream} value={stream}>
-                                    {stream}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                    <label>
-                        Admission Date
-                        <input
-                            type="date"
-                            value={masterForm.admissionDate}
-                            onChange={(event) =>
-                                setMasterForm((current) => ({
-                                    ...current,
-                                    admissionDate: event.target.value,
-                                }))
-                            }
-                        />
-                    </label>
-                </div>
+                                    setMasterForm({
+                                        studentId: nextStudentId,
+                                        admissionNumber: selectedStudent?.admissionNumber || '',
+                                        firstName: selectedStudent?.firstName || '',
+                                        lastName: selectedStudent?.lastName || '',
+                                        grade: selectedStudent?.grade || '',
+                                        stream: selectedStudent?.stream || '',
+                                        admissionDate: selectedStudent?.admissionDate || '',
+                                    })
+                                }}
+                                required
+                            >
+                                <option value="">Select student</option>
+                                {students.map((student) => (
+                                    <option key={student.id} value={student.id}>
+                                        {getStudentLabel(student)}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <fieldset className="schoolAdminFieldset">
+                    <legend>Profile</legend>
+                    <div className="schoolAdminGrid">
+                        <label>
+                            Admission Number
+                            <input
+                                value={masterForm.admissionNumber}
+                                onChange={(event) =>
+                                    setMasterForm((current) => ({
+                                        ...current,
+                                        admissionNumber: event.target.value,
+                                    }))
+                                }
+                            />
+                        </label>
+                        <label>
+                            First Name
+                            <input
+                                value={masterForm.firstName}
+                                onChange={(event) =>
+                                    setMasterForm((current) => ({ ...current, firstName: event.target.value }))
+                                }
+                            />
+                        </label>
+                        <label>
+                            Last Name
+                            <input
+                                value={masterForm.lastName}
+                                onChange={(event) =>
+                                    setMasterForm((current) => ({ ...current, lastName: event.target.value }))
+                                }
+                            />
+                        </label>
+                    </div>
+                </fieldset>
+
+                <fieldset className="schoolAdminFieldset">
+                    <legend>Placement</legend>
+                    <div className="schoolAdminGrid">
+                        <label>
+                            Grade
+                            <select
+                                value={masterForm.grade}
+                                onChange={(event) =>
+                                    setMasterForm((current) => ({ ...current, grade: event.target.value }))
+                                }
+                            >
+                                <option value="">Select grade</option>
+                                {gradeOptions.map((grade) => (
+                                    <option key={grade} value={grade}>
+                                        {grade}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <label>
+                            Stream
+                            <select
+                                value={masterForm.stream}
+                                onChange={(event) =>
+                                    setMasterForm((current) => ({ ...current, stream: event.target.value }))
+                                }
+                            >
+                                <option value="">Select stream</option>
+                                {streamOptions.map((stream) => (
+                                    <option key={stream} value={stream}>
+                                        {stream}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <fieldset className="schoolAdminFieldset">
+                    <legend>Admission</legend>
+                    <div className="schoolAdminGrid">
+                        <label>
+                            Admission Date
+                            <input
+                                type="date"
+                                value={masterForm.admissionDate}
+                                onChange={(event) =>
+                                    setMasterForm((current) => ({
+                                        ...current,
+                                        admissionDate: event.target.value,
+                                    }))
+                                }
+                            />
+                        </label>
+                    </div>
+                </fieldset>
 
                 <button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Saving...' : 'Save Master Data'}

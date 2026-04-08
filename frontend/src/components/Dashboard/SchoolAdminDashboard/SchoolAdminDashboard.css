@@ -132,6 +132,29 @@
     box-shadow: 0 12px 26px rgba(0, 0, 0, 0.05);
 }
 
+.schoolAdminFieldset {
+    margin: 0;
+    padding: 0.95rem;
+    border: 1px solid rgba(14, 158, 195, 0.18);
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, rgba(14, 158, 195, 0.03) 100%);
+    min-width: 0;
+}
+
+.schoolAdminFieldset legend {
+    padding: 0 0.6rem;
+    color: var(--schoolAdmin-primary);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--schoolAdmin-surface);
+}
+
+.schoolAdminFieldset .schoolAdminGrid {
+    margin-top: 0.45rem;
+}
+
 .schoolAdminGrid {
     display: grid;
     gap: 0.95rem;
