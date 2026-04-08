@@ -2,6 +2,7 @@ import type { DashboardRoleConfig } from '../dashboard.types'
 import { useEffect, useMemo, useState } from 'react'
 import { parentApi } from '../../../lib/api'
 import type { ParentChildRecord } from '../../../lib/api'
+import Loader from '../../Loader/Loader'
 import './ParentDashboard.css'
 
 type ParentDashboardProps = {
@@ -136,31 +137,34 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
                             {isLoading ? 'Refreshing...' : 'Refresh'}
                         </button>
                     </div>
-                    <ul>
-                        {isLoading ? <li className="parentListItem parentListItem--empty">Loading...</li> : null}
-                        {!isLoading && children.length === 0 ? (
-                            <li className="parentListItem parentListItem--empty">
-                                No children are linked to this parent account yet.
-                            </li>
-                        ) : null}
-                        {children.slice(0, 5).map((child) => (
-                            <li key={child.id} className="parentListItem">
-                                <span className="parentPrimary">{getChildLabel(child)}</span>
-                                <span className="parentMuted">
-                                    {child.grade} {child.stream}
-                                </span>
-                                <span
-                                    className={
-                                        child.status === 'active'
-                                            ? 'parentBadge parentBadge--active'
-                                            : 'parentBadge parentBadge--withdrawn'
-                                    }
-                                >
-                                    {child.status}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
+                    {isLoading ? (
+                        <Loader variant="section" label="Loading children" />
+                    ) : (
+                        <ul>
+                            {children.length === 0 ? (
+                                <li className="parentListItem parentListItem--empty">
+                                    No children are linked to this parent account yet.
+                                </li>
+                            ) : null}
+                            {children.slice(0, 5).map((child) => (
+                                <li key={child.id} className="parentListItem">
+                                    <span className="parentPrimary">{getChildLabel(child)}</span>
+                                    <span className="parentMuted">
+                                        {child.grade} {child.stream}
+                                    </span>
+                                    <span
+                                        className={
+                                            child.status === 'active'
+                                                ? 'parentBadge parentBadge--active'
+                                                : 'parentBadge parentBadge--withdrawn'
+                                        }
+                                    >
+                                        {child.status}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </section>
 
                 <section className="parentRecords" aria-label="Latest alerts">
@@ -194,31 +198,34 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
                         {isLoading ? 'Refreshing...' : 'Refresh'}
                     </button>
                 </div>
-                <ul>
-                    {isLoading ? <li className="parentListItem parentListItem--empty">Loading...</li> : null}
-                    {!isLoading && children.length === 0 ? (
-                        <li className="parentListItem parentListItem--empty">
-                            No children are linked to this parent account yet.
-                        </li>
-                    ) : null}
-                    {children.map((child) => (
-                        <li key={child.id} className="parentListItem">
-                            <span className="parentPrimary">{getChildLabel(child)}</span>
-                            <span className="parentMuted">
-                                {child.grade} {child.stream}
-                            </span>
-                            <span
-                                className={
-                                    child.status === 'active'
-                                        ? 'parentBadge parentBadge--active'
-                                        : 'parentBadge parentBadge--withdrawn'
-                                }
-                            >
-                                {child.status}
-                            </span>
-                        </li>
-                    ))}
-                </ul>
+                {isLoading ? (
+                    <Loader variant="section" label="Loading children" />
+                ) : (
+                    <ul>
+                        {children.length === 0 ? (
+                            <li className="parentListItem parentListItem--empty">
+                                No children are linked to this parent account yet.
+                            </li>
+                        ) : null}
+                        {children.map((child) => (
+                            <li key={child.id} className="parentListItem">
+                                <span className="parentPrimary">{getChildLabel(child)}</span>
+                                <span className="parentMuted">
+                                    {child.grade} {child.stream}
+                                </span>
+                                <span
+                                    className={
+                                        child.status === 'active'
+                                            ? 'parentBadge parentBadge--active'
+                                            : 'parentBadge parentBadge--withdrawn'
+                                    }
+                                >
+                                    {child.status}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </section>
         </div>
     )

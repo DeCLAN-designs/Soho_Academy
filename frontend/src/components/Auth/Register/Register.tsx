@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { ChangeEvent, FormEvent } from 'react'
 import { authApi } from '../../../lib/api'
+import Loader from '../../Loader/Loader'
 
 type RegisterFormData = {
     email: string
@@ -244,6 +245,14 @@ const Register = () => {
                         </label>
                     ) : null}
 
+                    {needsNumberPlate && isLoadingNumberPlates ? (
+                        <Loader
+                            variant="inline"
+                            label="Loading number plates"
+                            className={styles.fullWidth}
+                        />
+                    ) : null}
+
                     {needsNumberPlate && !isLoadingNumberPlates && numberPlateOptions.length === 0 ? (
                         <p className={`${styles.fullWidth} ${styles.hint}`}>
                             No number plates are currently available to assign.
@@ -299,6 +308,14 @@ const Register = () => {
                     <button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? 'Creating Account...' : 'Create Account'}
                     </button>
+
+                    {isSubmitting ? (
+                        <Loader
+                            variant="inline"
+                            label="Creating account"
+                            className={styles.fullWidth}
+                        />
+                    ) : null}
                 </form>
 
                 <p className={styles.switchAuth}>

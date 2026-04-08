@@ -8,8 +8,11 @@ import { parentDashboardConfig } from '../Dashboard/ParentDashboard/ParentDashbo
 import { schoolAdminDashboardConfig } from '../Dashboard/SchoolAdminDashboard/SchoolAdminDashboard'
 import type { DashboardRoleConfig } from '../Dashboard/dashboard.types'
 import DashboardHeader from '../DashboardHeader/DashboardHeader'
+import Loader from '../Loader/Loader'
 import SideBar, { getSidebarNavigationItems } from '../SideBar/SideBar'
 import './Layout.css'
+
+const MIN_SECTION_TRANSITION_MS = 550
 
 const ROLE_BASE_PATH: Record<string, string> = {
   'Parent': 'parent',
@@ -41,14 +44,57 @@ const FALLBACK_HEADER_CONFIG: DashboardRoleConfig = {
   },
 }
 
+const resolveActiveSection = (role: string, pathname: string) => {
+  const navigationItems = getSidebarNavigationItems(role)
+  const defaultSectionId = navigationItems[0]?.id || 'overview'
+  const pathSegments = pathname.split('/').filter(Boolean)
+  const basePath = ROLE_BASE_PATH[role]
+
+  if (pathSegments.length === 1 && pathSegments[0] === 'dashboard') {
+    return defaultSectionId
+  }
+
+  if (pathSegments.length >= 2 && pathSegments[0] === 'dashboard') {
+    const sectionFromUrl = pathSegments[1]
+    const isValidSection = navigationItems.some((item) => item.id === sectionFromUrl)
+
+    return isValidSection ? sectionFromUrl : defaultSectionId
+  }
+
+  if (pathSegments.length >= 2 && basePath && pathSegments[0] === basePath) {
+    const sectionFromUrl = pathSegments[1]
+    const isValidSection = navigationItems.some((item) => item.id === sectionFromUrl)
+
+    return isValidSection ? sectionFromUrl : defaultSectionId
+  }
+
+  return defaultSectionId
+}
+
+const buildSectionPath = (role: string, section: string) => {
+  const basePath = ROLE_BASE_PATH[role]
+
+  if (!basePath) {
+    return '/dashboard'
+  }
+
+  return `/${basePath}/${section}`
+}
+
 export const Layout: React.FC = () => {
   const { user, logout } = useAuth()
-  const [activeSection, setActiveSection] = useState('overview')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSectionTransitioning, setIsSectionTransitioning] = useState(false)
+  const [transitionLabel, setTransitionLabel] = useState('Loading')
   const contentRef = useRef<HTMLElement | null>(null)
+  const transitionTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
+  const transitionStartedAtRef = useRef(0)
+  const transitionPathRef = useRef('')
+  const transitionTokenRef = useRef(0)
   const navigate = useNavigate()
   const location = useLocation()
   const role = user?.role || ''
+  const activeSection = resolveActiveSection(role, location.pathname)
   
   const roleConfig = ROLE_CONFIG_MAP[role] || FALLBACK_HEADER_CONFIG
   const currentSection =
@@ -73,34 +119,20 @@ export const Layout: React.FC = () => {
     setIsMobileMenuOpen(false)
   }
 
-  // Sync active section with URL
-  useEffect(() => {
-    const pathSegments = location.pathname.split('/').filter(Boolean)
-    const basePath = ROLE_BASE_PATH[role]
-    
-    if (pathSegments.length >= 2 && pathSegments[0] === basePath) {
-      const sectionFromUrl = pathSegments[1]
-      const validSection = getSidebarNavigationItems(role).find(item => item.id === sectionFromUrl)
-      
-      if (validSection && sectionFromUrl !== activeSection) {
-        setActiveSection(sectionFromUrl)
-      }
-    } else {
-      // Set default section if URL doesn't match
-      const firstSection = getSidebarNavigationItems(role)[0]?.id || 'overview'
-      setActiveSection(firstSection)
+  const clearTransitionTimeout = () => {
+    if (transitionTimeoutRef.current) {
+      window.clearTimeout(transitionTimeoutRef.current)
+      transitionTimeoutRef.current = null
     }
-  }, [location.pathname, role, activeSection])
+  }
 
   useEffect(() => {
-    const firstSection = getSidebarNavigationItems(role)[0]?.id || 'overview'
-    setActiveSection(firstSection)
     setIsMobileMenuOpen(false)
 
     if (contentRef.current) {
       contentRef.current.scrollTop = 0
     }
-  }, [role])
+  }, [location.pathname, role])
 
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? 'hidden' : ''
@@ -111,6 +143,38 @@ export const Layout: React.FC = () => {
   }, [isMobileMenuOpen])
 
   useEffect(() => {
+    if (!isSectionTransitioning) {
+      return
+    }
+
+    if (!transitionPathRef.current || location.pathname !== transitionPathRef.current) {
+      return
+    }
+
+    clearTransitionTimeout()
+
+    const activeToken = transitionTokenRef.current
+    const elapsed = Date.now() - transitionStartedAtRef.current
+    const remainingDuration = Math.max(0, MIN_SECTION_TRANSITION_MS - elapsed)
+
+    transitionTimeoutRef.current = window.setTimeout(() => {
+      if (activeToken !== transitionTokenRef.current) {
+        return
+      }
+
+      setIsSectionTransitioning(false)
+      setTransitionLabel('Loading')
+      transitionPathRef.current = ''
+      transitionStartedAtRef.current = 0
+      transitionTimeoutRef.current = null
+    }, remainingDuration)
+
+    return () => {
+      clearTransitionTimeout()
+    }
+  }, [isSectionTransitioning, location.pathname])
+
+  useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth > 768) {
         setIsMobileMenuOpen(false)
@@ -119,6 +183,12 @@ export const Layout: React.FC = () => {
 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      clearTransitionTimeout()
+    }
   }, [])
 
   return (
@@ -152,11 +222,24 @@ export const Layout: React.FC = () => {
           activeItem={activeSection}
           onLogout={logout}
           onSelect={(section) => {
-            setActiveSection(section)
+            const navigationItems = getSidebarNavigationItems(role)
+            const sectionLabel =
+              navigationItems.find((item) => item.id === section)?.label || 'Section'
+            const targetPath = buildSectionPath(role, section)
+
             closeMobileMenu()
-            // Navigate to the specific route
-            const basePath = ROLE_BASE_PATH[role]
-            navigate(`/${basePath}/${section}`)
+
+            if (section === activeSection || targetPath === location.pathname) {
+              return
+            }
+
+            transitionTokenRef.current += 1
+            transitionStartedAtRef.current = Date.now()
+            transitionPathRef.current = targetPath
+            setTransitionLabel(`Loading ${sectionLabel}`)
+            setIsSectionTransitioning(true)
+            clearTransitionTimeout()
+            navigate(targetPath)
           }}
         />
       </aside>
@@ -172,8 +255,21 @@ export const Layout: React.FC = () => {
           />
         </header>
         
-        <main ref={contentRef} className="layout__content">
-          <Outlet context={{ activeSection, role }} />
+        <main
+          ref={contentRef}
+          className={isSectionTransitioning ? 'layout__content layout__content--transitioning' : 'layout__content'}
+        >
+          <div className="layout__contentInner">
+            <Outlet context={{ activeSection, role }} />
+          </div>
+
+          <div className="layout__transitionOverlay" aria-hidden={!isSectionTransitioning}>
+            <Loader
+              variant="inline"
+              label={transitionLabel}
+              className="layout__transitionLoader"
+            />
+          </div>
         </main>
       </div>
     </div>

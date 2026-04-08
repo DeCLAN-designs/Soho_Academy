@@ -24,6 +24,14 @@ const AUTH_NUMBER_PLATE_KEY = 'soho_user_number_plate'
 const AUTH_FIRST_NAME_KEY = 'soho_user_first_name'
 const AUTH_LAST_NAME_KEY = 'soho_user_last_name'
 
+const getStoredValue = (key: string) => {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+
+  return window.localStorage.getItem(key)?.trim() || ''
+}
+
 interface AuthProviderProps {
   children: ReactNode
 }
@@ -40,14 +48,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Force fresh authentication on each app start.
-    localStorage.removeItem(AUTH_TOKEN_KEY)
-    localStorage.removeItem(AUTH_ROLE_KEY)
-    localStorage.removeItem(AUTH_NUMBER_PLATE_KEY)
-    localStorage.removeItem(AUTH_FIRST_NAME_KEY)
-    localStorage.removeItem(AUTH_LAST_NAME_KEY)
-    setUser(null)
-    setIsAuthenticated(false)
+    const token = getStoredValue(AUTH_TOKEN_KEY)
+    const role = getStoredValue(AUTH_ROLE_KEY)
+    const firstName = getStoredValue(AUTH_FIRST_NAME_KEY)
+    const lastName = getStoredValue(AUTH_LAST_NAME_KEY)
+    const numberPlate = getStoredValue(AUTH_NUMBER_PLATE_KEY)
+
+    if (token) {
+      setUser({
+        token,
+        firstName,
+        lastName,
+        role,
+        numberPlate: numberPlate || null,
+      })
+      setIsAuthenticated(true)
+    } else {
+      setUser(null)
+      setIsAuthenticated(false)
+    }
+
     setIsLoading(false)
   }, [])
 

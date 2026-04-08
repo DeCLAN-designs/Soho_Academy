@@ -8,6 +8,7 @@ import {
     type FuelMaintenanceRequestType,
 } from '../../../../../lib/api'
 import { useAuth } from '../../../../../contexts/AuthContext'
+import Loader from '../../../../Loader/Loader'
 import './Fuel&Maintence.css'
 
 type FuelMaintenanceFormState = {
@@ -196,7 +197,7 @@ const DriverFuelMaintenanceMenuItem = () => {
                 <div className="driverMenuFuelMaintenance__history">
                     <h3 className="driverMenuFuelMaintenance__title">Fuel History</h3>
                     {isLoadingHistory ? (
-                        <p className="driverMenuFuelMaintenance__description">Loading request history...</p>
+                        <Loader variant="section" label="Loading request history" />
                     ) : null}
 
                     {!isLoadingHistory && historyRequests.length === 0 ? (
@@ -366,6 +367,8 @@ const DriverFuelMaintenanceMenuItem = () => {
                         <button type="submit" disabled={isSubmitting}>
                             {isSubmitting ? 'Saving Request...' : 'Submit Request'}
                         </button>
+
+                        {isSubmitting ? <Loader variant="inline" label="Saving request" /> : null}
                     </form>
                 </>
             )}

@@ -7,20 +7,10 @@ import Layout from './components/Layout/Layout'
 import Login from './components/Auth/Login/Login'
 import Register from './components/Auth/Register/Register'
 import Dashboard from './components/Dashboard/Dashboard'
+import Loader from './components/Loader/Loader'
 
 const FullPageLoading: React.FC = () => {
-  return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      fontSize: '1.2rem',
-      color: '#666'
-    }}>
-      Loading...
-    </div>
-  )
+  return <Loader variant="page" label="Loading" />
 }
 
 const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {

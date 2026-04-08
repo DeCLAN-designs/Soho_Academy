@@ -8,6 +8,7 @@ import type {
     UpdateStudentMasterDataPayload,
 } from '../../../lib/api'
 import type { DashboardRoleConfig } from '../dashboard.types'
+import Loader from '../../Loader/Loader'
 import './SchoolAdminDashboard.css'
 
 type SchoolAdminDashboardProps = {
@@ -479,6 +480,8 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                 <button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Saving...' : 'Save Admission'}
                 </button>
+
+                {isSubmitting ? <Loader variant="inline" label="Saving admission" /> : null}
             </form>
 
             <div className="schoolAdminRecords">
@@ -540,6 +543,8 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                 <button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Updating...' : 'Update Contact'}
                 </button>
+
+                {isSubmitting ? <Loader variant="inline" label="Updating contact" /> : null}
             </form>
 
             <div className="schoolAdminRecords">
@@ -621,6 +626,8 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                 <button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Saving...' : 'Save Withdrawal'}
                 </button>
+
+                {isSubmitting ? <Loader variant="inline" label="Saving withdrawal" /> : null}
             </form>
 
             <div className="schoolAdminRecords">
@@ -775,6 +782,8 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                 <button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Saving...' : 'Save Master Data'}
                 </button>
+
+                {isSubmitting ? <Loader variant="inline" label="Saving master data" /> : null}
             </form>
 
             <div className="schoolAdminRecords">
@@ -795,7 +804,7 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
 
     const renderSectionContent = () => {
         if (isLoading) {
-            return <p className="schoolAdminStatus">Loading student data...</p>
+            return <Loader variant="section" label="Loading student data" />
         }
 
         switch (activeSection) {

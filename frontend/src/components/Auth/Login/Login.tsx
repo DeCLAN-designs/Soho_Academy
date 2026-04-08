@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useAuth } from '../../../contexts/AuthContext'
+import Loader from '../../Loader/Loader'
 
 const Login = () => {
     const [formData, setFormData] = useState({
@@ -95,6 +96,8 @@ const Login = () => {
                     <button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? 'Signing In...' : 'Sign In'}
                     </button>
+
+                    {isSubmitting ? <Loader variant="inline" label="Signing in" /> : null}
                 </form>
 
                 <p className={styles.switchAuth}>

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import Loader from '../Loader/Loader'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -11,18 +12,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation()
 
   if (isLoading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '1.2rem',
-        color: '#666'
-      }}>
-        Loading...
-      </div>
-    )
+    return <Loader variant="page" label="Loading" />
   }
 
   if (!isAuthenticated) {
