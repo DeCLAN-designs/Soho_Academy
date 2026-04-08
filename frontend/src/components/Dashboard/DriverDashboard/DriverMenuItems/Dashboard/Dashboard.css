@@ -20,7 +20,6 @@
 }
 
 .driverMenuDashboard__header,
-.driverMenuDashboard__hero,
 .driverMenuDashboard__panelHeader,
 .driverMenuDashboard__activityTop {
     display: flex;
@@ -86,55 +85,20 @@
     color: #9c1732;
 }
 
-.driverMenuDashboard__hero {
-    flex-wrap: wrap;
-}
-
-.driverMenuDashboard__identityCard,
-.driverMenuDashboard__plateCard,
-.driverMenuDashboard__syncCard,
 .driverMenuDashboard__statCard,
 .driverMenuDashboard__panel,
-.driverMenuDashboard__snapshotCard {
+.driverMenuDashboard__summaryBubble {
     border: 1px solid #edf1f5;
     border-radius: 16px;
     background: #ffffff;
 }
 
-.driverMenuDashboard__identityCard,
-.driverMenuDashboard__plateCard,
-.driverMenuDashboard__syncCard {
-    min-width: 220px;
-    padding: 0.9rem 1rem;
-    display: grid;
-    gap: 0.24rem;
-    flex: 1 1 220px;
-}
-
-.driverMenuDashboard__identityCard span,
-.driverMenuDashboard__plateCard span,
-.driverMenuDashboard__syncCard span,
 .driverMenuDashboard__statCard span {
     color: var(--driver-dashboard-muted);
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-}
-
-.driverMenuDashboard__identityCard strong,
-.driverMenuDashboard__plateCard strong,
-.driverMenuDashboard__syncCard strong {
-    color: var(--driver-dashboard-primary);
-    font-size: 1.02rem;
-    overflow-wrap: anywhere;
-}
-
-.driverMenuDashboard__identityCard p {
-    margin: 0.2rem 0 0;
-    color: var(--driver-dashboard-muted);
-    line-height: 1.45;
-    overflow-wrap: anywhere;
 }
 
 .driverMenuDashboard__stats {
@@ -254,24 +218,76 @@
     white-space: pre-wrap;
 }
 
-.driverMenuDashboard__snapshotGrid {
+.driverMenuDashboard__summaryGrid {
     display: grid;
     gap: 0.75rem;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
-.driverMenuDashboard__snapshotCard {
-    padding: 0.85rem;
+.driverMenuDashboard__summaryBubble {
+    padding: 1rem;
+    display: grid;
+    gap: 0.55rem;
+    background:
+        linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
 }
 
-.driverMenuDashboard__snapshotCard h5 {
+.driverMenuDashboard__summaryBubble--incident {
+    background:
+        radial-gradient(circle at top right, rgba(103, 1, 34, 0.08), transparent 32%),
+        linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+}
+
+.driverMenuDashboard__summaryBubble--complaint {
+    background:
+        radial-gradient(circle at top right, rgba(14, 158, 195, 0.1), transparent 32%),
+        linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+}
+
+.driverMenuDashboard__summaryTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.driverMenuDashboard__summaryTop h5 {
     margin: 0;
     color: var(--driver-dashboard-primary);
-    font-size: 0.92rem;
+    font-size: 0.94rem;
 }
 
-.driverMenuDashboard__snapshotCard p {
-    margin: 0.38rem 0 0;
+.driverMenuDashboard__summaryTop span {
+    min-width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: rgba(103, 1, 34, 0.08);
+    color: var(--driver-dashboard-primary);
+    font-size: 0.92rem;
+    font-weight: 800;
+}
+
+.driverMenuDashboard__summaryBubble--complaint .driverMenuDashboard__summaryTop span {
+    background: rgba(14, 158, 195, 0.14);
+    color: #0f6f8a;
+}
+
+.driverMenuDashboard__summaryBubble strong {
+    color: var(--driver-dashboard-ink);
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+}
+
+.driverMenuDashboard__summaryBubble small {
+    color: var(--driver-dashboard-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.driverMenuDashboard__summaryBubble p {
+    margin: 0;
     color: var(--driver-dashboard-muted);
     line-height: 1.55;
     overflow-wrap: anywhere;
@@ -303,12 +319,9 @@
         border-radius: 16px;
     }
 
-    .driverMenuDashboard__identityCard,
-    .driverMenuDashboard__plateCard,
-    .driverMenuDashboard__syncCard,
     .driverMenuDashboard__statCard,
     .driverMenuDashboard__panel,
-    .driverMenuDashboard__snapshotCard,
+    .driverMenuDashboard__summaryBubble,
     .driverMenuDashboard__activityItem {
         padding: 0.8rem;
     }
@@ -316,7 +329,7 @@
 
 @media (max-width: 520px) {
     .driverMenuDashboard__stats,
-    .driverMenuDashboard__snapshotGrid {
+    .driverMenuDashboard__summaryGrid {
         grid-template-columns: 1fr;
     }
 }

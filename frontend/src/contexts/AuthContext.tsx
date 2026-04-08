@@ -2,16 +2,20 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { authApi } from '../lib/api'
 
+type AuthUser = {
+  token: string
+  firstName: string
+  lastName: string
+  role: string
+  numberPlate: string | null
+  profilePhotoUrl: string | null
+}
+
 interface AuthContextType {
   isAuthenticated: boolean
-  user: {
-    token: string
-    firstName: string
-    lastName: string
-    role: string
-    numberPlate: string | null
-  } | null
+  user: AuthUser | null
   login: (email: string, password: string) => Promise<void>
+  updateUser: (nextUser: AuthUser) => void
   logout: () => void
   isLoading: boolean
 }
@@ -23,6 +27,7 @@ const AUTH_ROLE_KEY = 'soho_user_role'
 const AUTH_NUMBER_PLATE_KEY = 'soho_user_number_plate'
 const AUTH_FIRST_NAME_KEY = 'soho_user_first_name'
 const AUTH_LAST_NAME_KEY = 'soho_user_last_name'
+const AUTH_PROFILE_PHOTO_URL_KEY = 'soho_user_profile_photo_url'
 
 const getStoredValue = (key: string) => {
   if (typeof window === 'undefined') {
@@ -36,15 +41,42 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
+const persistUser = (nextUser: AuthUser | null) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  if (!nextUser) {
+    localStorage.removeItem(AUTH_TOKEN_KEY)
+    localStorage.removeItem(AUTH_ROLE_KEY)
+    localStorage.removeItem(AUTH_NUMBER_PLATE_KEY)
+    localStorage.removeItem(AUTH_FIRST_NAME_KEY)
+    localStorage.removeItem(AUTH_LAST_NAME_KEY)
+    localStorage.removeItem(AUTH_PROFILE_PHOTO_URL_KEY)
+    return
+  }
+
+  localStorage.setItem(AUTH_TOKEN_KEY, nextUser.token)
+  localStorage.setItem(AUTH_ROLE_KEY, nextUser.role)
+  localStorage.setItem(AUTH_FIRST_NAME_KEY, nextUser.firstName)
+  localStorage.setItem(AUTH_LAST_NAME_KEY, nextUser.lastName)
+
+  if (nextUser.numberPlate) {
+    localStorage.setItem(AUTH_NUMBER_PLATE_KEY, nextUser.numberPlate)
+  } else {
+    localStorage.removeItem(AUTH_NUMBER_PLATE_KEY)
+  }
+
+  if (nextUser.profilePhotoUrl) {
+    localStorage.setItem(AUTH_PROFILE_PHOTO_URL_KEY, nextUser.profilePhotoUrl)
+  } else {
+    localStorage.removeItem(AUTH_PROFILE_PHOTO_URL_KEY)
+  }
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState<{
-    token: string
-    firstName: string
-    lastName: string
-    role: string
-    numberPlate: string | null
-  } | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -53,6 +85,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const firstName = getStoredValue(AUTH_FIRST_NAME_KEY)
     const lastName = getStoredValue(AUTH_LAST_NAME_KEY)
     const numberPlate = getStoredValue(AUTH_NUMBER_PLATE_KEY)
+    const profilePhotoUrl = getStoredValue(AUTH_PROFILE_PHOTO_URL_KEY)
 
     if (token) {
       setUser({
@@ -61,6 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         lastName,
         role,
         numberPlate: numberPlate || null,
+        profilePhotoUrl: profilePhotoUrl || null,
       })
       setIsAuthenticated(true)
     } else {
@@ -76,27 +110,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authApi.login({ email, password })
       
       if (response.success && response.data) {
-        const { token, firstName, lastName, role, numberPlate } = response.data
-        
-        // Store in localStorage
-        localStorage.setItem(AUTH_TOKEN_KEY, token)
-        localStorage.setItem(AUTH_ROLE_KEY, role)
-        localStorage.setItem(AUTH_FIRST_NAME_KEY, firstName)
-        localStorage.setItem(AUTH_LAST_NAME_KEY, lastName)
-        if (numberPlate) {
-          localStorage.setItem(AUTH_NUMBER_PLATE_KEY, numberPlate)
-        } else {
-          localStorage.removeItem(AUTH_NUMBER_PLATE_KEY)
-        }
-        
-        // Update state
-        setUser({
+        const {
           token,
           firstName,
           lastName,
           role,
-          numberPlate: numberPlate || null
-        })
+          numberPlate,
+          profilePhotoUrl,
+        } = response.data
+
+        const nextUser: AuthUser = {
+          token,
+          firstName,
+          lastName,
+          role,
+          numberPlate: numberPlate || null,
+          profilePhotoUrl: profilePhotoUrl || null,
+        }
+
+        persistUser(nextUser)
+        setUser(nextUser)
         setIsAuthenticated(true)
       } else {
         throw new Error(response.message || 'Login failed')
@@ -107,6 +140,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
+  const updateUser = (nextUser: AuthUser) => {
+    persistUser(nextUser)
+    setUser(nextUser)
+    setIsAuthenticated(true)
+  }
+
   const logout = async () => {
     try {
       // Call logout API if available
@@ -114,14 +153,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Logout API error:', error)
     } finally {
-      // Clear local storage regardless of API call success
-      localStorage.removeItem(AUTH_TOKEN_KEY)
-      localStorage.removeItem(AUTH_ROLE_KEY)
-      localStorage.removeItem(AUTH_NUMBER_PLATE_KEY)
-      localStorage.removeItem(AUTH_FIRST_NAME_KEY)
-      localStorage.removeItem(AUTH_LAST_NAME_KEY)
-      
-      // Update state
+      persistUser(null)
       setUser(null)
       setIsAuthenticated(false)
     }
@@ -131,6 +163,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated,
     user,
     login,
+    updateUser,
     logout,
     isLoading
   }

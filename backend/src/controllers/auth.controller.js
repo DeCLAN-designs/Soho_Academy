@@ -4,6 +4,7 @@ const {
   listNumberPlates,
   refreshSession,
   registerUser,
+  updateAuthenticatedUserProfile,
 } = require("../services/auth.service.js");
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -169,6 +170,7 @@ const login = async (req, res) => {
         phoneNumber: user.phoneNumber,
         role: user.role,
         numberPlate: user.numberPlate || null,
+        profilePhotoUrl: user.profilePhotoUrl || null,
         token: user.accessToken,
         accessToken: user.accessToken,
         refreshToken: user.refreshToken,
@@ -216,6 +218,7 @@ const refresh = async (req, res) => {
         phoneNumber: session.phoneNumber,
         role: session.role,
         numberPlate: session.numberPlate || null,
+        profilePhotoUrl: session.profilePhotoUrl || null,
         token: session.accessToken,
         accessToken: session.accessToken,
         refreshToken: session.refreshToken,
@@ -255,6 +258,60 @@ const me = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const user = await updateAuthenticatedUserProfile({
+      userId: req.user?.sub,
+      payload: req.body || {},
+      profilePhotoFile: req.file || null,
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Authenticated user was not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully.",
+      data: {
+        user,
+      },
+    });
+  } catch (error) {
+    if (error && error.code === "INVALID_CURRENT_PASSWORD") {
+      return res.status(400).json({
+        success: false,
+        message: "The current password you entered is incorrect.",
+      });
+    }
+
+    if (error && error.code === "R2_NOT_CONFIGURED") {
+      return res.status(500).json({
+        success: false,
+        message:
+          "Cloudflare R2 is not configured on the server. Add the R2 environment variables and try again.",
+      });
+    }
+
+    if (error && error.code === "R2_UPLOAD_FAILED") {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to upload the passport photo.",
+      });
+    }
+
+    console.error("Update profile error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update profile.",
+    });
+  }
+};
+
 const logout = (_req, res) => {
   res.clearCookie("refreshToken", refreshCookieOptions);
 
@@ -269,6 +326,7 @@ module.exports = {
   login,
   refresh,
   me,
+  updateProfile,
   logout,
   getNumberPlates,
 };

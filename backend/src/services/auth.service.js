@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const fs = require("fs");
 const path = require("path");
 const pool = require("../config/db.js");
+const { deleteFilesFromR2, uploadFilesToR2 } = require("./r2.service.js");
 const {
   createAccessToken,
   createRefreshToken,
@@ -55,6 +56,8 @@ const usersTableSql =
       email VARCHAR(255) NOT NULL UNIQUE,
       phoneNumber VARCHAR(20) NOT NULL UNIQUE,
       numberPlate VARCHAR(20),
+      profilePhotoUrl VARCHAR(500) NULL,
+      profilePhotoKey VARCHAR(255) NULL,
       password VARCHAR(255) NOT NULL,
       role ENUM(${USERS_ROLE_ENUM_SQL}) NOT NULL,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -121,6 +124,32 @@ const ensureNumberPlateColumn = async () => {
   }
 };
 
+const ensureProfilePhotoColumns = async () => {
+  const [rows] = await pool.query(
+    `
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'users'
+        AND COLUMN_NAME IN ('profilePhotoUrl', 'profilePhotoKey')
+    `
+  );
+
+  const existingColumns = new Set(rows.map((row) => row.COLUMN_NAME));
+
+  if (!existingColumns.has("profilePhotoUrl")) {
+    await pool.query(
+      "ALTER TABLE users ADD COLUMN profilePhotoUrl VARCHAR(500) NULL AFTER numberPlate"
+    );
+  }
+
+  if (!existingColumns.has("profilePhotoKey")) {
+    await pool.query(
+      "ALTER TABLE users ADD COLUMN profilePhotoKey VARCHAR(255) NULL AFTER profilePhotoUrl"
+    );
+  }
+};
+
 const dropUniqueIndexOnNumberPlate = async () => {
   const [indexes] = await pool.query(
     `
@@ -175,6 +204,7 @@ const ensureUsersTable = () => {
       await pool.query(numberPlatesTableSql);
       await ensureEmailColumn();
       await ensureNumberPlateColumn();
+      await ensureProfilePhotoColumns();
       await ensureUsersRoleEnum();
       await dropUniqueIndexOnNumberPlate();
     })();
@@ -193,6 +223,26 @@ const normalizeRegisterPayload = (payload) => ({
   numberPlate: String(payload.numberPlate || "").trim().toUpperCase(),
   role: String(payload.role || "").trim(),
   password: String(payload.password || ""),
+});
+
+const normalizeProfileUpdatePayload = (payload) => ({
+  firstName:
+    typeof payload.firstName === "string" ? payload.firstName.trim() : null,
+  lastName:
+    typeof payload.lastName === "string" ? payload.lastName.trim() : null,
+  currentPassword: String(payload.currentPassword || ""),
+  newPassword: String(payload.newPassword || ""),
+});
+
+const mapAuthenticatedUserRow = (user) => ({
+  id: user.id,
+  email: user.email,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  phoneNumber: user.phoneNumber,
+  role: user.role,
+  numberPlate: user.numberPlate || null,
+  profilePhotoUrl: user.profilePhotoUrl || null,
 });
 
 const registerUser = async (payload) => {
@@ -292,7 +342,16 @@ const loginUser = async ({ email, password }) => {
 
   const [users] = await pool.query(
     `
-      SELECT id, email, firstName, lastName, phoneNumber, role, numberPlate, password
+      SELECT
+        id,
+        email,
+        firstName,
+        lastName,
+        phoneNumber,
+        role,
+        numberPlate,
+        profilePhotoUrl,
+        password
       FROM users
       WHERE email = ?
       LIMIT 1
@@ -330,6 +389,7 @@ const loginUser = async ({ email, password }) => {
     phoneNumber: user.phoneNumber,
     role: user.role,
     numberPlate: user.numberPlate || null,
+    profilePhotoUrl: user.profilePhotoUrl || null,
     accessToken: createAccessToken(tokenPayload),
     refreshToken: createRefreshToken(tokenPayload),
   };
@@ -348,7 +408,15 @@ const refreshSession = async (refreshToken) => {
 
   const [users] = await pool.query(
     `
-      SELECT id, email, firstName, lastName, phoneNumber, role, numberPlate
+      SELECT
+        id,
+        email,
+        firstName,
+        lastName,
+        phoneNumber,
+        role,
+        numberPlate,
+        profilePhotoUrl
       FROM users
       WHERE email = ?
       LIMIT 1
@@ -377,6 +445,7 @@ const refreshSession = async (refreshToken) => {
     phoneNumber: user.phoneNumber,
     role: user.role,
     numberPlate: user.numberPlate || null,
+    profilePhotoUrl: user.profilePhotoUrl || null,
     accessToken: createAccessToken(newPayload),
     refreshToken: createRefreshToken(newPayload),
   };
@@ -393,7 +462,15 @@ const getAuthenticatedUserById = async (userId) => {
 
   const [rows] = await pool.query(
     `
-      SELECT id, email, firstName, lastName, phoneNumber, role, numberPlate
+      SELECT
+        id,
+        email,
+        firstName,
+        lastName,
+        phoneNumber,
+        role,
+        numberPlate,
+        profilePhotoUrl
       FROM users
       WHERE id = ?
       LIMIT 1
@@ -407,14 +484,131 @@ const getAuthenticatedUserById = async (userId) => {
 
   const user = rows[0];
 
+  return mapAuthenticatedUserRow(user);
+};
+
+const updateAuthenticatedUserProfile = async ({
+  userId,
+  payload,
+  profilePhotoFile,
+}) => {
+  await ensureUsersTable();
+
+  const normalizedUserId = Number(userId);
+
+  if (!Number.isInteger(normalizedUserId) || normalizedUserId <= 0) {
+    return null;
+  }
+
+  const normalized = normalizeProfileUpdatePayload(payload || {});
+  const [rows] = await pool.query(
+    `
+      SELECT
+        id,
+        email,
+        firstName,
+        lastName,
+        phoneNumber,
+        role,
+        numberPlate,
+        profilePhotoUrl,
+        profilePhotoKey,
+        password
+      FROM users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [normalizedUserId]
+  );
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  const user = rows[0];
+  const nextFirstName = normalized.firstName ?? user.firstName;
+  const nextLastName = normalized.lastName ?? user.lastName;
+  const isPasswordChangeRequested =
+    Boolean(normalized.currentPassword) || Boolean(normalized.newPassword);
+
+  let nextPasswordHash = user.password;
+
+  if (isPasswordChangeRequested) {
+    const isCurrentPasswordValid = await bcrypt.compare(
+      normalized.currentPassword,
+      user.password
+    );
+
+    if (!isCurrentPasswordValid) {
+      const invalidPasswordError = new Error("The current password is incorrect.");
+      invalidPasswordError.code = "INVALID_CURRENT_PASSWORD";
+      throw invalidPasswordError;
+    }
+
+    nextPasswordHash = await bcrypt.hash(normalized.newPassword, SALT_ROUNDS);
+  }
+
+  let nextProfilePhotoUrl = user.profilePhotoUrl || null;
+  let nextProfilePhotoKey = user.profilePhotoKey || null;
+  let uploadedPhoto = null;
+
+  if (profilePhotoFile) {
+    const uploadedFiles = await uploadFilesToR2({
+      files: [profilePhotoFile],
+      userId: normalizedUserId,
+      folder: "profile-photos",
+    });
+
+    uploadedPhoto = uploadedFiles[0] || null;
+
+    if (uploadedPhoto) {
+      nextProfilePhotoUrl = uploadedPhoto.fileUrl;
+      nextProfilePhotoKey = uploadedPhoto.fileKey;
+    }
+  }
+
+  try {
+    await pool.query(
+      `
+        UPDATE users
+        SET
+          firstName = ?,
+          lastName = ?,
+          password = ?,
+          profilePhotoUrl = ?,
+          profilePhotoKey = ?
+        WHERE id = ?
+      `,
+      [
+        nextFirstName,
+        nextLastName,
+        nextPasswordHash,
+        nextProfilePhotoUrl,
+        nextProfilePhotoKey,
+        normalizedUserId,
+      ]
+    );
+  } catch (error) {
+    if (uploadedPhoto?.fileKey) {
+      await deleteFilesFromR2([uploadedPhoto.fileKey]);
+    }
+
+    throw error;
+  }
+
+  if (uploadedPhoto?.fileKey && user.profilePhotoKey) {
+    await deleteFilesFromR2([user.profilePhotoKey]);
+  }
+
   return {
     id: user.id,
     email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
+    firstName: nextFirstName,
+    lastName: nextLastName,
     phoneNumber: user.phoneNumber,
     role: user.role,
     numberPlate: user.numberPlate || null,
+    profilePhotoUrl: nextProfilePhotoUrl,
   };
 };
 
@@ -423,6 +617,7 @@ module.exports = {
   loginUser,
   refreshSession,
   getAuthenticatedUserById,
+  updateAuthenticatedUserProfile,
   listNumberPlates,
   ensureUsersTable,
 };

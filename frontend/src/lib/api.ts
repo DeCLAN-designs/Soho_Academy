@@ -242,6 +242,34 @@ export type DriverComplaintReportRecord = {
   attachment: ComplaintAttachmentRecord | null;
 };
 
+export type ComplianceDocumentRelatedTo = "Driver";
+
+export type ComplianceDocumentType =
+  | "Insurance"
+  | "NTSA Inspection"
+  | "Speed Governor"
+  | "RSL"
+  | "Driving License"
+  | "PSV"
+  | "Police Clearance"
+  | "Warranty Certificate"
+  | "Other";
+
+export type DriverComplianceDocumentRecord = {
+  id: number;
+  relatedTo: ComplianceDocumentRelatedTo;
+  documentType: ComplianceDocumentType;
+  validFromDate: string;
+  validToDate: string;
+  uploadedBy: string;
+  fileName: string;
+  fileKey: string;
+  fileUrl: string;
+  createdByUserId: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AuthenticatedUserRecord = {
   id: number;
   email: string;
@@ -250,6 +278,7 @@ export type AuthenticatedUserRecord = {
   phoneNumber: string;
   role: string;
   numberPlate: string | null;
+  profilePhotoUrl: string | null;
 };
 
 const toUrl = (path: string) => {
@@ -412,6 +441,41 @@ const patch = async <TPayload, TResponse>(
   return parsedPayload as ApiEnvelope<TResponse>;
 };
 
+const patchFormData = async <TResponse>(
+  path: string,
+  payload: FormData
+): Promise<ApiEnvelope<TResponse>> => {
+  const response = await fetch(toUrl(path), {
+    method: "PATCH",
+    headers: buildHeaders(false),
+    credentials: "include",
+    body: payload,
+  });
+
+  const parsedPayload = await parsePayload(response);
+
+  if (!response.ok) {
+    const errorPayload =
+      parsedPayload && typeof parsedPayload === "object"
+        ? (parsedPayload as ErrorEnvelope)
+        : null;
+    const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+    const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
+    const message =
+      firstValidationMessage ||
+      readMessage(parsedPayload) ||
+      `Request failed with status ${response.status}.`;
+
+    throw new ApiError(message, response.status, errors);
+  }
+
+  if (!parsedPayload || typeof parsedPayload !== "object") {
+    throw new Error("Invalid response from server.");
+  }
+
+  return parsedPayload as ApiEnvelope<TResponse>;
+};
+
 const get = async <TResponse>(path: string): Promise<ApiEnvelope<TResponse>> => {
   const response = await fetch(toUrl(path), {
     method: "GET",
@@ -457,6 +521,7 @@ export const authApi = {
         role: string;
         token: string;
         numberPlate: string | null;
+        profilePhotoUrl: string | null;
       }
     >(
       "/auth/login",
@@ -471,6 +536,8 @@ export const authApi = {
     get<{ numberPlates: string[] }>("/auth/number-plates"),
   me: () =>
     get<AuthenticatedUserRecord>("/auth/me"),
+  updateProfile: (payload: FormData) =>
+    patchFormData<{ user: AuthenticatedUserRecord }>("/auth/profile", payload),
   logout: () =>
     post<{}, {}>("/auth/logout", {}),
 };
@@ -527,4 +594,14 @@ export const driverComplaintApi = {
   getReports: () => get<{ reports: DriverComplaintReportRecord[] }>("/complaints/reports"),
   createReport: (payload: FormData) =>
     postFormData<{ report: DriverComplaintReportRecord }>("/complaints/reports", payload),
+};
+
+export const driverComplianceDocumentApi = {
+  getDocuments: () =>
+    get<{ documents: DriverComplianceDocumentRecord[] }>("/compliance-documents/documents"),
+  createDocument: (payload: FormData) =>
+    postFormData<{ document: DriverComplianceDocumentRecord }>(
+      "/compliance-documents/documents",
+      payload
+    ),
 };

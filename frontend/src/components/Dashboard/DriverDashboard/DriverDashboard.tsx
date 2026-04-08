@@ -1,6 +1,7 @@
 import type { DashboardRoleConfig } from '../dashboard.types'
 import DriverAttendanceMenuItem from './DriverMenuItems/Attendance/Attendance'
 import DriverCompliantsReportsMenuItem from './DriverMenuItems/Compliants&Reports/Compliants&Reports'
+import DriverComplianceDocumentsUploadsMenuItem from './DriverMenuItems/ComplianceDocumentsUploads/ComplianceDocumentsUploads'
 import DriverDashboardMenuItem from './DriverMenuItems/Dashboard/Dashboard'
 import DriverFuelMaintenanceMenuItem from './DriverMenuItems/Fuel & Maintenance/Fuel&Maintence'
 import DriverIncidentsAndAccidentsMenuItem from './DriverMenuItems/IncidentsAndAccidents/IncidentsAndAccidents'
@@ -14,12 +15,13 @@ type DriverDashboardProps = {
 
 export const driverDashboardConfig: DashboardRoleConfig = {
     title: 'Driver Dashboard',
-    subtitle: 'Run assigned routes, attendance, and incidents.',
+    subtitle: 'Run assigned routes, attendance, compliance, and incidents.',
     quickActions: [],
     navigation: [
         { id: 'dashboard', label: 'Dashboard' },
         { id: 'attendance', label: 'Attendance' },
         { id: 'fuelMaintenance', label: 'Fuel & Maintenance' },
+        { id: 'complianceDocuments', label: 'Compliance Documents' },
         { id: 'incidents', label: 'Incidents & Accidents' },
         { id: 'compliantsReports', label: 'Compliants & Reports' },
         { id: 'myActivity', label: 'My Activity' },
@@ -39,6 +41,11 @@ export const driverDashboardConfig: DashboardRoleConfig = {
         fuelMaintenance: {
             heading: 'Fuel & Maintenance',
             description: 'Monitor fuel usage and bus service readiness.',
+            cards: [],
+        },
+        complianceDocuments: {
+            heading: 'Compliance Documents',
+            description: 'Upload scanned driver compliance documents and track expiry reminders.',
             cards: [],
         },
         incidents: {
@@ -77,6 +84,8 @@ const DriverDashboard = ({ activeSection }: DriverDashboardProps) => {
                 return <DriverAttendanceMenuItem />
             case 'fuelMaintenance':
                 return <DriverFuelMaintenanceMenuItem />
+            case 'complianceDocuments':
+                return <DriverComplianceDocumentsUploadsMenuItem />
             case 'incidents':
                 return <DriverIncidentsAndAccidentsMenuItem />
             case 'compliantsReports':

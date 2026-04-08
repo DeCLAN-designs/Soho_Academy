@@ -1,10 +1,12 @@
 .driverProfile {
     --profile-primary: #670122;
+    --profile-primary-soft: rgba(103, 1, 34, 0.08);
     --profile-border: #d8dee8;
     --profile-ink: #213039;
     --profile-muted: #56656f;
     --profile-surface: #ffffff;
     --profile-surface-alt: #f8f9fc;
+    --profile-accent: #0e9ec3;
 
     position: relative;
     overflow: hidden;
@@ -33,17 +35,30 @@
     justify-content: flex-start;
 }
 
+.driverProfile__avatar,
+.driverProfile__photoPreview {
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, rgba(103, 1, 34, 0.12) 0%, rgba(14, 158, 195, 0.08) 100%);
+    color: var(--profile-primary);
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
 .driverProfile__avatar {
     width: 64px;
     height: 64px;
     border-radius: 18px;
-    display: grid;
-    place-items: center;
-    background: linear-gradient(135deg, rgba(103, 1, 34, 0.12) 0%, rgba(103, 1, 34, 0.05) 100%);
-    color: var(--profile-primary);
     font-size: 1.2rem;
-    font-weight: 800;
-    flex-shrink: 0;
+}
+
+.driverProfile__avatar img,
+.driverProfile__photoPreview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .driverProfile__title {
@@ -79,15 +94,14 @@
     text-transform: uppercase;
 }
 
-.driverProfile__ghostButton {
+.driverProfile__ghostButton,
+.driverProfile__primaryButton,
+.driverProfile__fileButton,
+.driverProfile__textButton {
     width: fit-content;
-    border: 1px solid rgba(103, 1, 34, 0.22);
     border-radius: 12px;
-    background: rgba(103, 1, 34, 0.05);
-    color: var(--profile-primary);
     font: inherit;
     font-weight: 700;
-    padding: 0.6rem 0.88rem;
     cursor: pointer;
     transition:
         transform 0.18s ease,
@@ -96,11 +110,53 @@
         border-color 0.18s ease;
 }
 
-.driverProfile__ghostButton:hover:not(:disabled) {
+.driverProfile__ghostButton {
+    border: 1px solid rgba(103, 1, 34, 0.22);
+    background: rgba(103, 1, 34, 0.05);
+    color: var(--profile-primary);
+    padding: 0.6rem 0.88rem;
+}
+
+.driverProfile__primaryButton {
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, #670122 0%, #8a173a 100%);
+    color: #ffffff;
+    padding: 0.72rem 1rem;
+    box-shadow: 0 14px 24px rgba(103, 1, 34, 0.18);
+}
+
+.driverProfile__fileButton {
+    position: relative;
+    border: 1px solid rgba(14, 158, 195, 0.2);
+    background: rgba(14, 158, 195, 0.08);
+    color: #0f6f8a;
+    padding: 0.68rem 0.95rem;
+    overflow: hidden;
+}
+
+.driverProfile__fileButton input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.driverProfile__textButton {
+    border: none;
+    background: none;
+    color: var(--profile-primary);
+    padding: 0;
+}
+
+.driverProfile__ghostButton:hover:not(:disabled),
+.driverProfile__primaryButton:hover:not(:disabled),
+.driverProfile__fileButton:hover:not(:disabled),
+.driverProfile__textButton:hover:not(:disabled) {
     transform: translateY(-1px);
 }
 
-.driverProfile__ghostButton:disabled {
+.driverProfile__ghostButton:disabled,
+.driverProfile__primaryButton:disabled {
     opacity: 0.68;
     cursor: not-allowed;
     transform: none;
@@ -121,28 +177,68 @@
     color: #9c1732;
 }
 
-.driverProfile__hero {
-    flex-wrap: wrap;
+.driverProfile__status--success {
+    background: #eafaf2;
+    border-color: #c9eed8;
+    color: #18633c;
 }
 
-.driverProfile__plateCard,
-.driverProfile__syncCard,
-.driverProfile__infoCard {
+.driverProfile__hero {
+    gap: 1rem;
+}
+
+.driverProfile__photoCard,
+.driverProfile__summaryCard,
+.driverProfile__panel {
     border: 1px solid #edf1f5;
     border-radius: 16px;
     background: #ffffff;
 }
 
-.driverProfile__plateCard,
-.driverProfile__syncCard {
-    min-width: 220px;
+.driverProfile__photoCard {
+    min-width: 260px;
+    padding: 1rem;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.driverProfile__eyebrow {
+    color: var(--profile-muted);
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.driverProfile__photoPreview {
+    width: 132px;
+    height: 132px;
+    border-radius: 28px;
+    font-size: 2rem;
+    justify-self: flex-start;
+}
+
+.driverProfile__photoHelp {
+    margin: 0;
+    color: var(--profile-muted);
+    line-height: 1.55;
+}
+
+.driverProfile__summaryGrid {
+    flex: 1;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.driverProfile__summaryCard {
     padding: 0.9rem 1rem;
     display: grid;
     gap: 0.24rem;
 }
 
-.driverProfile__plateCard span,
-.driverProfile__syncCard span {
+.driverProfile__summaryCard span,
+.driverProfile__accountMeta span {
     color: var(--profile-muted);
     font-size: 0.78rem;
     font-weight: 700;
@@ -150,34 +246,95 @@
     text-transform: uppercase;
 }
 
-.driverProfile__plateCard strong,
-.driverProfile__syncCard strong {
+.driverProfile__summaryCard strong,
+.driverProfile__accountMeta strong {
     color: var(--profile-primary);
-    font-size: 1.02rem;
+    font-size: 1rem;
     overflow-wrap: anywhere;
 }
 
-.driverProfile__grid {
+.driverProfile__form {
     display: grid;
-    gap: 0.75rem;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
 }
 
-.driverProfile__infoCard {
+.driverProfile__formGrid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.driverProfile__panel {
+    padding: 1rem;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.driverProfile__panelHeader h4 {
+    margin: 0;
+    color: var(--profile-primary);
+    font-size: 1rem;
+}
+
+.driverProfile__panelHeader p {
+    margin: 0.28rem 0 0;
+    color: var(--profile-muted);
+    line-height: 1.55;
+}
+
+.driverProfile__field {
+    display: grid;
+    gap: 0.42rem;
+}
+
+.driverProfile__field span {
+    color: var(--profile-ink);
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.driverProfile__field input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d5dce6;
+    border-radius: 12px;
+    background: #ffffff;
+    color: var(--profile-ink);
+    font: inherit;
+    padding: 0.78rem 0.88rem;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.driverProfile__field input:focus {
+    outline: none;
+    border-color: rgba(103, 1, 34, 0.42);
+    box-shadow: 0 0 0 3px rgba(103, 1, 34, 0.08);
+}
+
+.driverProfile__field input[readonly] {
+    background: #f8fafc;
+    color: var(--profile-muted);
+}
+
+.driverProfile__accountMeta {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(103, 1, 34, 0.04) 0%, rgba(14, 158, 195, 0.05) 100%);
     padding: 0.9rem;
 }
 
-.driverProfile__infoCard h4 {
-    margin: 0;
-    color: var(--profile-primary);
-    font-size: 0.92rem;
+.driverProfile__accountMeta div {
+    display: grid;
+    gap: 0.25rem;
 }
 
-.driverProfile__infoCard p {
-    margin: 0.38rem 0 0;
-    color: var(--profile-muted);
-    line-height: 1.55;
-    overflow-wrap: anywhere;
+.driverProfile__formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
 @media (max-width: 900px) {
@@ -192,9 +349,13 @@
     }
 
     .driverProfile__ghostButton,
-    .driverProfile__plateCard,
-    .driverProfile__syncCard {
+    .driverProfile__primaryButton,
+    .driverProfile__photoCard {
         width: 100%;
+    }
+
+    .driverProfile__formGrid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -208,27 +369,48 @@
         align-items: center;
     }
 
-    .driverProfile__avatar,
-    .driverProfile__infoCard,
-    .driverProfile__plateCard,
-    .driverProfile__syncCard {
-        padding: 0.8rem;
+    .driverProfile__avatar {
+        width: 58px;
+        height: 58px;
+        border-radius: 16px;
+    }
+
+    .driverProfile__photoPreview {
+        width: 112px;
+        height: 112px;
+        border-radius: 24px;
+    }
+
+    .driverProfile__panel,
+    .driverProfile__summaryCard,
+    .driverProfile__photoCard,
+    .driverProfile__accountMeta {
+        padding: 0.88rem;
     }
 }
 
 @media (max-width: 520px) {
-    .driverProfile__grid {
-        grid-template-columns: 1fr;
-    }
-
     .driverProfile__identity {
         flex-direction: column;
         align-items: flex-start;
     }
+
+    .driverProfile__summaryGrid,
+    .driverProfile__accountMeta {
+        grid-template-columns: 1fr;
+    }
+
+    .driverProfile__formActions {
+        flex-direction: column-reverse;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .driverProfile__ghostButton {
+    .driverProfile__ghostButton,
+    .driverProfile__primaryButton,
+    .driverProfile__fileButton,
+    .driverProfile__textButton,
+    .driverProfile__field input {
         transition: none;
     }
 }

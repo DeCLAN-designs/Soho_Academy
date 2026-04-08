@@ -33,19 +33,6 @@
     font-weight: 500;
 }
 
-.dashboardHeader__role {
-    margin: 0;
-    color: #0e9ec3;
-    font-size: 0.85rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-weight: 700;
-    background: rgba(14, 158, 195, 0.1);
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    display: inline-block;
-}
-
 .dashboardHeader__subtitle {
     margin: 0.5rem 0 0;
     color: #5a5a5a;
@@ -59,6 +46,74 @@
     align-items: flex-end;
     gap: 0.9rem;
     min-width: 0;
+}
+
+.dashboardHeader__profileCard {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.9rem;
+    min-width: 0;
+}
+
+.dashboardHeader__avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, rgba(104, 1, 33, 0.16) 0%, rgba(14, 158, 195, 0.14) 100%);
+    color: #680121;
+    font-size: 1.15rem;
+    font-weight: 800;
+    box-shadow: inset 0 0 0 1px rgba(104, 1, 33, 0.08);
+}
+
+.dashboardHeader__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.dashboardHeader__profileCopy {
+    min-width: 0;
+    display: grid;
+    gap: 0.22rem;
+    text-align: right;
+}
+
+.dashboardHeader__label {
+    margin: 0;
+    color: #7a838d;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.dashboardHeader__name {
+    margin: 0;
+    color: #1f2b33;
+    font-size: 1rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.dashboardHeader__role {
+    margin: 0;
+    color: #0e9ec3;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    background: rgba(14, 158, 195, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    display: inline-block;
+    justify-self: end;
 }
 
 .dashboardHeader__chips {
@@ -90,7 +145,6 @@
     box-shadow: 0 4px 12px rgba(14, 158, 195, 0.25);
 }
 
-/* Mobile Responsive */
 @media (max-width: 1024px) {
     .dashboardHeader {
         flex-direction: column;
@@ -102,11 +156,21 @@
 
     .dashboardHeader__actions {
         width: 100%;
-        align-items: flex-end;
+        align-items: flex-start;
     }
 
+    .dashboardHeader__profileCard,
     .dashboardHeader__chips {
-        justify-content: flex-end;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .dashboardHeader__profileCopy {
+        text-align: left;
+    }
+
+    .dashboardHeader__role {
+        justify-self: start;
     }
 }
 
@@ -123,20 +187,19 @@
 
     .dashboardHeader__actions {
         gap: 0.75rem;
-        align-items: flex-end;
         width: 100%;
     }
 
-    .dashboardHeader__chips {
-        width: 100%;
-        justify-content: flex-end;
+    .dashboardHeader__avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 18px;
     }
 
     .dashboardHeader__chip {
         font-size: 0.8rem;
         padding: 0.4rem 0.8rem;
     }
-
 }
 
 @media (max-width: 480px) {
@@ -152,6 +215,10 @@
 
     .dashboardHeader__subtitle {
         font-size: 0.9rem;
+    }
+
+    .dashboardHeader__profileCard {
+        align-items: flex-start;
     }
 
     .dashboardHeader__chip {

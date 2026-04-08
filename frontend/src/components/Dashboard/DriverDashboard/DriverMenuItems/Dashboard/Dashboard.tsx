@@ -118,6 +118,10 @@ const isWithinLastSevenDays = (sortValue: number) => {
     return sortValue >= sevenDaysAgo
 }
 
+const sortActivityItems = (items: DashboardActivityItem[]) => {
+    return [...items].sort((left, right) => right.sortValue - left.sortValue)
+}
+
 const DriverDashboardMenuItem = () => {
     const { user } = useAuth()
     const [profile, setProfile] = useState<AuthenticatedUserRecord | null>(null)
@@ -129,6 +133,8 @@ const DriverDashboardMenuItem = () => {
         weeklyReports: 0,
     })
     const [recentActivity, setRecentActivity] = useState<DashboardActivityItem[]>([])
+    const [latestIncident, setLatestIncident] = useState<DashboardActivityItem | null>(null)
+    const [latestComplaint, setLatestComplaint] = useState<DashboardActivityItem | null>(null)
     const [lastUpdated, setLastUpdated] = useState('')
     const [isLoading, setIsLoading] = useState(true)
     const [isRefreshing, setIsRefreshing] = useState(false)
@@ -142,6 +148,7 @@ const DriverDashboardMenuItem = () => {
         phoneNumber: '',
         role: user?.role || '',
         numberPlate: user?.numberPlate || null,
+        profilePhotoUrl: user?.profilePhotoUrl || null,
     }
 
     const loadDashboard = async (withLoader = true) => {
@@ -177,14 +184,19 @@ const DriverDashboardMenuItem = () => {
             setErrorMessage('Some dashboard data could not be loaded.')
         }
 
-        const combinedActivity = [
-            ...fuelRequests.map(mapFuelRequest),
-            ...incidentReports.map(mapIncidentReport),
-            ...complaintReports.map(mapComplaintReport),
-        ].sort((left, right) => right.sortValue - left.sortValue)
+        const fuelActivity = fuelRequests.map(mapFuelRequest)
+        const incidentActivity = sortActivityItems(incidentReports.map(mapIncidentReport))
+        const complaintActivity = sortActivityItems(complaintReports.map(mapComplaintReport))
+        const combinedActivity = sortActivityItems([
+            ...fuelActivity,
+            ...incidentActivity,
+            ...complaintActivity,
+        ])
 
         setProfile(nextProfile)
         setRecentActivity(combinedActivity.slice(0, 5))
+        setLatestIncident(incidentActivity[0] || null)
+        setLatestComplaint(complaintActivity[0] || null)
         setStats({
             fuelCount: fuelRequests.length,
             incidentCount: incidentReports.length,
@@ -207,7 +219,6 @@ const DriverDashboardMenuItem = () => {
 
     const activeProfile = profile || fallbackProfile
     const fullName = [activeProfile.firstName, activeProfile.lastName].filter(Boolean).join(' ').trim()
-    const latestActivity = recentActivity[0] || null
 
     if (isLoading) {
         return <Loader variant="section" label="Loading driver dashboard" />
@@ -221,8 +232,8 @@ const DriverDashboardMenuItem = () => {
                         {fullName ? `${fullName}'s Dashboard` : 'Driver Dashboard'}
                     </h3>
                     <p className="driverMenuDashboard__description">
-                        Get a live overview of your assigned vehicle, reporting activity, and
-                        latest submissions.
+                        Get a live overview of your reporting activity, incidents, accidents,
+                        and complaints.
                     </p>
                 </div>
 
@@ -241,24 +252,6 @@ const DriverDashboardMenuItem = () => {
                     {errorMessage}
                 </p>
             ) : null}
-
-            <div className="driverMenuDashboard__hero">
-                <div className="driverMenuDashboard__identityCard">
-                    <span>Driver</span>
-                    <strong>{fullName || 'Not available'}</strong>
-                    <p>{activeProfile.email || 'No email available'}</p>
-                </div>
-
-                <div className="driverMenuDashboard__plateCard">
-                    <span>Assigned Bus</span>
-                    <strong>{activeProfile.numberPlate || 'Not assigned'}</strong>
-                </div>
-
-                <div className="driverMenuDashboard__syncCard">
-                    <span>Last Updated</span>
-                    <strong>{lastUpdated || 'Not updated yet'}</strong>
-                </div>
-            </div>
 
             <div className="driverMenuDashboard__stats">
                 <article className="driverMenuDashboard__statCard">
@@ -323,28 +316,42 @@ const DriverDashboardMenuItem = () => {
                 <section className="driverMenuDashboard__panel">
                     <div className="driverMenuDashboard__panelHeader">
                         <h4>Driver Snapshot</h4>
-                        <span>Live account summary</span>
+                        <span>{lastUpdated ? `Updated ${lastUpdated}` : 'Live account summary'}</span>
                     </div>
 
-                    <div className="driverMenuDashboard__snapshotGrid">
-                        <article className="driverMenuDashboard__snapshotCard">
-                            <h5>Phone Number</h5>
-                            <p>{activeProfile.phoneNumber || 'Not available'}</p>
+                    <div className="driverMenuDashboard__summaryGrid">
+                        <article className="driverMenuDashboard__summaryBubble driverMenuDashboard__summaryBubble--incident">
+                            <div className="driverMenuDashboard__summaryTop">
+                                <h5>Incidents & Accidents</h5>
+                                <span>{stats.incidentCount}</span>
+                            </div>
+
+                            {latestIncident ? (
+                                <>
+                                    <strong>{latestIncident.title}</strong>
+                                    <small>{latestIncident.dateLabel}</small>
+                                    <p>{latestIncident.summary}</p>
+                                </>
+                            ) : (
+                                <p>No incident or accident report has been submitted yet.</p>
+                            )}
                         </article>
 
-                        <article className="driverMenuDashboard__snapshotCard">
-                            <h5>Role</h5>
-                            <p>{activeProfile.role || 'Driver'}</p>
-                        </article>
+                        <article className="driverMenuDashboard__summaryBubble driverMenuDashboard__summaryBubble--complaint">
+                            <div className="driverMenuDashboard__summaryTop">
+                                <h5>Complaints</h5>
+                                <span>{stats.complaintCount}</span>
+                            </div>
 
-                        <article className="driverMenuDashboard__snapshotCard">
-                            <h5>Latest Entry</h5>
-                            <p>{latestActivity ? latestActivity.title : 'No entries yet'}</p>
-                        </article>
-
-                        <article className="driverMenuDashboard__snapshotCard">
-                            <h5>Latest Timestamp</h5>
-                            <p>{latestActivity ? latestActivity.dateLabel : 'No entries yet'}</p>
+                            {latestComplaint ? (
+                                <>
+                                    <strong>{latestComplaint.title}</strong>
+                                    <small>{latestComplaint.dateLabel}</small>
+                                    <p>{latestComplaint.summary}</p>
+                                </>
+                            ) : (
+                                <p>No complaint report has been submitted yet.</p>
+                            )}
                         </article>
                     </div>
                 </section>

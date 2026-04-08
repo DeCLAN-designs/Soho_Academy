@@ -137,6 +137,55 @@ const refreshTokenValidator = [
     .withMessage("refreshToken cannot be empty."),
 ];
 
+const updateProfileValidator = [
+  body("firstName")
+    .optional()
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage("firstName cannot be empty.")
+    .bail()
+    .isLength({ max: 255 })
+    .withMessage("firstName is too long."),
+
+  body("lastName")
+    .optional()
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage("lastName cannot be empty.")
+    .bail()
+    .isLength({ max: 255 })
+    .withMessage("lastName is too long."),
+
+  body("currentPassword")
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 255 })
+    .withMessage("currentPassword is invalid."),
+
+  body("newPassword")
+    .optional()
+    .isString()
+    .isLength({ min: 6, max: 255 })
+    .withMessage("Password must be between 6 and 255 characters."),
+
+  body().custom((_value, { req }) => {
+    const currentPassword = String(req.body?.currentPassword || "");
+    const newPassword = String(req.body?.newPassword || "");
+
+    if (currentPassword && !newPassword) {
+      throw new Error("newPassword is required to change password.");
+    }
+
+    if (newPassword && !currentPassword) {
+      throw new Error("currentPassword is required to change password.");
+    }
+
+    return true;
+  }),
+];
+
 /**
  * =====================================================
  * Validation Middleware
@@ -164,5 +213,6 @@ module.exports = {
   registerValidator,
   loginValidator,
   refreshTokenValidator,
+  updateProfileValidator,
   validate,
 };

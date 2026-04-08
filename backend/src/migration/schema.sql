@@ -5,6 +5,8 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL UNIQUE,
     phoneNumber VARCHAR(20) NOT NULL UNIQUE,
     numberPlate VARCHAR(20),
+    profilePhotoUrl VARCHAR(500) NULL,
+    profilePhotoKey VARCHAR(255) NULL,
     password VARCHAR(255) NOT NULL,
     role ENUM('Parent', 'Driver', 'Bus Assistant', 'Transport Manager', 'School Admin') NOT NULL,
     CONSTRAINT chk_phoneNumber_numeric CHECK (phoneNumber REGEXP '^[0-9]+$'),
@@ -150,6 +152,36 @@ CREATE TABLE complaint_report_uploads (
         FOREIGN KEY (upload_id) REFERENCES uploads(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE
+);
+
+CREATE TABLE compliance_documents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    relatedTo ENUM('Driver') NOT NULL DEFAULT 'Driver',
+    documentType ENUM(
+        'Insurance',
+        'NTSA Inspection',
+        'Speed Governor',
+        'RSL',
+        'Driving License',
+        'PSV',
+        'Police Clearance',
+        'Warranty Certificate',
+        'Other'
+    ) NOT NULL,
+    validFromDate DATE NOT NULL,
+    validToDate DATE NOT NULL,
+    uploadedBy VARCHAR(255) NOT NULL,
+    fileName VARCHAR(255) NOT NULL,
+    fileKey VARCHAR(255) NOT NULL,
+    fileUrl VARCHAR(500) NOT NULL,
+    createdByUserId INT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uq_compliance_document_file_key UNIQUE (fileKey),
+    CONSTRAINT fk_compliance_document_created_by
+        FOREIGN KEY (createdByUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
 );
 
 CREATE TABLE students (

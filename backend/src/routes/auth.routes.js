@@ -6,12 +6,15 @@ const {
   me,
   refresh,
   register,
+  updateProfile,
 } = require("../controllers/auth.controller.js");
 const { authenticate } = require("../middlewares/auth.middleware.js");
+const { uploadProfilePhoto } = require("../middlewares/profileUpload.middleware.js");
 const {
   loginValidator,
   refreshTokenValidator,
   registerValidator,
+  updateProfileValidator,
   validate,
 } = require("../validators/auth.validators.js");
 
@@ -49,6 +52,14 @@ router
 
 router.get("/number-plates", getNumberPlates);
 router.get("/me", authenticate, me);
+router.patch(
+  "/profile",
+  authenticate,
+  uploadProfilePhoto,
+  updateProfileValidator,
+  validate,
+  updateProfile
+);
 router.post("/logout", logout);
 
 module.exports = router;

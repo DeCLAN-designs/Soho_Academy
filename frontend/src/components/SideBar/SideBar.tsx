@@ -22,6 +22,7 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'dashboard', label: 'Dashboard' },
         { id: 'attendance', label: 'Attendance' },
         { id: 'fuelMaintenance', label: 'Fuel & Maintenance' },
+        { id: 'complianceDocuments', label: 'Compliance Documents' },
         { id: 'incidents', label: 'Incidents & Accidents' },
         { id: 'compliantsReports', label: 'Compliants & Reports' },
         { id: 'myActivity', label: 'My Activity' },

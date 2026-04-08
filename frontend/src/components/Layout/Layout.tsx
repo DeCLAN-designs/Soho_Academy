@@ -252,6 +252,8 @@ export const Layout: React.FC = () => {
             title={dashboardTitle}
             subtitle={dashboardSubtitle}
             quickActions={quickActions}
+            userName={fullName || displayName}
+            profilePhotoUrl={user?.profilePhotoUrl || null}
           />
         </header>
         
