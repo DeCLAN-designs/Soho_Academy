@@ -1,7 +1,38 @@
 import type { DashboardRoleConfig } from '../dashboard.types'
+import BusAssistantDashboardMenuItem from './BusAssistantMenuItems/Dashboard/Dashboard'
+import BusAssistantAttendanceMenuItem from './BusAssistantMenuItems/Attendance/Attendance'
+import BusAssistantAccidentsReportsMenuItem from './BusAssistantMenuItems/AccidentsReports/AccidentsReports'
+import BusAssistantComplaintsIncidentsMenuItem from './BusAssistantMenuItems/ComplaintsIncidents/ComplaintsIncidents'
+import BusAssistantProfileMenuItem from './BusAssistantMenuItems/Profile/Profile'
+import './BusAssistantDashboard.css'
 
 type BusAssistantDashboardProps = {
     activeSection: string
+}
+
+const BusAssistantDashboard = ({ activeSection }: BusAssistantDashboardProps) => {
+    const renderMenuItem = () => {
+        switch (activeSection) {
+            case 'overview':
+                return <BusAssistantDashboardMenuItem />
+            case 'attendance':
+                return <BusAssistantAttendanceMenuItem />
+            case 'accidents-reports':
+                return <BusAssistantAccidentsReportsMenuItem />
+            case 'complaints-incidents':
+                return <BusAssistantComplaintsIncidentsMenuItem />
+            case 'profile':
+                return <BusAssistantProfileMenuItem />
+            default:
+                return <BusAssistantDashboardMenuItem />
+        }
+    }
+
+    return (
+        <>
+            {renderMenuItem()}
+        </>
+    )
 }
 
 export const busAssistantDashboardConfig: DashboardRoleConfig = {
@@ -9,68 +40,39 @@ export const busAssistantDashboardConfig: DashboardRoleConfig = {
     subtitle: 'Handle student boarding and safety support.',
     quickActions: ['Boarding List', 'Safety Check', 'Notify Driver'],
     navigation: [
-        { id: 'overview', label: 'Overview' },
-        { id: 'boarding', label: 'Boarding' },
-        { id: 'students', label: 'Students' },
-        { id: 'safety', label: 'Safety' },
+        { id: 'overview', label: 'Dashboard' },
+        { id: 'attendance', label: 'Attendance' },
+        { id: 'accidents-reports', label: 'Accidents and Reports' },
+        { id: 'complaints-incidents', label: 'Complaints and incidents' },
+        { id: 'profile', label: 'Profile' },
     ],
     sections: {
         overview: {
-            heading: 'Assistant Overview',
+            heading: 'Dashboard',
             description: 'Coordinate with the driver and track student flow.',
-            cards: [
-                'Current bus occupancy',
-                'Pending stop verifications',
-                'Latest safety notes',
-            ],
+            cards: [],
         },
-        boarding: {
-            heading: 'Boarding Status',
-            description: 'Mark student pickup and drop-off in real time.',
-            cards: [
-                'Waiting students',
-                'Boarded students',
-                'Drop-off completion',
-            ],
+        attendance: {
+            heading: 'Attendance',
+            description: 'Track student boarding and drop-off attendance.',
+            cards: [],
         },
-        students: {
-            heading: 'Student Support',
-            description: 'Manage special care and communication notes.',
-            cards: [
-                'Special care indicators',
-                'Guardian contact quick list',
-                'Student seating reminders',
-            ],
+        'accidents-reports': {
+            heading: 'Accidents and Reports',
+            description: 'Document and report accidents and incidents.',
+            cards: [],
         },
-        safety: {
-            heading: 'Safety Tasks',
-            description: 'Ensure trip safety checkpoints are completed.',
-            cards: [
-                'Seat belt checks',
-                'Emergency kit checklist',
-                'Bus entry and exit checks',
-            ],
+        'complaints-incidents': {
+            heading: 'Complaints and Incidents',
+            description: 'Handle complaints and incident reports.',
+            cards: [],
+        },
+        profile: {
+            heading: 'Profile',
+            description: 'Manage your bus assistant profile and settings.',
+            cards: [],
         },
     },
-}
-
-const BusAssistantDashboard = ({ activeSection }: BusAssistantDashboardProps) => {
-    const defaultSection = busAssistantDashboardConfig.navigation[0].id
-    const section =
-        busAssistantDashboardConfig.sections[activeSection] ||
-        busAssistantDashboardConfig.sections[defaultSection]
-
-    return (
-        <>
-            <div className="dashboardCards">
-                {section.cards.map((card) => (
-                    <article key={card} className="dashboardCard">
-                        <p>{card}</p>
-                    </article>
-                ))}
-            </div>
-        </>
-    )
 }
 
 export default BusAssistantDashboard

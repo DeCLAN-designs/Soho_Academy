@@ -29,10 +29,11 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'profile', label: 'Profile' },
     ],
     'Bus Assistant': [
-        { id: 'overview', label: 'Overview' },
-        { id: 'boarding', label: 'Boarding' },
-        { id: 'students', label: 'Students' },
-        { id: 'safety', label: 'Safety' },
+        { id: 'overview', label: 'Dashboard' },
+        { id: 'attendance', label: 'Attendance' },
+        { id: 'accidents-reports', label: 'Accidents and Reports' },
+        { id: 'complaints-incidents', label: 'Complaints and incidents' },
+        { id: 'profile', label: 'Profile' },
     ],
     'Transport Manager': [
         { id: 'overview', label: 'Overview' },

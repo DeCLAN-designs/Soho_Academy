@@ -14,7 +14,7 @@ const {
 
 const router = express.Router();
 
-router.use(authenticate, authorizeRoles("Driver"));
+router.use(authenticate, authorizeRoles("Driver", "Bus Assistant"));
 
 router.get("/requests", getRequests);
 
