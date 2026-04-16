@@ -14,6 +14,12 @@ dist-ssr
 env.example
 env
 
+# Environment files containing secrets
+.env
+.env.local
+.env.prod
+.env.production
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -173,7 +173,7 @@ const login = async (req, res) => {
         profilePhotoUrl: user.profilePhotoUrl || null,
         token: user.accessToken,
         accessToken: user.accessToken,
-        refreshToken: user.refreshToken,
+        // refreshToken is sent only via httpOnly cookie — not in the body
       },
     });
   } catch (error) {
@@ -221,7 +221,7 @@ const refresh = async (req, res) => {
         profilePhotoUrl: session.profilePhotoUrl || null,
         token: session.accessToken,
         accessToken: session.accessToken,
-        refreshToken: session.refreshToken,
+        // refreshToken is sent only via httpOnly cookie — not in the body
       },
     });
   } catch (error) {

@@ -10,7 +10,7 @@ const upload = multer({
   },
   fileFilter: (_req, file, callback) => {
     const mimeType = String(file.mimetype || "").toLowerCase();
-    const isAllowedImage = mimeType.startsWith("image/");
+    const isAllowedImage = mimeType.startsWith("image/") && mimeType !== "image/svg+xml";
     const isAllowedPdf = mimeType === "application/pdf";
 
     if (isAllowedImage || isAllowedPdf) {

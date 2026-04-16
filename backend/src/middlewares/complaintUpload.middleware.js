@@ -9,12 +9,13 @@ const upload = multer({
     files: 1,
   },
   fileFilter: (_req, file, callback) => {
-    if (String(file.mimetype || "").toLowerCase().startsWith("image/")) {
+    const mime = String(file.mimetype || "").toLowerCase();
+    if (mime.startsWith("image/") && mime !== "image/svg+xml") {
       callback(null, true);
       return;
     }
 
-    const error = new Error("Only image files are allowed.");
+    const error = new Error("Only raster image files are allowed (SVG is not permitted).");
     error.code = "UNSUPPORTED_COMPLAINT_ATTACHMENT_TYPE";
     callback(error);
   },

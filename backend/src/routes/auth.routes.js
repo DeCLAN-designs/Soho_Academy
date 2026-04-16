@@ -9,6 +9,7 @@ const {
   updateProfile,
 } = require("../controllers/auth.controller.js");
 const { authenticate } = require("../middlewares/auth.middleware.js");
+const { createRateLimiter } = require("../middlewares/rateLimiter.middleware.js");
 const { uploadProfilePhoto } = require("../middlewares/profileUpload.middleware.js");
 const {
   loginValidator,
@@ -20,9 +21,16 @@ const {
 
 const router = express.Router();
 
+// Rate limiters for sensitive auth endpoints
+const authLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  message: "Too many attempts, please try again after 15 minutes.",
+});
+
 router
   .route("/register")
-  .post(registerValidator, validate, register)
+  .post(authLimiter, registerValidator, validate, register)
   .all((_req, res) =>
     res.status(405).json({
       success: false,
@@ -32,7 +40,7 @@ router
 
 router
   .route("/login")
-  .post(loginValidator, validate, login)
+  .post(authLimiter, loginValidator, validate, login)
   .all((_req, res) =>
     res.status(405).json({
       success: false,
@@ -42,7 +50,7 @@ router
 
 router
   .route("/refresh")
-  .post(refreshTokenValidator, validate, refresh)
+  .post(authLimiter, refreshTokenValidator, validate, refresh)
   .all((_req, res) =>
     res.status(405).json({
       success: false,
