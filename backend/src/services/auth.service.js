@@ -375,11 +375,7 @@ const loginUser = async ({ email, password }) => {
 
   const tokenPayload = {
     sub: String(user.id),
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
     role: user.role,
-    numberPlate: user.numberPlate || null,
   };
 
   return {
@@ -399,10 +395,16 @@ const refreshSession = async (refreshToken) => {
   await ensureUsersTable();
 
   const payload = verifyRefreshToken(refreshToken);
-  const emailFromToken =
-    payload && payload.email ? String(payload.email).trim().toLowerCase() : "";
+  const userIdFromToken =
+    payload && payload.sub ? String(payload.sub).trim() : "";
 
-  if (!emailFromToken) {
+  if (!userIdFromToken) {
+    return null;
+  }
+
+  const normalizedUserId = Number(userIdFromToken);
+
+  if (!Number.isInteger(normalizedUserId) || normalizedUserId <= 0) {
     return null;
   }
 
@@ -418,10 +420,10 @@ const refreshSession = async (refreshToken) => {
         numberPlate,
         profilePhotoUrl
       FROM users
-      WHERE email = ?
+      WHERE id = ?
       LIMIT 1
     `,
-    [emailFromToken]
+    [normalizedUserId]
   );
 
   if (users.length === 0) {
@@ -431,11 +433,7 @@ const refreshSession = async (refreshToken) => {
   const user = users[0];
   const newPayload = {
     sub: String(user.id),
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
     role: user.role,
-    numberPlate: user.numberPlate || null,
   };
 
   return {
