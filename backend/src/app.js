@@ -12,6 +12,12 @@ const fuelMaintenanceRoutes = require("./routes/fuelMaintenance.routes.js");
 const incidentRoutes = require("./routes/incident.routes.js");
 const parentRoutes = require("./routes/parent.routes.js");
 const studentRoutes = require("./routes/student.routes.js");
+const routeRoutes = require("./routes/route.routes.js");
+const fleetRoutes = require("./routes/fleet.routes.js");
+const staffRoutes = require("./routes/staff.routes.js");
+const tripRoutes = require("./routes/trip.routes.js");
+const transportRequestRoutes = require("./routes/transportRequest.routes.js");
+const studentTransportRoutes = require("./routes/studentTransport.routes.js");
 
 const app = express();
 // API endpoints should not rely on ETag-based caching. Disabling ETag avoids
@@ -57,6 +63,12 @@ app.use("/api/fuel-maintenance", fuelMaintenanceRoutes);
 app.use("/api/incidents", incidentRoutes);
 app.use("/api/parent", parentRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/transport-manager", routeRoutes);
+app.use("/api/transport-manager", fleetRoutes);
+app.use("/api/transport-manager", staffRoutes);
+app.use("/api/transport-manager", tripRoutes);
+app.use("/api/transport-manager", transportRequestRoutes);
+app.use("/api/transport-manager", studentTransportRoutes);
 
 // Health check
 app.get("/health", (_, res) => {

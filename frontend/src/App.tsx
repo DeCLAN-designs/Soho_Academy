@@ -1,13 +1,13 @@
 import './App.css'
-import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
+import AuthProvider, { useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import Layout from './components/Layout/Layout'
 import Login from './components/Auth/Login/Login'
 import Register from './components/Auth/Register/Register'
 import Dashboard from './components/Dashboard/Dashboard'
 import Loader from './components/Loader/Loader'
+import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary'
 
 const FullPageLoading: React.FC = () => {
   return <Loader variant="page" label="Loading" />
@@ -79,11 +79,13 @@ const AppRoutes: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 

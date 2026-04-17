@@ -18,7 +18,7 @@ const {
 
 const router = express.Router();
 
-router.use(authenticate, authorizeRoles("Driver", "Bus Assistant"));
+router.use(authenticate, authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "School Admin"));
 
 router.get("/meta", getFormMeta);
 router.get("/reports", getReports);

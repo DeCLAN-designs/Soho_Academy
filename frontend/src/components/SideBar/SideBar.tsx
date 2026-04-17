@@ -16,6 +16,7 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'overview', label: 'Overview' },
         { id: 'children', label: 'Children' },
         { id: 'trips', label: 'Trips' },
+        { id: 'requests', label: 'Requests' },
         { id: 'alerts', label: 'Alerts' },
     ],
     Driver: [
@@ -38,6 +39,8 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
     'Transport Manager': [
         { id: 'overview', label: 'Overview' },
         { id: 'fleet', label: 'Fleet' },
+        { id: 'trips', label: 'Trips' },
+        { id: 'requests', label: 'Requests' },
         { id: 'staff', label: 'Staff' },
         { id: 'reports', label: 'Reports' },
     ],

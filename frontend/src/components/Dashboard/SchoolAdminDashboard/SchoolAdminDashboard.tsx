@@ -25,12 +25,20 @@ const initialAdmissionForm: CreateStudentAdmissionPayload = {
     grade: '',
     stream: '',
     parentContact: '',
+    parentIdType: 'ID',
+    parentIdNumber: '',
     admissionDate: '',
 }
 
 const initialContactForm = {
     studentId: '',
     parentContact: '',
+}
+
+const initialIdentifierForm = {
+    studentId: '',
+    parentIdType: 'ID',
+    parentIdNumber: '',
 }
 
 const initialWithdrawalForm = {
@@ -140,6 +148,7 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
 
     const [admissionForm, setAdmissionForm] = useState(initialAdmissionForm)
     const [contactForm, setContactForm] = useState(initialContactForm)
+    const [identifierForm, setIdentifierForm] = useState(initialIdentifierForm)
     const [withdrawalForm, setWithdrawalForm] = useState(initialWithdrawalForm)
     const [masterForm, setMasterForm] = useState(initialMasterForm)
 
@@ -217,6 +226,35 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
             await loadDashboardData(false)
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'Failed to update parent contact.')
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleParentIdentifierSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        clearFlashMessages()
+
+        const studentId = Number(identifierForm.studentId)
+        if (!studentId) {
+            setErrorMessage('Select a student to update parent identifier.')
+            return
+        }
+
+        setIsSubmitting(true)
+
+        try {
+            await studentApi.updateParentIdentifier(studentId, {
+                parentIdType: identifierForm.parentIdType,
+                parentIdNumber: identifierForm.parentIdNumber,
+            })
+            setIdentifierForm(initialIdentifierForm)
+            setSuccessMessage('Parent identifier updated successfully.')
+            await loadDashboardData(false)
+        } catch (error) {
+            setErrorMessage(
+                error instanceof Error ? error.message : 'Failed to update parent identifier.'
+            )
         } finally {
             setIsSubmitting(false)
         }
@@ -461,6 +499,37 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                             />
                         </label>
                         <label>
+                            Parent ID / Passport
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <select
+                                    name="parentIdType"
+                                    value={admissionForm.parentIdType}
+                                    onChange={(event) =>
+                                        setAdmissionForm((current) => ({
+                                            ...current,
+                                            parentIdType: event.target.value,
+                                        }))
+                                    }
+                                    required
+                                >
+                                    <option value="ID">ID</option>
+                                    <option value="PASSPORT">Passport</option>
+                                </select>
+                                <input
+                                    name="parentIdNumber"
+                                    value={admissionForm.parentIdNumber}
+                                    onChange={(event) =>
+                                        setAdmissionForm((current) => ({
+                                            ...current,
+                                            parentIdNumber: event.target.value,
+                                        }))
+                                    }
+                                    required
+                                    placeholder="Enter identifier number"
+                                />
+                            </div>
+                        </label>
+                        <label>
                             Admission Date
                             <input
                                 type="date"
@@ -545,6 +614,76 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                 </button>
 
                 {isSubmitting ? <Loader variant="inline" label="Updating contact" /> : null}
+            </form>
+
+            <form className="schoolAdminForm" onSubmit={handleParentIdentifierSubmit}>
+                <h3>Update Parent ID / Passport</h3>
+                <fieldset className="schoolAdminFieldset">
+                    <legend>Identifier Change</legend>
+                    <div className="schoolAdminGrid">
+                        <label>
+                            Student
+                            <select
+                                value={identifierForm.studentId}
+                                onChange={(event) =>
+                                    setIdentifierForm((current) => ({
+                                        ...current,
+                                        studentId: event.target.value,
+                                    }))
+                                }
+                                required
+                            >
+                                <option value="">Select student</option>
+                                {students.map((student) => (
+                                    <option key={student.id} value={student.id}>
+                                        {getStudentLabel(student)}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <label>
+                            Parent ID / Passport
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <select
+                                    name="parentIdType"
+                                    value={identifierForm.parentIdType}
+                                    onChange={(event) =>
+                                        setIdentifierForm((current) => ({
+                                            ...current,
+                                            parentIdType: event.target.value,
+                                        }))
+                                    }
+                                    required
+                                    style={{ flex: 1 }}
+                                >
+                                    <option value="ID">ID</option>
+                                    <option value="PASSPORT">Passport</option>
+                                </select>
+                                <input
+                                    name="parentIdNumber"
+                                    value={identifierForm.parentIdNumber}
+                                    onChange={(event) =>
+                                        setIdentifierForm((current) => ({
+                                            ...current,
+                                            parentIdNumber: event.target.value,
+                                        }))
+                                    }
+                                    required
+                                    placeholder="Enter identifier number"
+                                    style={{ flex: 1 }}
+                                />
+                            </div>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? 'Updating...' : 'Update Identifier'}
+                </button>
+
+                {isSubmitting ? (
+                    <Loader variant="inline" label="Updating identifier" />
+                ) : null}
             </form>
 
             <div className="schoolAdminRecords">

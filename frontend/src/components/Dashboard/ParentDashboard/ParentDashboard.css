@@ -185,6 +185,24 @@
     border: 1px solid rgba(159, 26, 46, 0.25);
 }
 
+.parentBadge--pending {
+    background: rgba(205, 128, 0, 0.12);
+    color: #9a6200;
+    border: 1px solid rgba(205, 128, 0, 0.24);
+}
+
+.parentBadge--approved {
+    background: rgba(25, 140, 60, 0.12);
+    color: #1f7a31;
+    border: 1px solid rgba(25, 140, 60, 0.25);
+}
+
+.parentBadge--rejected {
+    background: rgba(159, 26, 46, 0.1);
+    color: #9f1a2e;
+    border: 1px solid rgba(159, 26, 46, 0.25);
+}
+
 .parentStatus {
     margin: 0;
     border-radius: 12px;
@@ -199,9 +217,155 @@
     color: #9f1a2e;
 }
 
+.parentStatus--success {
+    background: #e9f8ef;
+    color: #1f7a31;
+}
+
+.parentRequestLayout {
+    display: grid;
+    gap: 1rem;
+}
+
+.parentFormGrid {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.parentField {
+    display: grid;
+    gap: 0.38rem;
+    color: var(--parent-ink);
+    font-weight: 600;
+}
+
+.parentField--full {
+    grid-column: 1 / -1;
+}
+
+.parentField input,
+.parentField select,
+.parentField textarea {
+    width: 100%;
+    border: 1px solid var(--parent-border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--parent-ink);
+    padding: 0.72rem 0.8rem;
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.parentField textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.parentField input:focus,
+.parentField select:focus,
+.parentField textarea:focus {
+    outline: 2px solid rgba(14, 158, 195, 0.2);
+    border-color: rgba(14, 158, 195, 0.55);
+}
+
+.parentPrimaryButton {
+    width: fit-content;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--parent-primary) 0%, #8c173e 100%);
+    color: #fff;
+    padding: 0.72rem 1rem;
+    min-height: 44px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.parentPrimaryButton:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(104, 1, 33, 0.18);
+}
+
+.parentPrimaryButton:disabled {
+    opacity: 0.72;
+    cursor: not-allowed;
+}
+
+.parentRequestList {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.parentRequestCard {
+    display: grid;
+    gap: 0.35rem;
+    text-align: left;
+    border: 1px solid var(--parent-border);
+    border-radius: 14px;
+    background: linear-gradient(180deg, var(--parent-surface) 0%, var(--parent-surfaceAlt) 100%);
+    color: var(--parent-ink);
+    padding: 0.85rem;
+    cursor: pointer;
+    font: inherit;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.parentRequestCard:hover {
+    transform: translateY(-1px);
+    border-color: rgba(14, 158, 195, 0.45);
+    box-shadow: 0 12px 22px rgba(14, 158, 195, 0.08);
+}
+
+.parentRequestCard p,
+.parentRequestTimeline p,
+.parentAuditItem p {
+    margin: 0;
+    color: var(--parent-muted);
+}
+
+.parentRequestDetail {
+    border: 1px solid var(--parent-border);
+    border-radius: 14px;
+    background: linear-gradient(180deg, var(--parent-surface) 0%, var(--parent-surfaceAlt) 100%);
+    padding: 1rem;
+    min-width: 0;
+}
+
+.parentRequestTimeline {
+    display: grid;
+    gap: 1rem;
+}
+
+.parentRequestTimeline h4,
+.parentAuditItem strong {
+    margin: 0;
+    color: var(--parent-primary);
+}
+
+.parentAuditList {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.parentAuditItem {
+    border: 1px solid var(--parent-border);
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.8rem;
+}
+
 @media (max-width: 900px) {
     .parentLists {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 1040px) {
+    .parentRequestLayout {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+        align-items: start;
     }
 }
 
@@ -230,6 +394,10 @@
     }
 
     .parentGhostButton {
+        width: 100%;
+    }
+
+    .parentPrimaryButton {
         width: 100%;
     }
 

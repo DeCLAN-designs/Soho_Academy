@@ -35,6 +35,84 @@ export class ApiError extends Error {
   }
 }
 
+// Import error handling utilities
+const isNetworkError = (error: any): boolean => {
+  return (
+    error instanceof TypeError && 
+    (error.message === 'Failed to fetch' || 
+     error.message.includes('NetworkError') ||
+     error.message.includes('fetch') ||
+     error.message.includes('ERR_NETWORK') ||
+     error.message.includes('ERR_INTERNET_DISCONNECTED'))
+  ) || (
+    // Handle DOMException timeout errors
+    error instanceof DOMException && error.name === 'TimeoutError'
+  )
+}
+
+const isServerError = (error: any): boolean => {
+  return error instanceof ApiError && (error.status >= 500 || error.status === 0)
+}
+
+const isConnectionError = (error: any): boolean => {
+  return isNetworkError(error) || isServerError(error)
+}
+
+// Clear all authentication data
+const clearAuthData = (): void => {
+  if (typeof window === 'undefined') return
+
+  const keysToRemove = [
+    'soho_auth_token',
+    'soho_user_role',
+    'soho_user_number_plate',
+    'soho_user_first_name',
+    'soho_user_last_name',
+    'soho_user_profile_photo_url'
+  ]
+
+  keysToRemove.forEach(key => {
+    localStorage.removeItem(key)
+  })
+}
+
+// Redirect to login page
+const redirectToLogin = (): void => {
+  if (typeof window === 'undefined') return
+
+  // Clear auth data first
+  clearAuthData()
+  
+  // Redirect to login page
+  window.location.href = '/login'
+}
+
+// Enhanced error handler for API calls
+const handleApiError = (error: any): void => {
+  console.error('API Error:', error)
+
+  // Check if it's a connection/server error
+  if (isConnectionError(error)) {
+    console.log('Connection error detected, clearing auth data and redirecting to login')
+    redirectToLogin()
+    return
+  }
+
+  // Handle authentication errors (401)
+  if (error instanceof ApiError && error.status === 401) {
+    console.log('Authentication error detected, clearing auth data and redirecting to login')
+    redirectToLogin()
+    return
+  }
+
+  // Handle forbidden errors (403)
+  if (error instanceof ApiError && error.status === 403) {
+    console.log('Forbidden error detected, clearing auth data and redirecting to login')
+    redirectToLogin()
+    return
+  }
+}
+
 export type LoginPayload = {
   email: string;
   password: string;
@@ -45,6 +123,8 @@ export type RegisterPayload = {
   firstName: string;
   lastName: string;
   phoneNumber: string;
+  parentIdType: string;
+  parentIdNumber: string;
   numberPlate: string;
   role: string;
   password: string;
@@ -78,6 +158,78 @@ export type ParentChildRecord = {
   withdrawalDate: string | null;
 };
 
+export type ParentTransportRequestType =
+  | "route_change"
+  | "complaint"
+  | "general_support";
+
+export type ParentTransportRequestStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED";
+
+export type ParentTransportRequestRecord = {
+  id: number;
+  parentUserId: number;
+  parentName: string | null;
+  parentEmail: string | null;
+  studentId: number;
+  studentName: string;
+  admissionNumber: string;
+  grade: string;
+  stream: string;
+  currentRouteId: number | null;
+  currentRouteCode: string | null;
+  currentRouteName: string | null;
+  requestType: ParentTransportRequestType;
+  requestTitle: string;
+  requestDetails: string;
+  requestedPickupLocation: string | null;
+  requestedDropoffLocation: string | null;
+  preferredEffectiveDate: string | null;
+  status: ParentTransportRequestStatus;
+  managerReviewNotes: string | null;
+  reviewedByUserId: number | null;
+  reviewedByName: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AuditLogRecord = {
+  id: number;
+  actorUserId: number | null;
+  actorName: string | null;
+  actorRole: string | null;
+  domain: string;
+  entityType: string;
+  entityId: number;
+  action: string;
+  previousState: unknown;
+  newState: unknown;
+  createdAt: string;
+};
+
+export type ParentTransportRequestDetailRecord = {
+  request: ParentTransportRequestRecord;
+  auditLogs: AuditLogRecord[];
+};
+
+export type CreateParentTransportRequestPayload = {
+  studentId: number;
+  requestType: ParentTransportRequestType;
+  requestTitle: string;
+  requestDetails: string;
+  requestedPickupLocation?: string | null;
+  requestedDropoffLocation?: string | null;
+  preferredEffectiveDate?: string | null;
+};
+
+export type ReviewParentTransportRequestPayload = {
+  status: Extract<ParentTransportRequestStatus, "APPROVED" | "REJECTED">;
+  managerReviewNotes?: string | null;
+};
+
 export type ParentContactChangeRecord = {
   id: number;
   studentId: number;
@@ -107,11 +259,18 @@ export type CreateStudentAdmissionPayload = {
   grade: string;
   stream: string;
   parentContact: string;
+  parentIdType: string;
+  parentIdNumber: string;
   admissionDate?: string;
 };
 
 export type UpdateStudentParentContactPayload = {
   parentContact: string;
+};
+
+export type UpdateStudentParentIdentifierPayload = {
+  parentIdType: string;
+  parentIdNumber: string;
 };
 
 export type WithdrawStudentPayload = {
@@ -336,177 +495,238 @@ const readMessage = (payload: unknown) => {
   return null;
 };
 
+const enhancedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  try {
+    const response = await fetch(url, {
+      ...options,
+      // Increase timeout to 30 seconds for better reliability
+      signal: AbortSignal.timeout(30000) // 30 second timeout
+    })
+
+    return response
+  } catch (error) {
+    console.error('Fetch error:', error)
+    
+    // Handle timeout errors specifically
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error('Request timed out. Please check your internet connection and try again.')
+    }
+    
+    // Handle network errors
+    if (isNetworkError(error)) {
+      throw new Error('Network connection failed. Server might be down or unavailable.')
+    }
+    
+    throw error
+  }
+}
+
 const post = async <TPayload, TResponse>(
   path: string,
   payload: TPayload
 ): Promise<ApiEnvelope<TResponse>> => {
-  const response = await fetch(toUrl(path), {
-    method: "POST",
-    headers: buildHeaders(true),
-    credentials: "include",
-    body: JSON.stringify(payload),
-  });
+  try {
+    const response = await enhancedFetch(toUrl(path), {
+      method: "POST",
+      headers: buildHeaders(true),
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
 
-  const parsedPayload = await parsePayload(response);
+    const parsedPayload = await parsePayload(response);
 
-  if (!response.ok) {
-    const errorPayload =
-      parsedPayload && typeof parsedPayload === "object"
-        ? (parsedPayload as ErrorEnvelope)
-        : null;
-    const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
-    const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
-    const message =
-      firstValidationMessage ||
-      readMessage(parsedPayload) ||
-      `Request failed with status ${response.status}.`;
+    if (!response.ok) {
+      const errorPayload =
+        parsedPayload && typeof parsedPayload === "object"
+          ? (parsedPayload as ErrorEnvelope)
+          : null;
+      const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+      const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
+      const message =
+        firstValidationMessage ||
+        readMessage(parsedPayload) ||
+        `Request failed with status ${response.status}.`;
 
-    throw new ApiError(message, response.status, errors);
+      const apiError = new ApiError(message, response.status, errors);
+      handleApiError(apiError);
+      throw apiError;
+    }
+
+    if (!parsedPayload || typeof parsedPayload !== "object") {
+      throw new Error("Invalid response from server.");
+    }
+
+    return parsedPayload as ApiEnvelope<TResponse>;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
   }
-
-  if (!parsedPayload || typeof parsedPayload !== "object") {
-    throw new Error("Invalid response from server.");
-  }
-
-  return parsedPayload as ApiEnvelope<TResponse>;
 };
 
 const postFormData = async <TResponse>(
   path: string,
   payload: FormData
 ): Promise<ApiEnvelope<TResponse>> => {
-  const response = await fetch(toUrl(path), {
-    method: "POST",
-    headers: buildHeaders(false),
-    credentials: "include",
-    body: payload,
-  });
+  try {
+    const response = await enhancedFetch(toUrl(path), {
+      method: "POST",
+      headers: buildHeaders(false),
+      credentials: "include",
+      body: payload,
+    });
 
-  const parsedPayload = await parsePayload(response);
+    const parsedPayload = await parsePayload(response);
 
-  if (!response.ok) {
-    const errorPayload =
-      parsedPayload && typeof parsedPayload === "object"
-        ? (parsedPayload as ErrorEnvelope)
-        : null;
-    const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
-    const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
-    const message =
-      firstValidationMessage ||
-      readMessage(parsedPayload) ||
-      `Request failed with status ${response.status}.`;
+    if (!response.ok) {
+      const errorPayload =
+        parsedPayload && typeof parsedPayload === "object"
+          ? (parsedPayload as ErrorEnvelope)
+          : null;
+      const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+      const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
+      const message =
+        firstValidationMessage ||
+        readMessage(parsedPayload) ||
+        `Request failed with status ${response.status}.`;
 
-    throw new ApiError(message, response.status, errors);
+      const apiError = new ApiError(message, response.status, errors);
+      handleApiError(apiError);
+      throw apiError;
+    }
+
+    if (!parsedPayload || typeof parsedPayload !== "object") {
+      throw new Error("Invalid response from server.");
+    }
+
+    return parsedPayload as ApiEnvelope<TResponse>;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
   }
-
-  if (!parsedPayload || typeof parsedPayload !== "object") {
-    throw new Error("Invalid response from server.");
-  }
-
-  return parsedPayload as ApiEnvelope<TResponse>;
 };
 
 const patch = async <TPayload, TResponse>(
   path: string,
   payload: TPayload
 ): Promise<ApiEnvelope<TResponse>> => {
-  const response = await fetch(toUrl(path), {
-    method: "PATCH",
-    headers: buildHeaders(true),
-    credentials: "include",
-    body: JSON.stringify(payload),
-  });
+  try {
+    const response = await enhancedFetch(toUrl(path), {
+      method: "PATCH",
+      headers: buildHeaders(true),
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
 
-  const parsedPayload = await parsePayload(response);
+    const parsedPayload = await parsePayload(response);
 
-  if (!response.ok) {
-    const errorPayload =
-      parsedPayload && typeof parsedPayload === "object"
-        ? (parsedPayload as ErrorEnvelope)
-        : null;
-    const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
-    const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
-    const message =
-      firstValidationMessage ||
-      readMessage(parsedPayload) ||
-      `Request failed with status ${response.status}.`;
+    if (!response.ok) {
+      const errorPayload =
+        parsedPayload && typeof parsedPayload === "object"
+          ? (parsedPayload as ErrorEnvelope)
+          : null;
+      const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+      const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
+      const message =
+        firstValidationMessage ||
+        readMessage(parsedPayload) ||
+        `Request failed with status ${response.status}.`;
 
-    throw new ApiError(message, response.status, errors);
+      const apiError = new ApiError(message, response.status, errors);
+      handleApiError(apiError);
+      throw apiError;
+    }
+
+    if (!parsedPayload || typeof parsedPayload !== "object") {
+      throw new Error("Invalid response from server.");
+    }
+
+    return parsedPayload as ApiEnvelope<TResponse>;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
   }
-
-  if (!parsedPayload || typeof parsedPayload !== "object") {
-    throw new Error("Invalid response from server.");
-  }
-
-  return parsedPayload as ApiEnvelope<TResponse>;
 };
 
 const patchFormData = async <TResponse>(
   path: string,
   payload: FormData
 ): Promise<ApiEnvelope<TResponse>> => {
-  const response = await fetch(toUrl(path), {
-    method: "PATCH",
-    headers: buildHeaders(false),
-    credentials: "include",
-    body: payload,
-  });
+  try {
+    const response = await enhancedFetch(toUrl(path), {
+      method: "PATCH",
+      headers: buildHeaders(false),
+      credentials: "include",
+      body: payload,
+    });
 
-  const parsedPayload = await parsePayload(response);
+    const parsedPayload = await parsePayload(response);
 
-  if (!response.ok) {
-    const errorPayload =
-      parsedPayload && typeof parsedPayload === "object"
-        ? (parsedPayload as ErrorEnvelope)
-        : null;
-    const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
-    const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
-    const message =
-      firstValidationMessage ||
-      readMessage(parsedPayload) ||
-      `Request failed with status ${response.status}.`;
+    if (!response.ok) {
+      const errorPayload =
+        parsedPayload && typeof parsedPayload === "object"
+          ? (parsedPayload as ErrorEnvelope)
+          : null;
+      const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+      const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
+      const message =
+        firstValidationMessage ||
+        readMessage(parsedPayload) ||
+        `Request failed with status ${response.status}.`;
 
-    throw new ApiError(message, response.status, errors);
+      const apiError = new ApiError(message, response.status, errors);
+      handleApiError(apiError);
+      throw apiError;
+    }
+
+    if (!parsedPayload || typeof parsedPayload !== "object") {
+      throw new Error("Invalid response from server.");
+    }
+
+    return parsedPayload as ApiEnvelope<TResponse>;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
   }
-
-  if (!parsedPayload || typeof parsedPayload !== "object") {
-    throw new Error("Invalid response from server.");
-  }
-
-  return parsedPayload as ApiEnvelope<TResponse>;
 };
 
 const get = async <TResponse>(path: string): Promise<ApiEnvelope<TResponse>> => {
-  const response = await fetch(toUrl(path), {
-    method: "GET",
-    headers: buildHeaders(false),
-    credentials: "include",
-    // Avoid HTTP cache revalidation (304) for API endpoints.
-    cache: "no-store",
-  });
+  try {
+    const response = await enhancedFetch(toUrl(path), {
+      method: "GET",
+      headers: buildHeaders(false),
+      credentials: "include",
+      // Avoid HTTP cache revalidation (304) for API endpoints.
+      cache: "no-store",
+    });
 
-  const parsedPayload = await parsePayload(response);
+    const parsedPayload = await parsePayload(response);
 
-  if (!response.ok) {
-    const errorPayload =
-      parsedPayload && typeof parsedPayload === "object"
-        ? (parsedPayload as ErrorEnvelope)
-        : null;
-    const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
-    const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
-    const message =
-      firstValidationMessage ||
-      readMessage(parsedPayload) ||
-      `Request failed with status ${response.status}.`;
+    if (!response.ok) {
+      const errorPayload =
+        parsedPayload && typeof parsedPayload === "object"
+          ? (parsedPayload as ErrorEnvelope)
+          : null;
+      const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+      const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
+      const message =
+        firstValidationMessage ||
+        readMessage(parsedPayload) ||
+        `Request failed with status ${response.status}.`;
 
-    throw new ApiError(message, response.status, errors);
+      const apiError = new ApiError(message, response.status, errors);
+      handleApiError(apiError);
+      throw apiError;
+    }
+
+    if (!parsedPayload || typeof parsedPayload !== "object") {
+      throw new Error("Invalid response from server.");
+    }
+
+    return parsedPayload as ApiEnvelope<TResponse>;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
   }
-
-  if (!parsedPayload || typeof parsedPayload !== "object") {
-    throw new Error("Invalid response from server.");
-  }
-
-  return parsedPayload as ApiEnvelope<TResponse>;
 };
 
 export const authApi = {
@@ -557,6 +777,14 @@ export const studentApi = {
       `/students/${studentId}/parent-contact`,
       payload
     ),
+  updateParentIdentifier: (
+    studentId: number,
+    payload: UpdateStudentParentIdentifierPayload
+  ) =>
+    patch<
+      UpdateStudentParentIdentifierPayload,
+      { student: StudentRecord }
+    >(`/students/${studentId}/parent-identifier`, payload),
   withdrawStudent: (studentId: number, payload: WithdrawStudentPayload) =>
     patch<WithdrawStudentPayload, { student: StudentRecord }>(
       `/students/${studentId}/withdrawal`,
@@ -571,6 +799,15 @@ export const studentApi = {
 
 export const parentApi = {
   getChildren: () => get<{ children: ParentChildRecord[] }>("/parent/children"),
+  getTransportRequests: () =>
+    get<{ requests: ParentTransportRequestRecord[] }>("/parent/transport-requests"),
+  getTransportRequest: (requestId: number) =>
+    get<ParentTransportRequestDetailRecord>(`/parent/transport-requests/${requestId}`),
+  createTransportRequest: (payload: CreateParentTransportRequestPayload) =>
+    post<CreateParentTransportRequestPayload, ParentTransportRequestDetailRecord>(
+      "/parent/transport-requests",
+      payload
+    ),
 };
 
 export const fuelMaintenanceApi = {
@@ -604,4 +841,202 @@ export const driverComplianceDocumentApi = {
       "/compliance-documents/documents",
       payload
     ),
+};
+
+export type TransportVehicleRecord = {
+  plateNumber: string;
+  capacity: number;
+  insuranceExpiryDate: string | null;
+  inspectionExpiryDate: string | null;
+  status: "active" | "inactive";
+};
+
+export type TransportStaffRecord = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  role: string;
+  phoneNumber: string;
+};
+
+export type TransportStudentRecord = {
+  id: number;
+  admissionNumber: string;
+  firstName: string;
+  lastName: string;
+  grade: string;
+  stream: string;
+};
+
+export type RouteStopPayload = {
+  stopType: "pickup" | "dropoff";
+  stopOrder: number;
+  location: string;
+  timeAllocation?: string | null;
+};
+
+export type CreateRoutePayload = {
+  routeCode: string;
+  routeName: string;
+  routeDate: string;
+  startTime: string;
+  endTime: string;
+  stops: RouteStopPayload[];
+};
+
+export type RouteRecord = {
+  id: number;
+  routeCode: string;
+  routeName: string;
+  routeDate: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  status: "active" | "inactive" | "completed";
+  createdAt: string;
+};
+
+export type AssignVehicleStaffPayload = {
+  numberPlate: string;
+  driverUserId: number;
+  assistantUserId?: number | null;
+};
+
+export type AssignStudentsPayload = {
+  studentIds: number[];
+};
+
+export type TripStatus = "scheduled" | "started" | "in_progress" | "completed";
+
+export type TripRecord = {
+  id: number;
+  routeId: number;
+  routeAssignmentId: number;
+  routeCode: string;
+  routeName: string;
+  routeDate: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  tripDate: string | null;
+  scheduledStartTime: string | null;
+  numberPlate: string;
+  driverUserId: number;
+  assistantUserId: number | null;
+  driverName: string | null;
+  assistantName: string | null;
+  status: TripStatus;
+  totalStudents: number;
+  boardedStudents: number;
+  droppedOffStudents: number;
+  startedAt: string | null;
+  inProgressAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+};
+
+export type TripAttendanceRecord = {
+  studentId: number;
+  admissionNumber: string;
+  firstName: string;
+  lastName: string;
+  grade: string;
+  stream: string;
+  boardingStatus: "not_boarded" | "boarded" | "dropped_off";
+  boardedAt: string | null;
+  droppedOffAt: string | null;
+};
+
+export type TripEventRecord = {
+  id: number;
+  eventType: "scheduled" | "started" | "in_progress" | "completed" | "attendance_updated";
+  description: string;
+  actorUserId: number | null;
+  actorName: string | null;
+  actorRole: string | null;
+  createdAt: string;
+};
+
+export type TripDetailRecord = {
+  trip: TripRecord;
+  attendance: TripAttendanceRecord[];
+  events: TripEventRecord[];
+};
+
+export type UpdateTripStatusPayload = {
+  status: Extract<TripStatus, "started" | "in_progress" | "completed">;
+};
+
+export type UpdateTripAttendancePayload = {
+  boardingStatus: "boarded" | "dropped_off";
+};
+
+export const transportManagerApi = {
+  getRoutes: () => get<{ routes: RouteRecord[] }>("/transport-manager/routes"),
+  getVehicles: () =>
+    get<{ vehicles: TransportVehicleRecord[] }>("/transport-manager/vehicles"),
+  getStaff: () => get<{ staff: TransportStaffRecord[] }>("/transport-manager/staff"),
+  getStudents: () =>
+    get<{ students: TransportStudentRecord[] }>("/transport-manager/students"),
+  getTrips: () => get<{ trips: TripRecord[] }>("/transport-manager/trips"),
+  getTrip: (tripId: number) =>
+    get<TripDetailRecord>(`/transport-manager/trips/${tripId}`),
+  getParentRequests: () =>
+    get<{ requests: ParentTransportRequestRecord[] }>("/transport-manager/parent-requests"),
+  getParentRequest: (requestId: number) =>
+    get<ParentTransportRequestDetailRecord>(
+      `/transport-manager/parent-requests/${requestId}`
+    ),
+
+  createRoute: (payload: CreateRoutePayload) =>
+    post<CreateRoutePayload, { route: RouteRecord }>("/transport-manager/routes", payload),
+
+  assignVehicleStaff: (
+    routeId: number,
+    payload: AssignVehicleStaffPayload
+  ) =>
+    post<
+      AssignVehicleStaffPayload,
+      { assigned: boolean }
+    >(`/transport-manager/routes/${routeId}/assign-vehicle-staff`, payload),
+
+  assignStudents: (routeId: number, payload: AssignStudentsPayload) =>
+    post<AssignStudentsPayload, { assigned: boolean }>(
+      `/transport-manager/routes/${routeId}/students`,
+      payload
+    ),
+
+  createTrip: (routeId: number) =>
+    post<{}, TripDetailRecord>(`/transport-manager/routes/${routeId}/trips`, {}),
+
+  updateTripStatus: (tripId: number, payload: UpdateTripStatusPayload) =>
+    patch<UpdateTripStatusPayload, TripDetailRecord>(
+      `/transport-manager/trips/${tripId}/status`,
+      payload
+    ),
+
+  updateTripAttendance: (
+    tripId: number,
+    studentId: number,
+    payload: UpdateTripAttendancePayload
+  ) =>
+    patch<UpdateTripAttendancePayload, TripDetailRecord>(
+      `/transport-manager/trips/${tripId}/students/${studentId}/attendance`,
+      payload
+    ),
+
+  reviewParentRequest: (
+    requestId: number,
+    payload: ReviewParentTransportRequestPayload
+  ) =>
+    patch<ReviewParentTransportRequestPayload, ParentTransportRequestDetailRecord>(
+      `/transport-manager/parent-requests/${requestId}/review`,
+      payload
+    ),
+
+  // Compliance Documents
+  getComplianceDocuments: () =>
+    get<{ documents: DriverComplianceDocumentRecord[] }>("/compliance-documents/documents"),
+
+  // Complaints
+  getComplaints: () =>
+    get<{ reports: DriverComplaintReportRecord[] }>("/complaints/reports"),
 };
