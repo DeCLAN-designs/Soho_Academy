@@ -1151,7 +1151,7 @@ const TransportManagerDashboard = ({ activeSection }: TransportManagerDashboardP
                                 ) : (
                                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                                         {vehicles.slice(0, 10).map((vehicle) => (
-                                            <li key={vehicle.id} style={{ padding: '4px 0', borderBottom: '1px solid #eee' }}>
+                                            <li key={vehicle.plateNumber} style={{ padding: '4px 0', borderBottom: '1px solid #eee' }}>
                                                 {vehicle.plateNumber} (Capacity: {vehicle.capacity})
                                             </li>
                                         ))}
