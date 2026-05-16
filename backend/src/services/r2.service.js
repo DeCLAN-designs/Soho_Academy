@@ -5,43 +5,9 @@ const {
   PutObjectCommand,
   S3Client,
 } = require("@aws-sdk/client-s3");
+const { ensureR2Configured } = require("../config/r2.config.js");
 
 let r2Client;
-
-const getR2Config = () => {
-  const accountId = String(process.env.R2_ACCOUNT_ID || "").trim();
-  const accessKeyId = String(process.env.R2_ACCESS_KEY_ID || "").trim();
-  const secretAccessKey = String(process.env.R2_SECRET_ACCESS_KEY || "").trim();
-  const bucketName = String(process.env.R2_BUCKET_NAME || "").trim();
-  const publicBaseUrl = String(process.env.R2_PUBLIC_BASE_URL || "")
-    .trim()
-    .replace(/\/$/, "");
-
-  return {
-    accountId,
-    accessKeyId,
-    secretAccessKey,
-    bucketName,
-    publicBaseUrl,
-  };
-};
-
-const ensureR2Configured = () => {
-  const config = getR2Config();
-  const missingKeys = Object.entries(config)
-    .filter(([, value]) => !value)
-    .map(([key]) => key);
-
-  if (missingKeys.length > 0) {
-    const error = new Error(
-      `Cloudflare R2 is not configured. Missing: ${missingKeys.join(", ")}.`
-    );
-    error.code = "R2_NOT_CONFIGURED";
-    throw error;
-  }
-
-  return config;
-};
 
 const getR2Client = () => {
   if (!r2Client) {
@@ -197,6 +163,11 @@ const deleteIncidentImagesFromR2 = async (fileKeys) => {
 };
 
 module.exports = {
+  getR2Client,
+  normalizeFileName,
+  resolveFileExtension,
+  buildFileKey,
+  buildFileKeyForFolder,
   uploadFilesToR2,
   uploadIncidentImagesToR2,
   deleteFilesFromR2,
