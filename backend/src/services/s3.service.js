@@ -2,14 +2,31 @@ const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/cl
 const fs = require('fs');
 const path = require('path');
 
-// Initialize S3 client
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+// Lazy-initialise the S3 client so the module can be safely required even when
+// AWS credentials are not yet available (e.g. during tests or when only R2 is
+// used).  The client is created on first actual use.
+let s3Client;
+
+const getS3Client = () => {
+  if (!s3Client) {
+    const region = process.env.AWS_REGION;
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+
+    if (!region || !accessKeyId || !secretAccessKey) {
+      throw new Error(
+        'AWS S3 is not configured. Missing one or more of: AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY.'
+      );
+    }
+
+    s3Client = new S3Client({
+      region,
+      credentials: { accessKeyId, secretAccessKey },
+    });
+  }
+
+  return s3Client;
+};
 
 const uploadFilesToS3 = async ({ files, userId, folder }) => {
   const uploadedFiles = [];
@@ -25,7 +42,7 @@ const uploadFilesToS3 = async ({ files, userId, folder }) => {
     };
 
     try {
-      const result = await s3Client.send(new PutObjectCommand(params));
+      const result = await getS3Client().send(new PutObjectCommand(params));
       
       const fileUrl = `${process.env.S3_BUCKET_URL}/${fileKey}`;
       
@@ -53,7 +70,7 @@ const deleteFilesFromS3 = async (fileKeys) => {
         Key: fileKey,
       };
 
-      await s3Client.send(new DeleteObjectCommand(params));
+      await getS3Client().send(new DeleteObjectCommand(params));
     }
   } catch (error) {
     console.error('Error deleting files from S3:', error);

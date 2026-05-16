@@ -1,8 +1,24 @@
 const jwt = require("jsonwebtoken");
 
-const getAccessSecret = () => process.env.JWT_SECRET || "development_access_secret";
-const getRefreshSecret = () =>
-  process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || "development_refresh_secret";
+const getAccessSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error(
+      "JWT_SECRET environment variable is not set. Refusing to start with an insecure default."
+    );
+  }
+  return secret;
+};
+
+const getRefreshSecret = () => {
+  const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error(
+      "JWT_REFRESH_SECRET (or JWT_SECRET) environment variable is not set. Refusing to start with an insecure default."
+    );
+  }
+  return secret;
+};
 
 const getAccessExpiry = () => process.env.JWT_EXPIRES_IN || "8h";
 const getRefreshExpiry = () => process.env.JWT_REFRESH_EXPIRES_IN || "7d";

@@ -10,12 +10,13 @@ const upload = multer({
     files: MAX_INCIDENT_IMAGE_COUNT,
   },
   fileFilter: (_req, file, callback) => {
-    if (String(file.mimetype || "").toLowerCase().startsWith("image/")) {
+    const mime = String(file.mimetype || "").toLowerCase();
+    if (mime.startsWith("image/") && mime !== "image/svg+xml") {
       callback(null, true);
       return;
     }
 
-    const invalidTypeError = new Error("Only image files are allowed.");
+    const invalidTypeError = new Error("Only raster image files are allowed (SVG is not permitted).");
     invalidTypeError.code = "UNSUPPORTED_INCIDENT_IMAGE_TYPE";
     callback(invalidTypeError);
   },

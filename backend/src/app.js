@@ -41,8 +41,8 @@ app.use(
   })
 );
 
-// Logging
-app.use(morgan("dev"));
+// Logging — use compact "combined" format in production, verbose "dev" otherwise
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 // Body parsing
 app.use(express.json({ limit: "10kb" }));
