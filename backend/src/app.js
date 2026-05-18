@@ -4,6 +4,10 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const {
+  requestErrorLogStream,
+  requestLogStream,
+} = require("./utils/logger.js");
 
 const authRoutes = require("./routes/auth.routes.js");
 const complianceDocumentRoutes = require("./routes/complianceDocument.routes.js");
@@ -35,7 +39,20 @@ app.use(
 );
 
 // Logging
-app.use(morgan("dev"));
+const requestLogFormat =
+  ":method :url :status :response-time ms - :res[content-length]";
+
+app.use(
+  morgan(requestLogFormat, {
+    stream: requestLogStream,
+  })
+);
+app.use(
+  morgan(requestLogFormat, {
+    skip: (_req, res) => res.statusCode < 400,
+    stream: requestErrorLogStream,
+  })
+);
 
 // Body parsing
 app.use(express.json({ limit: "10kb" }));

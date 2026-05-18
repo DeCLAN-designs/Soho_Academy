@@ -41,6 +41,8 @@ const incidentReportsTableSql =
       description TEXT NOT NULL,
       actionTaken TEXT NOT NULL,
       numberPlate VARCHAR(20) NOT NULL,
+      confirmedBy VARCHAR(255) NULL,
+      status ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending',
       createdByUserId INT NOT NULL,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -138,6 +140,8 @@ const mapIncidentReportRow = (row) => ({
   description: row.description,
   actionTaken: row.actionTaken,
   numberPlate: row.numberPlate,
+  confirmedBy: row.confirmedBy || null,
+  status: row.status || 'Pending',
   createdByUserId: row.createdByUserId,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
@@ -318,6 +322,8 @@ const createIncidentReport = async ({ payload, files, createdByUserId }) => {
           description,
           actionTaken,
           numberPlate,
+          confirmedBy,
+          status,
           createdByUserId,
           createdAt,
           updatedAt
@@ -363,6 +369,8 @@ const listIncidentReportsByUser = async ({ createdByUserId }) => {
         description,
         actionTaken,
         numberPlate,
+        confirmedBy,
+        status,
         createdByUserId,
         createdAt,
         updatedAt
@@ -385,8 +393,118 @@ const listIncidentReportsByUser = async ({ createdByUserId }) => {
   }));
 };
 
+const updateIncidentStatus = async ({
+  incidentId,
+  status,
+  confirmedBy,
+}) => {
+  await ensureIncidentTables();
+
+  const VALID_STATUSES = ['Pending', 'Approved', 'Rejected'];
+  if (!VALID_STATUSES.includes(status)) {
+    const error = new Error("Invalid status.");
+    error.code = "INVALID_STATUS";
+    throw error;
+  }
+
+  if (!confirmedBy || String(confirmedBy).trim() === '') {
+    const error = new Error("confirmedBy is required.");
+    error.code = "CONFIRMED_BY_REQUIRED";
+    throw error;
+  }
+
+  const [result] = await pool.query(
+    `
+      UPDATE incident_reports
+      SET status = ?, confirmedBy = ?, updatedAt = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `,
+    [status, String(confirmedBy).trim(), incidentId]
+  );
+
+  if (result.affectedRows === 0) {
+    const error = new Error("Incident report not found.");
+    error.code = "INCIDENT_NOT_FOUND";
+    throw error;
+  }
+
+  const [updatedRows] = await pool.query(
+    `
+      SELECT
+        id,
+        incidentDate,
+        incidentTime,
+        pointOfIncident,
+        childrenInvolved,
+        description,
+        actionTaken,
+        numberPlate,
+        confirmedBy,
+        status,
+        createdByUserId,
+        createdAt,
+        updatedAt
+      FROM incident_reports
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [incidentId]
+  );
+
+  const incidentReport = mapIncidentReportRow(updatedRows[0]);
+  const uploadsByIncidentReportId = await getIncidentReportUploads({
+    incidentReportIds: [incidentReport.id],
+  });
+
+  return {
+    ...incidentReport,
+    uploads: uploadsByIncidentReportId.get(incidentReport.id) || [],
+  };
+};
+
+const listAllIncidentReports = async ({ pageSize = 50, pageNumber = 1 } = {}) => {
+  await ensureIncidentTables();
+
+  const offset = (pageNumber - 1) * pageSize;
+
+  const [rows] = await pool.query(
+    `
+      SELECT
+        id,
+        incidentDate,
+        incidentTime,
+        pointOfIncident,
+        childrenInvolved,
+        description,
+        actionTaken,
+        numberPlate,
+        confirmedBy,
+        status,
+        createdByUserId,
+        createdAt,
+        updatedAt
+      FROM incident_reports
+      ORDER BY incidentDate DESC, incidentTime DESC, id DESC
+      LIMIT ? OFFSET ?
+    `,
+    [pageSize, offset]
+  );
+
+  const incidentReports = rows.map(mapIncidentReportRow);
+  const uploadsByIncidentReportId = await getIncidentReportUploads({
+    incidentReportIds: incidentReports.map((report) => report.id),
+  });
+
+  return incidentReports.map((report) => ({
+    ...report,
+    uploads: uploadsByIncidentReportId.get(report.id) || [],
+  }));
+};
+
 module.exports = {
   ensureIncidentTables,
   createIncidentReport,
   listIncidentReportsByUser,
+  updateIncidentStatus,
+  listAllIncidentReports,
 };

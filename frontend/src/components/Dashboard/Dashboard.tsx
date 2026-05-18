@@ -9,9 +9,8 @@ import ParentDashboard, { parentDashboardConfig } from './ParentDashboard/Parent
 import SchoolAdminDashboard, {
     schoolAdminDashboardConfig,
 } from './SchoolAdminDashboard/SchoolAdminDashboard'
-import TransportManagerDashboard, {
-    transportManagerDashboardConfig,
-} from './TransportManagerDashboard/TransportManagerDashboard'
+import TransportManagerDashboard from './TransportManagerDashboard/TransportManagerDashboard'
+import { transportManagerDashboardConfig } from './TransportManagerDashboard/transportManagerDashboard.config'
 import type { DashboardRoleConfig } from './dashboard.types'
 import './Dashboard.css'
 

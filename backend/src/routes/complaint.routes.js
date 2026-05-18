@@ -3,6 +3,8 @@ const {
   createReport,
   getFormMeta,
   getReports,
+  updateStatus,
+  getAllReports,
 } = require("../controllers/complaint.controller.js");
 const {
   authenticate,
@@ -18,17 +20,26 @@ const {
 
 const router = express.Router();
 
-router.use(authenticate, authorizeRoles("Driver", "Bus Assistant"));
-
-router.get("/meta", getFormMeta);
-router.get("/reports", getReports);
+// Driver and Bus Assistant endpoints
+router.use(authenticate);
+router.get("/meta", authorizeRoles("Driver", "Bus Assistant"), getFormMeta);
+router.get("/reports", authorizeRoles("Driver", "Bus Assistant"), getReports);
 
 router.post(
   "/reports",
+  authorizeRoles("Driver", "Bus Assistant"),
   uploadComplaintAttachment,
   createComplaintReportValidator,
   validate,
   createReport
+);
+
+// Transport Manager and School Admin endpoints
+router.get("/all/reports", authorizeRoles("Transport Manager", "School Admin"), getAllReports);
+router.patch(
+  "/reports/:id/status",
+  authorizeRoles("Transport Manager", "School Admin"),
+  updateStatus
 );
 
 module.exports = router;

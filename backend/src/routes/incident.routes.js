@@ -2,6 +2,8 @@ const express = require("express");
 const {
   createReport,
   getReports,
+  updateStatus,
+  getAllReports,
 } = require("../controllers/incident.controller.js");
 const {
   authenticate,
@@ -15,16 +17,25 @@ const {
 
 const router = express.Router();
 
-router.use(authenticate, authorizeRoles("Driver", "Bus Assistant"));
-
-router.get("/reports", getReports);
+// Driver and Bus Assistant endpoints
+router.use(authenticate);
+router.get("/reports", authorizeRoles("Driver", "Bus Assistant"), getReports);
 
 router.post(
   "/reports",
+  authorizeRoles("Driver", "Bus Assistant"),
   uploadIncidentImages,
   createIncidentReportValidator,
   validate,
   createReport
+);
+
+// Transport Manager and School Admin endpoints
+router.get("/all/reports", authorizeRoles("Transport Manager", "School Admin"), getAllReports);
+router.patch(
+  "/reports/:id/status",
+  authorizeRoles("Transport Manager", "School Admin"),
+  updateStatus
 );
 
 module.exports = router;

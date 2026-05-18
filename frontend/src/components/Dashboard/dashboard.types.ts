@@ -1,6 +1,7 @@
 export type NavigationItem = {
     id: string
     label: string
+    children?: NavigationItem[]
 }
 
 export type RoleSection = {

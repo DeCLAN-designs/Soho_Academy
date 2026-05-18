@@ -1,4 +1,4 @@
-const { body, validationResult } = require("express-validator");
+const { body, param, validationResult } = require("express-validator");
 
 const REQUEST_TYPES = Object.freeze([
   "Fuel",
@@ -16,6 +16,13 @@ const REQUEST_CATEGORIES = Object.freeze([
   "Insurance",
   "RSL",
   "Inspection / Speed Governors",
+]);
+
+const REQUEST_STATUSES = Object.freeze([
+  "Pending",
+  "Approved",
+  "Rejected",
+  "Completed",
 ]);
 
 const normalizeNumberPlate = (value) =>
@@ -123,6 +130,24 @@ const createFuelMaintenanceRequestValidator = [
     .withMessage("confirmedBy is too long."),
 ];
 
+const updateFuelMaintenanceRequestValidator = createFuelMaintenanceRequestValidator;
+
+const updateFuelMaintenanceStatusValidator = [
+  body("status")
+    .exists({ checkFalsy: true })
+    .withMessage("status is required.")
+    .bail()
+    .isIn(REQUEST_STATUSES)
+    .withMessage(`status must be one of: ${REQUEST_STATUSES.join(", ")}.`),
+];
+
+const fuelMaintenanceRequestIdValidator = [
+  param("id")
+    .isInt({ min: 1 })
+    .withMessage("id must be a positive integer.")
+    .toInt(),
+];
+
 const validate = (req, res, next) => {
   const result = validationResult(req);
 
@@ -143,6 +168,10 @@ const validate = (req, res, next) => {
 module.exports = {
   REQUEST_TYPES,
   REQUEST_CATEGORIES,
+  REQUEST_STATUSES,
   createFuelMaintenanceRequestValidator,
+  fuelMaintenanceRequestIdValidator,
+  updateFuelMaintenanceRequestValidator,
+  updateFuelMaintenanceStatusValidator,
   validate,
 };
