@@ -1,6 +1,8 @@
 const {
   createFuelMaintenanceRequest,
   listFuelMaintenanceRequestsByUser,
+  listAllFuelMaintenanceRequests,
+  confirmFuelMaintenanceRequest,
 } = require("../services/fuelMaintenance.service.js");
 
 const createRequest = async (req, res) => {
@@ -87,7 +89,93 @@ const getRequests = async (req, res) => {
   }
 };
 
+const getAllRequests = async (req, res) => {
+  try {
+    const { status, numberPlate, limit = 100, offset = 0 } = req.query;
+
+    const requests = await listAllFuelMaintenanceRequests({
+      status: status || null,
+      numberPlate: numberPlate || null,
+      limit: Math.min(Number(limit), 200),
+      offset: Number(offset),
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "All fuel and maintenance requests retrieved successfully.",
+      data: {
+        requests,
+      },
+    });
+  } catch (error) {
+    console.error("Get all fuel and maintenance requests error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch fuel and maintenance requests.",
+    });
+  }
+};
+
+const confirmRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { confirmationStatus = "CONFIRMED" } = req.body;
+
+    if (!requestId) {
+      return res.status(400).json({
+        success: false,
+        message: "requestId is required.",
+      });
+    }
+
+    const updatedRequest = await confirmFuelMaintenanceRequest({
+      requestId: Number(requestId),
+      confirmedByUserId: Number(req.user.sub),
+      confirmationStatus: String(confirmationStatus).toUpperCase(),
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Fuel and maintenance request ${confirmationStatus.toLowerCase()} successfully.`,
+      data: {
+        request: updatedRequest,
+      },
+    });
+  } catch (error) {
+    if (error.code === "REQUEST_NOT_FOUND") {
+      return res.status(404).json({
+        success: false,
+        message: "Fuel and maintenance request not found.",
+      });
+    }
+
+    if (error.code === "INVALID_CONFIRMATION_STATUS") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid confirmation status. Use CONFIRMED or REJECTED.",
+      });
+    }
+
+    if (error.code === "UNAUTHORIZED_CONFIRMATION") {
+      return res.status(403).json({
+        success: false,
+        message: "Only Transport Managers can confirm requests.",
+      });
+    }
+
+    console.error("Confirm fuel and maintenance request error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to confirm fuel and maintenance request.",
+    });
+  }
+};
+
 module.exports = {
   createRequest,
   getRequests,
+  getAllRequests,
+  confirmRequest,
 };

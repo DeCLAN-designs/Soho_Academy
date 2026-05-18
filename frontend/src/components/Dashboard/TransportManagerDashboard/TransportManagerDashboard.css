@@ -1,0 +1,363 @@
+.transportManagerDashboard {
+    display: grid;
+    gap: 2rem;
+    padding: 1rem;
+}
+
+.dashboardCards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.dashboardCard {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboardCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dashboardCard.metric {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.dashboardCard h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    opacity: 0.95;
+}
+
+.metricValue {
+    margin: 0.5rem 0;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+.metricLabel {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.dashboardCard.error {
+    background: linear-gradient(135deg, #f93b1d 0%, #ea1e63 100%);
+    padding: 1.5rem;
+    border-left: 4px solid #ff1744;
+}
+
+.dashboardCard.success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    padding: 1.5rem;
+    border-left: 4px solid #4caf50;
+}
+
+.statsList {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0 0;
+    text-align: left;
+}
+
+.statsList li {
+    padding: 0.5rem 0;
+    font-size: 0.95rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.statsList li:last-child {
+    border-bottom: none;
+}
+
+/* Fuel Maintenance Section */
+.fuelMaintenanceSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.requestsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.requestsList h3,
+.confirmedRequestsList h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.25rem;
+}
+
+.emptyState {
+    padding: 2rem;
+    text-align: center;
+    background: #f5f5f5;
+    border-radius: 0.5rem;
+    color: #666;
+}
+
+.requestsTable {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.requestCard {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.requestCard:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.requestCard.selected {
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+.requestHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #eee;
+}
+
+.requestHeader strong {
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.requestType {
+    display: inline-block;
+    background: #667eea;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.requestBody {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.requestBody p {
+    margin: 0.5rem 0;
+}
+
+.requestBody strong {
+    color: #333;
+}
+
+.date {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 0.75rem;
+}
+
+/* Confirmation Panel */
+.confirmationPanel {
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.confirmationPanel h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.25rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formGroup label {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.formGroup select,
+.formGroup input {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 0.375rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+.formGroup select:focus,
+.formGroup input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.formGroup select:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.requestDetails {
+    background: #f9f9f9;
+    padding: 1rem;
+    border-radius: 0.375rem;
+}
+
+.requestDetails h4 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-size: 1rem;
+}
+
+.requestDetails p {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.requestDetails strong {
+    color: #333;
+}
+
+.submitButton {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.875rem 1.5rem;
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.submitButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.submitButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Confirmed Requests List */
+.confirmedRequestsList {
+    grid-column: 1 / -1;
+}
+
+.confirmedRequestsList h3 {
+    margin: 0 0 1rem 0;
+}
+
+.confirmed {
+    background: #4caf50;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Coming Soon Section */
+.comingSoonSection {
+    grid-column: 1 / -1;
+}
+
+.comingSoonSection .dashboardCard {
+    background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%);
+    color: #666;
+}
+
+.comingSoonSection h3 {
+    margin-top: 0;
+}
+
+.comingSoonSection ul {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.comingSoonSection li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.comingSoon {
+    text-align: center;
+    font-style: italic;
+    color: #999;
+    margin: 1rem 0 0 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .fuelMaintenanceSection {
+        grid-template-columns: 1fr;
+    }
+
+    .requestsTable {
+        max-height: 400px;
+    }
+
+    .dashboardCards {
+        grid-template-columns: 1fr;
+    }
+
+    .metricValue {
+        font-size: 2rem;
+    }
+}
+
+/* Scrollbar styling */
+.requestsTable::-webkit-scrollbar {
+    width: 8px;
+}
+
+.requestsTable::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.requestsTable::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+.requestsTable::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
+}
