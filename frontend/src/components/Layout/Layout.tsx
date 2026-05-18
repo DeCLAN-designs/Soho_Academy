@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { busAssistantDashboardConfig } from '../Dashboard/BusAssistantDashboard/BusAssistantDashboard'
-import { transportManagerDashboardConfig } from '../Dashboard/TransportManagerDashboard/TransportManagerDashboard'
 import { driverDashboardConfig } from '../Dashboard/DriverDashboard/DriverDashboard'
 import { parentDashboardConfig } from '../Dashboard/ParentDashboard/ParentDashboard'
 import { schoolAdminDashboardConfig } from '../Dashboard/SchoolAdminDashboard/SchoolAdminDashboard'
@@ -26,7 +25,6 @@ const ROLE_CONFIG_MAP: Record<string, DashboardRoleConfig> = {
   Parent: parentDashboardConfig,
   Driver: driverDashboardConfig,
   'Bus Assistant': busAssistantDashboardConfig,
-  'Transport Manager': transportManagerDashboardConfig,
   'School Admin': schoolAdminDashboardConfig,
 }
 

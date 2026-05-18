@@ -9,9 +9,6 @@ import ParentDashboard, { parentDashboardConfig } from './ParentDashboard/Parent
 import SchoolAdminDashboard, {
     schoolAdminDashboardConfig,
 } from './SchoolAdminDashboard/SchoolAdminDashboard'
-import TransportManagerDashboard, {
-    transportManagerDashboardConfig,
-} from './TransportManagerDashboard/TransportManagerDashboard'
 import type { DashboardRoleConfig } from './dashboard.types'
 import './Dashboard.css'
 
@@ -76,10 +73,6 @@ const ROLE_DASHBOARD_MAP: Record<string, RoleDashboardEntry> = {
     'Bus Assistant': {
         config: busAssistantDashboardConfig,
         Component: BusAssistantDashboard,
-    },
-    'Transport Manager': {
-        config: transportManagerDashboardConfig,
-        Component: TransportManagerDashboard,
     },
     'School Admin': {
         config: schoolAdminDashboardConfig,
