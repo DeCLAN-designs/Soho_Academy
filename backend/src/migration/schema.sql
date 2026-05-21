@@ -28,6 +28,30 @@ CREATE TABLE number_plates (
     CONSTRAINT uq_plate_number UNIQUE (plate_number)
 );
 
+CREATE TABLE vehicle_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    plate_number VARCHAR(20) NOT NULL,
+    model VARCHAR(255) NULL,
+    type ENUM('School Bus', 'Mini Van', 'Coaster') NULL,
+    year INT NULL,
+    capacity INT NULL,
+    color VARCHAR(100) NULL,
+    fuelType ENUM('Diesel', 'Petrol', 'Electric') NULL,
+    status ENUM('Active', 'Maintenance', 'Inactive') NULL,
+    assignedDriver VARCHAR(255) NULL,
+    assignedAssistant VARCHAR(255) NULL,
+    assignedRoute VARCHAR(255) NULL,
+    lastService VARCHAR(50) NULL,
+    mileage INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uq_vehicle_details_plate UNIQUE (plate_number),
+    CONSTRAINT fk_vehicle_details_plate
+        FOREIGN KEY (plate_number) REFERENCES number_plates(plate_number)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
 CREATE TABLE fuel_maintenance_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
     requestDate DATE NOT NULL,

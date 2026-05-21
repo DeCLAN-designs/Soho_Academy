@@ -1,0 +1,12 @@
+export { default as DashboardTab } from './Dashboard'
+export { default as FleetTab } from './Fleet'
+export { default as RoutesTab } from './Routes'
+export { default as StudentsTab } from './Students'
+export { default as StaffTab } from './Staff'
+export { default as SafetyIncidentsTab } from './SafetyIncidents'
+export { default as RequestsTab } from './Requests'
+export { default as CommunicationTab } from './Communication'
+export { default as ReportsTab } from './Reports'
+export { default as AuditLogsTab } from './AuditLogs'
+export { default as SettingsTab } from './Settings'
+

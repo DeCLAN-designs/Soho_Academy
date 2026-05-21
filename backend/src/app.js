@@ -12,6 +12,7 @@ const {
 const authRoutes = require("./routes/auth.routes.js");
 const complianceDocumentRoutes = require("./routes/complianceDocument.routes.js");
 const complaintRoutes = require("./routes/complaint.routes.js");
+const fleetRoutes = require("./routes/fleet.routes.js");
 const fuelMaintenanceRoutes = require("./routes/fuelMaintenance.routes.js");
 const incidentRoutes = require("./routes/incident.routes.js");
 const parentRoutes = require("./routes/parent.routes.js");
@@ -68,6 +69,7 @@ app.use("/api", (_req, res, next) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api", fleetRoutes);
 app.use("/api/compliance-documents", complianceDocumentRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/fuel-maintenance", fuelMaintenanceRoutes);
