@@ -37,6 +37,26 @@ const getStoredValue = (key: string) => {
   return window.localStorage.getItem(key)?.trim() || ''
 }
 
+// Parse JWT token expiry without verification
+const getTokenExpiry = (token: string): number | null => {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    
+    const decoded = JSON.parse(atob(parts[1]))
+    return decoded.exp ? decoded.exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
+// Check if token has expired
+const isTokenExpired = (token: string): boolean => {
+  const expiry = getTokenExpiry(token)
+  if (!expiry) return true
+  return Date.now() >= expiry
+}
+
 interface AuthProviderProps {
   children: ReactNode
 }
@@ -87,7 +107,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const numberPlate = getStoredValue(AUTH_NUMBER_PLATE_KEY)
     const profilePhotoUrl = getStoredValue(AUTH_PROFILE_PHOTO_URL_KEY)
 
-    if (token) {
+    // Check if token exists and hasn't expired
+    if (token && !isTokenExpired(token)) {
       setUser({
         token,
         firstName,
@@ -98,6 +119,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       })
       setIsAuthenticated(true)
     } else {
+      // Clear expired token
+      if (token && isTokenExpired(token)) {
+        persistUser(null)
+      }
       setUser(null)
       setIsAuthenticated(false)
     }
@@ -171,6 +196,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext)
   if (context === undefined) {

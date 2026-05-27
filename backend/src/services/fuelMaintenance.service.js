@@ -489,6 +489,46 @@ const listFuelMaintenanceRequests = async ({ userId, role }) => {
   return rows.map(mapFuelMaintenanceRow);
 };
 
+const listFuelMaintenanceRequestsByStatus = async ({ status }) => {
+  await ensureFuelMaintenanceTables();
+
+  const normalizedStatus = String(status || "").trim();
+
+  if (!REQUEST_STATUSES.includes(normalizedStatus)) {
+    const invalidStatusError = new Error("Invalid request status.");
+    invalidStatusError.code = "INVALID_REQUEST_STATUS";
+    throw invalidStatusError;
+  }
+
+  const [rows] = await pool.query(
+    `
+      SELECT
+        id,
+        requestDate,
+        requestTime,
+        numberPlate,
+        currentMileage,
+        requestType,
+        requestedBy,
+        category,
+        description,
+        amount,
+        confirmedBy,
+        status,
+        createdByUserId,
+        createdAt,
+        updatedAt
+      FROM fuel_maintenance_requests
+      WHERE status = ?
+      ORDER BY requestDate DESC, requestTime DESC, id DESC
+      LIMIT 500
+    `,
+    [normalizedStatus]
+  );
+
+  return rows.map(mapFuelMaintenanceRow);
+};
+
 const getFuelMaintenanceRequestById = async ({ requestId, userId, role }) => {
   await ensureFuelMaintenanceTables();
 
@@ -633,6 +673,7 @@ module.exports = {
   deleteFuelMaintenanceRequest,
   getFuelMaintenanceRequestById,
   listFuelMaintenanceRequests,
+  listFuelMaintenanceRequestsByStatus,
   listFuelMaintenanceRequestsByUser,
   updateFuelMaintenanceRequest,
   updateFuelMaintenanceRequestStatus,

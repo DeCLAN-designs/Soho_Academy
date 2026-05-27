@@ -3,6 +3,7 @@ const {
   deleteFuelMaintenanceRequest,
   getFuelMaintenanceRequestById,
   listFuelMaintenanceRequests,
+  listFuelMaintenanceRequestsByStatus,
   updateFuelMaintenanceRequest,
   updateFuelMaintenanceRequestStatus,
 } = require("../services/fuelMaintenance.service.js");
@@ -127,6 +128,28 @@ const getRequests = async (req, res) => {
   }
 };
 
+const getRequestsByStatus = async (req, res) => {
+  try {
+    const requests = await listFuelMaintenanceRequestsByStatus({
+      status: req.params.status,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Fuel and maintenance requests retrieved successfully.",
+      data: {
+        requests,
+      },
+    });
+  } catch (error) {
+    return handleRequestError(
+      res,
+      error,
+      "Failed to fetch fuel and maintenance requests."
+    );
+  }
+};
+
 const getRequest = async (req, res) => {
   try {
     const request = await getFuelMaintenanceRequestById({
@@ -230,6 +253,7 @@ module.exports = {
   deleteRequest,
   getRequest,
   getRequests,
+  getRequestsByStatus,
   updateRequest,
   updateRequestStatus,
 };

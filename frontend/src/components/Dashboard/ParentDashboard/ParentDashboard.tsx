@@ -9,6 +9,7 @@ type ParentDashboardProps = {
     activeSection: string
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const parentDashboardConfig: DashboardRoleConfig = {
     title: 'Parent Dashboard',
     subtitle: 'Monitor your child transport schedule and updates.',

@@ -49,6 +49,7 @@ const initialMasterForm = {
     admissionDate: '',
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const schoolAdminDashboardConfig: DashboardRoleConfig = {
     title: 'School Admin Dashboard',
     subtitle: 'Manage student admissions, records, and lifecycle changes.',
@@ -143,7 +144,7 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
     const [withdrawalForm, setWithdrawalForm] = useState(initialWithdrawalForm)
     const [masterForm, setMasterForm] = useState(initialMasterForm)
 
-    const students = dashboardData?.students || []
+    const students = useMemo(() => dashboardData?.students || [], [dashboardData?.students])
     const activeStudents = dashboardData?.admissions || []
     const withdrawnStudents = dashboardData?.withdrawals || []
     const parentContactChanges = dashboardData?.parentContactChanges || []

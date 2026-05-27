@@ -253,6 +253,33 @@ const listUsersByRole = async ({ role }) => {
   }));
 };
 
+const listVehicleDetails = async () => {
+  await ensureFleetTables();
+
+  const [rows] = await pool.query(
+    `
+      SELECT
+        plate_number AS plateNumber,
+        model,
+        type,
+        year,
+        capacity,
+        color,
+        fuelType,
+        status,
+        assignedDriver,
+        assignedAssistant,
+        assignedRoute,
+        lastService,
+        mileage
+      FROM vehicle_details
+      ORDER BY plate_number ASC
+    `
+  );
+
+  return rows;
+};
+
 const getVehicleDetails = async ({ plateNumber }) => {
   await ensureFleetTables();
 
@@ -381,6 +408,7 @@ module.exports = {
   getVehicleDetails,
   listNumberPlates,
   listUsersByRole,
+  listVehicleDetails,
   updateNumberPlateStatus,
   updateVehicleDetails,
 };

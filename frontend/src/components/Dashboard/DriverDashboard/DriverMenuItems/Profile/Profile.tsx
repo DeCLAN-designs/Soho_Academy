@@ -103,6 +103,7 @@ const DriverProfileMenuItem = () => {
 
     useEffect(() => {
         void loadProfile(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {

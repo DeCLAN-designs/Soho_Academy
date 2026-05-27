@@ -35,6 +35,7 @@ const BusAssistantDashboard = ({ activeSection }: BusAssistantDashboardProps) =>
     )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const busAssistantDashboardConfig: DashboardRoleConfig = {
     title: 'Bus Assistant Dashboard',
     subtitle: 'Handle student boarding and safety support.',

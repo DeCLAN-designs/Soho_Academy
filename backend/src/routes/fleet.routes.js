@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   getActiveNumberPlates,
+  getAllVehicleDetails,
   getNumberPlates,
   getUsersByRole,
   getVehicleDetailsByPlate,
@@ -20,6 +21,8 @@ router.delete("/number-plates/:id", removeNumberPlate);
 
 router.get("/users/role/:role", getUsersByRole);
 
+router.get("/vehicle-details", getAllVehicleDetails);
+router.get("/vehicle-details/:plateNumber", getVehicleDetailsByPlate);
 router.get("/vehicles/:plateNumber", getVehicleDetailsByPlate);
 router.put("/vehicles/:plateNumber", putVehicleDetailsByPlate);
 

@@ -13,6 +13,7 @@ type DriverDashboardProps = {
     activeSection: string
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const driverDashboardConfig: DashboardRoleConfig = {
     title: 'Driver Dashboard',
     subtitle: 'Run assigned routes, attendance, compliance, and incidents.',

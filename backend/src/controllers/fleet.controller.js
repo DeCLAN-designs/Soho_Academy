@@ -4,6 +4,7 @@ const {
   getVehicleDetails,
   listNumberPlates,
   listUsersByRole,
+  listVehicleDetails,
   updateNumberPlateStatus,
   updateVehicleDetails,
 } = require("../services/fleet.service.js");
@@ -115,6 +116,16 @@ const getVehicleDetailsByPlate = async (req, res) => {
   }
 };
 
+const getAllVehicleDetails = async (_req, res) => {
+  try {
+    const vehicleDetails = await listVehicleDetails();
+
+    return res.status(200).json(vehicleDetails);
+  } catch (error) {
+    return handleFleetError(res, error, "Failed to fetch vehicle details.");
+  }
+};
+
 const putVehicleDetailsByPlate = async (req, res) => {
   try {
     const vehicleDetails = await updateVehicleDetails({
@@ -130,6 +141,7 @@ const putVehicleDetailsByPlate = async (req, res) => {
 
 module.exports = {
   getActiveNumberPlates,
+  getAllVehicleDetails,
   getNumberPlates,
   getUsersByRole,
   getVehicleDetailsByPlate,

@@ -622,7 +622,7 @@ export const authApi = {
   updateProfile: (payload: FormData) =>
     patchFormData<{ user: AuthenticatedUserRecord }>("/auth/profile", payload),
   logout: () =>
-    post<{}, {}>("/auth/logout", {}),
+    post<Record<string, never>, Record<string, never>>("/auth/logout", {}),
 };
 
 export const studentApi = {
