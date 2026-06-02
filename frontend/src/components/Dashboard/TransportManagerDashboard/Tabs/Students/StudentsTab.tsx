@@ -1,21 +1,21 @@
-import type { DashboardRoleConfig } from '../../../dashboard.types'
+import type { RoleSection } from '../../../dashboard.types'
 import './StudentsTab.css'
+import { Assignments } from './Tabs'
+import { STUDENTS_SUB_TABS, isStudentsSubTab } from './studentsSubTabs'
 
 interface StudentsTabProps {
-    section: DashboardRoleConfig['sections']['students']
+    section: RoleSection
+    activeSection: string
 }
 
-const StudentsTab = ({ section }: StudentsTabProps) => {
+const StudentsTab = ({ section, activeSection }: StudentsTabProps) => {
+    const activeSubTab = isStudentsSubTab(activeSection) ? activeSection : 'assignments'
+    const ActiveComponent = STUDENTS_SUB_TABS.find((tab) => tab.id === activeSubTab)?.component || Assignments
+
     return (
         <div className="tabContent">
-            <h2>{section.heading}</h2>
-            <p>{section.description}</p>
-            <div className="dashboardCards">
-                {section.cards.map((card) => (
-                    <article key={card} className="dashboardCard">
-                        <p>{card}</p>
-                    </article>
-                ))}
+            <div className="subTabContent">
+                <ActiveComponent section={section} />
             </div>
         </div>
     )

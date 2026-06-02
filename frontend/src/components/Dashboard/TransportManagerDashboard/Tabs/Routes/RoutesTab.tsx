@@ -1,21 +1,21 @@
-import type { DashboardRoleConfig } from '../../../dashboard.types'
+import type { RoleSection } from '../../../dashboard.types'
 import './RoutesTab.css'
+import { RoutePlanning } from './Tabs'
+import { ROUTES_SUB_TABS, isRoutesSubTab } from './routesSubTabs'
 
 interface RoutesTabProps {
-    section: DashboardRoleConfig['sections']['routes']
+    section: RoleSection
+    activeSection: string
 }
 
-const RoutesTab = ({ section }: RoutesTabProps) => {
+const RoutesTab = ({ section, activeSection }: RoutesTabProps) => {
+    const activeSubTab = isRoutesSubTab(activeSection) ? activeSection : 'route-planning'
+    const ActiveComponent = ROUTES_SUB_TABS.find((tab) => tab.id === activeSubTab)?.component || RoutePlanning
+
     return (
         <div className="tabContent">
-            <h2>{section.heading}</h2>
-            <p>{section.description}</p>
-            <div className="dashboardCards">
-                {section.cards.map((card) => (
-                    <article key={card} className="dashboardCard">
-                        <p>{card}</p>
-                    </article>
-                ))}
+            <div className="subTabContent">
+                <ActiveComponent section={section} />
             </div>
         </div>
     )

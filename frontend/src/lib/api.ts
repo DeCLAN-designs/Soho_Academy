@@ -298,6 +298,45 @@ export type AuthenticatedUserRecord = {
   profilePhotoUrl: string | null;
 };
 
+export type RouteStatus = "Active" | "Inactive" | "Draft";
+
+export type RouteRecord = {
+  id: number;
+  routeId: string;
+  routeName: string;
+  description: string | null;
+  vehiclePlate: string | null;
+  vehicleModel: string | null;
+  assignedDriver: string | null;
+  assignedAssistant: string | null;
+  totalStops: number;
+  status: RouteStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type RoutePayload = {
+  routeId?: string;
+  routeName: string;
+  description?: string | null;
+  vehiclePlate?: string | null;
+  vehicleModel?: string | null;
+  assignedDriver?: string | null;
+  assignedAssistant?: string | null;
+  totalStops?: number;
+  status?: RouteStatus;
+};
+
+export type UserRecord = AuthenticatedUserRecord;
+
+export type NumberPlateRecord = {
+  id: number;
+  plate_number: string;
+  status: "active" | "inactive";
+  created_at: string;
+  updated_at: string;
+};
+
 const toUrl = (path: string) => {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${API_BASE_URL}${normalizedPath}`;
@@ -561,6 +600,38 @@ const get = async <TResponse>(path: string): Promise<ApiEnvelope<TResponse>> => 
   return parsedPayload as ApiEnvelope<TResponse>;
 };
 
+const getRaw = async <TResponse>(path: string): Promise<TResponse> => {
+  const response = await fetch(toUrl(path), {
+    method: "GET",
+    headers: buildHeaders(false),
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  const parsedPayload = await parsePayload(response);
+
+  if (!response.ok) {
+    const errorPayload =
+      parsedPayload && typeof parsedPayload === "object"
+        ? (parsedPayload as ErrorEnvelope)
+        : null;
+    const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+    const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
+    const message =
+      firstValidationMessage ||
+      readMessage(parsedPayload) ||
+      `Request failed with status ${response.status}.`;
+
+    throw new ApiError(message, response.status, errors);
+  }
+
+  if (parsedPayload === null || typeof parsedPayload !== "object") {
+    throw new Error("Invalid response from server.");
+  }
+
+  return parsedPayload as TResponse;
+};
+
 const del = async <TResponse>(path: string): Promise<ApiEnvelope<TResponse>> => {
   const response = await fetch(toUrl(path), {
     method: "DELETE",
@@ -623,6 +694,38 @@ export const authApi = {
     patchFormData<{ user: AuthenticatedUserRecord }>("/auth/profile", payload),
   logout: () =>
     post<Record<string, never>, Record<string, never>>("/auth/logout", {}),
+};
+
+export const fleetApi = {
+  getNumberPlates: () => getRaw<NumberPlateRecord[]>("/number-plates"),
+  getActiveNumberPlates: () => getRaw<NumberPlateRecord[]>("/number-plates/active"),
+};
+
+export const routeApi = {
+  getRoutes: () => get<{ routes: RouteRecord[] }>("/routes"),
+  createRoute: (payload: RoutePayload) =>
+    post<RoutePayload, { route: RouteRecord }>("/routes", payload),
+  updateRoute: (
+    routeId: number,
+    payload: Partial<RoutePayload>
+  ) => put<Partial<RoutePayload>, { route: RouteRecord }>(
+    `/routes/${routeId}`,
+    payload
+  ),
+  updateRouteStatus: (routeId: number, status: RouteStatus) =>
+    patch<{ status: RouteStatus }, { route: RouteRecord }>(
+      `/routes/${routeId}/status`,
+      { status }
+    ),
+  deleteRoute: (routeId: number) =>
+    del<Record<string, never>>(`/routes/${routeId}`),
+};
+
+export const usersApi = {
+  getUsers: (role?: string) =>
+    get<{ users: UserRecord[] }>(
+      role ? `/users?role=${encodeURIComponent(role)}` : "/users"
+    ),
 };
 
 export const studentApi = {

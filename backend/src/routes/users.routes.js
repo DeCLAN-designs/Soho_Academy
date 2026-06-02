@@ -1,9 +1,11 @@
 const express = require("express");
 const { me } = require("../controllers/auth.controller.js");
+const { getUsers } = require("../controllers/users.controller.js");
 const { authenticate } = require("../middlewares/auth.middleware.js");
 
 const router = express.Router();
 
+router.get("/", getUsers);
 router.get(
   "/me",
   authenticate,

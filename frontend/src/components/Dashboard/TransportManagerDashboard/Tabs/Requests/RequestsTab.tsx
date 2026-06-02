@@ -1,21 +1,21 @@
-import type { DashboardRoleConfig } from '../../../dashboard.types'
+import type { RoleSection } from '../../../dashboard.types'
 import './RequestsTab.css'
+import { FuelRequests } from './Tabs'
+import { REQUESTS_SUB_TABS, isRequestsSubTab } from './requestsSubTabs'
 
 interface RequestsTabProps {
-    section: DashboardRoleConfig['sections']['requests']
+    section: RoleSection
+    activeSection: string
 }
 
-const RequestsTab = ({ section }: RequestsTabProps) => {
+const RequestsTab = ({ section, activeSection }: RequestsTabProps) => {
+    const activeSubTab = isRequestsSubTab(activeSection) ? activeSection : 'fuel-requests'
+    const ActiveComponent = REQUESTS_SUB_TABS.find((tab) => tab.id === activeSubTab)?.component || FuelRequests
+
     return (
         <div className="tabContent">
-            <h2>{section.heading}</h2>
-            <p>{section.description}</p>
-            <div className="dashboardCards">
-                {section.cards.map((card) => (
-                    <article key={card} className="dashboardCard">
-                        <p>{card}</p>
-                    </article>
-                ))}
+            <div className="subTabContent">
+                <ActiveComponent section={section} />
             </div>
         </div>
     )

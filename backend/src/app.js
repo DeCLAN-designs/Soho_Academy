@@ -17,6 +17,7 @@ const fuelMaintenanceRoutes = require("./routes/fuelMaintenance.routes.js");
 const fuelRequestsRoutes = require("./routes/fuelRequests.routes.js");
 const incidentRoutes = require("./routes/incident.routes.js");
 const parentRoutes = require("./routes/parent.routes.js");
+const routeRoutes = require("./routes/routes.routes.js");
 const studentRoutes = require("./routes/student.routes.js");
 const usersRoutes = require("./routes/users.routes.js");
 
@@ -78,6 +79,7 @@ app.use("/api/fuel-maintenance", fuelMaintenanceRoutes);
 app.use("/api/fuel-requests", fuelRequestsRoutes);
 app.use("/api/incidents", incidentRoutes);
 app.use("/api/parent", parentRoutes);
+app.use("/api", routeRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/users", usersRoutes);
 
