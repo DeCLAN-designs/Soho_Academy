@@ -930,30 +930,36 @@ const RPSelect: React.FC<{
   error?: string;
   required?: boolean;
   valueMap?: Record<string, string>;
-}> = ({ label, value, onChange, options, error, required, valueMap }) => (
-  <div className="rp-form-field">
-    <label className="rp-form-label">
-      {label}
-      {required && <span className="rp-required">*</span>}
-    </label>
-    <select
-      className={`rp-form-select${error ? ' rp-form-input--error' : ''}`}
-      value={value}
-      onChange={e => {
-        const raw = e.target.value;
-        onChange(valueMap ? (valueMap[raw] ?? raw) : raw);
-      }}
-    >
-      <option value="">Select {label}</option>
-      {options.map(o => (
-        <option key={o} value={o}>
-          {o}
-        </option>
-      ))}
-    </select>
-    {error && <span className="rp-form-error">{error}</span>}
-  </div>
-);
+}> = ({ label, value, onChange, options, error, required, valueMap }) => {
+  const resolvedValue = valueMap
+    ? Object.entries(valueMap).find(([, actualValue]) => actualValue === value)?.[0] ?? value
+    : value;
+
+  return (
+    <div className="rp-form-field">
+      <label className="rp-form-label">
+        {label}
+        {required && <span className="rp-required">*</span>}
+      </label>
+      <select
+        className={`rp-form-select${error ? ' rp-form-input--error' : ''}`}
+        value={resolvedValue}
+        onChange={e => {
+          const raw = e.target.value;
+          onChange(valueMap ? (valueMap[raw] ?? raw) : raw);
+        }}
+      >
+        <option value="">Select {label}</option>
+        {options.map(o => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+      {error && <span className="rp-form-error">{error}</span>}
+    </div>
+  );
+};
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 

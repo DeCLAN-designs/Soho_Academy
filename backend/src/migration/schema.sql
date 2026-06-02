@@ -644,9 +644,12 @@ CREATE TRIGGER before_insert_routes
 BEFORE INSERT ON routes
 FOR EACH ROW
 BEGIN
-    DECLARE next_id INT;
+    DECLARE next_id DECIMAL(30,0);
     IF NEW.route_id IS NULL OR NEW.route_id = '' THEN
-        SELECT COALESCE(MAX(CAST(SUBSTRING(route_id, 4) AS UNSIGNED)), 0) + 1 INTO next_id FROM routes;
+        SELECT COALESCE(MAX(CAST(SUBSTRING(route_id, 4) AS DECIMAL(30,0))), 0) + 1
+        INTO next_id
+        FROM routes
+        WHERE route_id REGEXP '^RT-[0-9]+$';
         SET NEW.route_id = CONCAT('RT-', LPAD(next_id, 3, '0'));
     END IF;
 END$$

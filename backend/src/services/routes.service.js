@@ -9,18 +9,34 @@ const ensureRoutesTable = () => {
     ensureRoutesTablesPromise = pool.query(`
       CREATE TABLE IF NOT EXISTS routes (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        route_id VARCHAR(50) NOT NULL,
-        route_name VARCHAR(255) NOT NULL,
-        description TEXT NULL,
-        vehicle_plate VARCHAR(20) NULL,
-        vehicle_model VARCHAR(255) NULL,
-        assigned_driver VARCHAR(255) NULL,
-        assigned_assistant VARCHAR(255) NULL,
-        total_stops INT DEFAULT 0,
+        route_id VARCHAR(20) NOT NULL,
+        route_name VARCHAR(200) NOT NULL,
+        description TEXT NOT NULL,
         status ENUM('Active', 'Inactive', 'Draft') NOT NULL DEFAULT 'Draft',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        CONSTRAINT uq_route_id UNIQUE (route_id)
+        total_stops INT NOT NULL DEFAULT 0,
+        vehicle_plate VARCHAR(20) NOT NULL,
+        vehicle_model VARCHAR(100) DEFAULT NULL,
+        assigned_driver VARCHAR(100) NOT NULL,
+        assigned_assistant VARCHAR(100) NOT NULL,
+        driver_id INT DEFAULT NULL,
+        assistant_id INT DEFAULT NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by_user_id INT DEFAULT NULL,
+        deleted_at TIMESTAMP NULL DEFAULT NULL,
+        UNIQUE KEY uq_route_id (route_id),
+        KEY idx_routes_status (status),
+        KEY idx_routes_route_id (route_id),
+        KEY idx_routes_vehicle_plate (vehicle_plate),
+        KEY idx_routes_assigned_driver (assigned_driver),
+        KEY idx_routes_deleted (deleted_at),
+        KEY fk_routes_driver (driver_id),
+        KEY fk_routes_assistant (assistant_id),
+        KEY fk_routes_created_by (created_by_user_id),
+        CONSTRAINT fk_routes_driver FOREIGN KEY (driver_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+        CONSTRAINT fk_routes_assistant FOREIGN KEY (assistant_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+        CONSTRAINT fk_routes_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+        CONSTRAINT fk_routes_vehicle_plate FOREIGN KEY (vehicle_plate) REFERENCES number_plates(plate_number) ON UPDATE CASCADE
       )
     `);
   }
@@ -79,14 +95,14 @@ const createRoute = async ({ payload }) => {
     throw error;
   }
 
-  const routeId = normalizeRouteId(payload.routeId) || `RT-${Date.now()}`;
+  const routeId = normalizeRouteId(payload.routeId || "") || null;
   const normalizedPayload = {
     route_name: routeName,
-    description: payload.description || null,
-    vehicle_plate: payload.vehiclePlate || null,
-    vehicle_model: payload.vehicleModel || null,
-    assigned_driver: payload.assignedDriver || null,
-    assigned_assistant: payload.assignedAssistant || null,
+    description: payload.description || "",
+    vehicle_plate: payload.vehiclePlate || "",
+    vehicle_model: payload.vehicleModel || "",
+    assigned_driver: payload.assignedDriver || "",
+    assigned_assistant: payload.assignedAssistant || "",
     total_stops: Number(payload.totalStops ?? 0),
     status: ROUTE_STATUSES.has(payload.status) ? payload.status : "Draft",
   };
@@ -177,27 +193,27 @@ const updateRoute = async ({ id, payload }) => {
 
   if (payload.description !== undefined) {
     fields.push("description = ?");
-    values.push(payload.description || null);
+    values.push(payload.description || "");
   }
 
   if (payload.vehiclePlate !== undefined) {
     fields.push("vehicle_plate = ?");
-    values.push(payload.vehiclePlate || null);
+    values.push(payload.vehiclePlate || "");
   }
 
   if (payload.vehicleModel !== undefined) {
     fields.push("vehicle_model = ?");
-    values.push(payload.vehicleModel || null);
+    values.push(payload.vehicleModel || "");
   }
 
   if (payload.assignedDriver !== undefined) {
     fields.push("assigned_driver = ?");
-    values.push(payload.assignedDriver || null);
+    values.push(payload.assignedDriver || "");
   }
 
   if (payload.assignedAssistant !== undefined) {
     fields.push("assigned_assistant = ?");
-    values.push(payload.assignedAssistant || null);
+    values.push(payload.assignedAssistant || "");
   }
 
   if (payload.totalStops !== undefined) {
