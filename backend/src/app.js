@@ -4,6 +4,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const rateLimit = require("express-rate-limit");
 
 const authRoutes = require("./routes/auth.routes.js");
 const complianceDocumentRoutes = require("./routes/complianceDocument.routes.js");
@@ -39,8 +40,10 @@ app.use(
   })
 );
 
-// Logging
-app.use(morgan("dev"));
+// Logging — only enable in non-production environments
+if (process.env.NODE_ENV !== "production") {
+  app.use(morgan("dev"));
+}
 
 // Body parsing
 app.use(express.json({ limit: "10kb" }));
@@ -54,7 +57,21 @@ app.use("/api", (_req, res, next) => {
   next();
 });
 
+// Rate limiting for authentication endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many requests from this IP, please try again after 15 minutes.",
+  },
+});
+
 // Routes
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/compliance-documents", complianceDocumentRoutes);
 app.use("/api/complaints", complaintRoutes);

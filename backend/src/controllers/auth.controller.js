@@ -46,7 +46,7 @@ const refreshTokenMaxAge = parseExpiryToMs(
 const refreshCookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: "lax",
+  sameSite: "strict",
   path: "/api/auth",
   maxAge: refreshTokenMaxAge,
 };
@@ -172,8 +172,6 @@ const login = async (req, res) => {
         numberPlate: user.numberPlate || null,
         profilePhotoUrl: user.profilePhotoUrl || null,
         token: user.accessToken,
-        accessToken: user.accessToken,
-        refreshToken: user.refreshToken,
       },
     });
   } catch (error) {
@@ -220,8 +218,6 @@ const refresh = async (req, res) => {
         numberPlate: session.numberPlate || null,
         profilePhotoUrl: session.profilePhotoUrl || null,
         token: session.accessToken,
-        accessToken: session.accessToken,
-        refreshToken: session.refreshToken,
       },
     });
   } catch (error) {

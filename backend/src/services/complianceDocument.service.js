@@ -245,7 +245,7 @@ const createComplianceDocument = async ({
           fileUrl,
           createdByUserId
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         normalized.relatedTo,

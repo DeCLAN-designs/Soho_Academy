@@ -50,7 +50,7 @@ router
     })
   );
 
-router.get("/number-plates", getNumberPlates);
+router.get("/number-plates", authenticate, getNumberPlates);
 router.get("/me", authenticate, me);
 router.patch(
   "/profile",
@@ -60,6 +60,6 @@ router.patch(
   validate,
   updateProfile
 );
-router.post("/logout", logout);
+router.post("/logout", authenticate, logout);
 
 module.exports = router;
