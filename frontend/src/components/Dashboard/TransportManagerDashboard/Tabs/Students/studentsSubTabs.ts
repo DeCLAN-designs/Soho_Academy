@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
 import type { RoleSection } from '../../../dashboard.types'
-import { Assignments, Attendance, ChangeRequests } from './Tabs'
+import { Assignments, StudentAttendance, ChangeRequests } from './Tabs'
 
 export type StudentsSubTabType = 'assignments' | 'attendance' | 'change-requests'
 
@@ -12,7 +12,7 @@ type StudentsSubTab = {
 
 export const STUDENTS_SUB_TABS: StudentsSubTab[] = [
     { id: 'assignments', label: 'Assignments', component: Assignments },
-    { id: 'attendance', label: 'Attendance', component: Attendance },
+    { id: 'attendance', label: 'StudentAttendance', component: StudentAttendance },
     { id: 'change-requests', label: 'Change Requests', component: ChangeRequests },
 ]
 

@@ -84,6 +84,18 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api`;
 
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem('soho_auth_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
 const toNumberPlateStatus = (status: VehicleStatus): NumberPlate['status'] =>
   status === 'Inactive' ? 'inactive' : 'active';
 
@@ -141,7 +153,7 @@ const apiService = {
 
   // Vehicle details (extended info - you may need to create this endpoint)
   getVehicleDetails: async (plateNumber: string): Promise<VehicleDetailsPayload> => {
-    const response = await axios.get(`${API_BASE_URL}/vehicles/${plateNumber}`);
+    const response = await axiosInstance.get(`/vehicles/${encodeURIComponent(plateNumber)}`);
     return response.data;
   },
 
@@ -149,7 +161,7 @@ const apiService = {
     plateNumber: string,
     data: VehicleDetailsPayload,
   ): Promise<VehicleDetailsPayload> => {
-    const response = await axios.put(`${API_BASE_URL}/vehicles/${plateNumber}`, data);
+    const response = await axiosInstance.put(`/vehicles/${encodeURIComponent(plateNumber)}`, data);
     return response.data;
   },
 };

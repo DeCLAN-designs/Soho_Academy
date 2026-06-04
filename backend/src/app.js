@@ -19,7 +19,10 @@ const incidentRoutes = require("./routes/incident.routes.js");
 const parentRoutes = require("./routes/parent.routes.js");
 const routeRoutes = require("./routes/routes.routes.js");
 const stopRoutes = require("./routes/stops.routes.js");
+const studentAssignmentsRoutes = require("./routes/studentAssignments.routes.js");
+const studentAttendanceRoutes = require("./routes/studentAttendance.routes.js");
 const studentRoutes = require("./routes/student.routes.js");
+const tripsRoutes = require("./routes/trips.routes.js");
 const usersRoutes = require("./routes/users.routes.js");
 
 const app = express();
@@ -82,6 +85,9 @@ app.use("/api/incidents", incidentRoutes);
 app.use("/api/parent", parentRoutes);
 app.use("/api", routeRoutes);
 app.use("/api", stopRoutes);
+app.use("/api", studentAssignmentsRoutes);
+app.use("/api", studentAttendanceRoutes);
+app.use("/api", tripsRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/users", usersRoutes);
 

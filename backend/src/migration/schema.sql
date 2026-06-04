@@ -703,3 +703,116 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+CREATE TABLE student_attendance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    -- Trip reference
+    trip_id INT NOT NULL,
+
+    -- Student reference
+    student_id INT NOT NULL,
+
+    -- Stop where student should board/alight
+    stop_id INT NOT NULL,
+
+    -- Trip direction
+    trip_type ENUM('Morning', 'Evening') NOT NULL,
+
+    -- Attendance status
+    boarding_status ENUM('Boarded', 'Absent', 'Missed Pickup', 'Parent Pickup') NOT NULL DEFAULT 'Absent',
+    dropoff_status ENUM('Dropped Off', 'Not Dropped', 'Parent Pickup', 'Pending') NOT NULL DEFAULT 'Pending',
+
+    -- Timestamps of actual events
+    boarded_at DATETIME NULL,
+    dropped_off_at DATETIME NULL,
+
+    -- Who confirmed (bus assistant)
+    confirmed_by_user_id INT NULL,
+
+    -- Notes (e.g. reason for absence, emergency pickup details)
+    notes TEXT NULL,
+
+    -- Date of attendance (for easy daily querying without joining trip_monitoring)
+    attendance_date DATE NOT NULL,
+
+    -- Audit
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    -- Prevent duplicate attendance record per student per trip per direction
+    CONSTRAINT uq_student_trip_type UNIQUE (student_id, trip_id, trip_type),
+
+    -- Indexes
+    INDEX idx_attendance_date (attendance_date),
+    INDEX idx_attendance_student (student_id),
+    INDEX idx_attendance_trip (trip_id),
+    INDEX idx_attendance_stop (stop_id),
+    INDEX idx_attendance_boarding_status (boarding_status),
+    INDEX idx_attendance_dropoff_status (dropoff_status),
+
+    -- Foreign keys
+    CONSTRAINT fk_attendance_trip
+        FOREIGN KEY (trip_id) REFERENCES trip_monitoring(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_attendance_student
+        FOREIGN KEY (student_id) REFERENCES students(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_attendance_stop
+        FOREIGN KEY (stop_id) REFERENCES stops(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_attendance_confirmed_by
+        FOREIGN KEY (confirmed_by_user_id) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+);
+
+DELIMITER $$
+
+CREATE TRIGGER after_insert_trip_create_attendance
+AFTER INSERT ON trip_monitoring
+FOR EACH ROW
+BEGIN
+    -- Auto-create attendance records for all active students on this route
+    INSERT INTO student_attendance (
+        trip_id,
+        student_id,
+        stop_id,
+        trip_type,
+        boarding_status,
+        dropoff_status,
+        attendance_date
+    )
+    SELECT
+        NEW.id,
+        sra.student_id,
+        sra.stop_id,
+        -- Derive trip_type from departure time (Morning before 12:00, Evening after)
+        CASE
+            WHEN TIME(NEW.departure_time) < '12:00:00' THEN 'Morning'
+            ELSE 'Evening'
+        END,
+        'Absent',   -- Default: not yet confirmed
+        'Pending',  -- Default: not yet dropped off
+        DATE(NEW.departure_time)
+    FROM student_route_assignment sra
+    WHERE sra.route_id = NEW.route_id
+      AND sra.status = 'Active'
+      AND (sra.effective_to IS NULL OR sra.effective_to >= DATE(NEW.departure_time))
+      AND sra.effective_from <= DATE(NEW.departure_time)
+      AND (
+          -- Match trip_type to assignment
+          sra.trip_type = 'Both'
+          OR (sra.trip_type = 'Morning' AND TIME(NEW.departure_time) < '12:00:00')
+          OR (sra.trip_type = 'Evening' AND TIME(NEW.departure_time) >= '12:00:00')
+      );
+END$$
+
+DELIMITER ;
+
