@@ -31,7 +31,8 @@ const getStudentAssignments = async (_req, res) => {
 
 const postStudentAssignment = async (req, res) => {
   try {
-    const assignment = await createStudentAssignment({ payload: req.body || {} });
+    const payload = { ...(req.body || {}), assignedByUserId: Number(req.user.sub) };
+    const assignment = await createStudentAssignment({ payload });
     return res.status(201).json({ success: true, message: "Assignment created successfully.", data: { assignment } });
   } catch (error) {
     return handleAssignmentError(res, error, "Failed to create student assignment.");

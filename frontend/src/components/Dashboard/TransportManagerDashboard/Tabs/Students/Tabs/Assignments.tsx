@@ -197,16 +197,22 @@ const Assignments = () => {
         routeName: String(r.routeName || r.route_name || ''),
       }));
 
-      // Normalize stops - ensure routeId is numeric (foreign key to routes.id)
+      // Normalize stops - resolve string route code to numeric route.id
       const rawStops = extractArray<RawStopOption>(stopsRes.data, 'stops');
-      const nextStops: StopOption[] = rawStops.map((s) => ({
-        id: s.id,
-        stopId: String(s.stopId || s.stop_id || ''),
-        stopName: String(s.stopName || s.stop_name || ''),
-        routeId: Number(s.routeId ?? s.route_id ?? 0), // Numeric foreign key
-        routeCode: String(s.routeCode || s.route_code || ''),
-        routeName: String(s.routeName || s.route_name || ''),
-      }));
+      const nextStops: StopOption[] = rawStops.map((s) => {
+        // The stops API returns routeId as the string route code (e.g. "RT-001")
+        // We need the numeric route PK for matching against the route dropdown
+        const stopRouteCode = String(s.routeId || s.route_id || s.routeCode || s.route_code || '');
+        const matchedRoute = nextRoutes.find((r) => r.routeId === stopRouteCode);
+        return {
+          id: s.id,
+          stopId: String(s.stopId || s.stop_id || ''),
+          stopName: String(s.stopName || s.stop_name || ''),
+          routeId: matchedRoute?.id ?? Number(s.route_id ?? 0),
+          routeCode: stopRouteCode,
+          routeName: String(s.routeName || s.route_name || matchedRoute?.routeName || ''),
+        };
+      });
 
       // Normalize assignments
       const rawAssignments = extractArray<RawAssignmentRecord>(assignmentsRes.data, 'assignments');

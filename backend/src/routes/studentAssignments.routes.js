@@ -5,8 +5,15 @@ const {
   patchStudentAssignment,
   postStudentAssignment,
 } = require("../controllers/studentAssignments.controller.js");
+const {
+  authenticate,
+  authorizeRoles,
+} = require("../middlewares/auth.middleware.js");
 
 const router = express.Router();
+
+router.use(authenticate);
+router.use(authorizeRoles("School Admin", "Transport Manager"));
 
 router.get("/student-assignments", getStudentAssignments);
 router.post("/student-assignments", postStudentAssignment);
