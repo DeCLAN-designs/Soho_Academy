@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import "./Assignments.css";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 type StudentOption = {
   id: number;
   admissionNumber: string;
@@ -12,16 +14,18 @@ type StudentOption = {
 };
 
 type RouteOption = {
-  id: number;
-  route_id: string;
-  route_name: string;
+  id: number;           // Database primary key (used internally)
+  routeId: string;      // Display code (RT-001, etc.)
+  routeName: string;
 };
 
 type StopOption = {
-  id: number;
-  stop_id: string;
-  stop_name: string;
-  route_id: number; // This is the route's ID (foreign key to routes.id)
+  id: number;           // Database primary key
+  stopId: string;       // Display code (ST-001, etc.)
+  stopName: string;
+  routeId: number;      // Foreign key to routes.id (numeric)
+  routeCode?: string;   // Optional: RT-001 for display
+  routeName?: string;   // Optional: route name for display
 };
 
 type AssignmentRecord = {
@@ -31,15 +35,79 @@ type AssignmentRecord = {
   admissionNumber: string;
   grade: string;
   stream: string;
-  routeId: number;
+  routeId: number;      // Foreign key to routes.id (numeric)
   routeName: string;
-  stopId: number;
+  stopId: number;       // Foreign key to stops.id (numeric)
   stopName: string;
   tripType: 'Morning' | 'Evening' | 'Both';
   status: 'Active' | 'Inactive' | 'Temporary';
   effectiveFrom: string;
   effectiveTo: string | null;
 };
+
+// Raw types for API responses before normalization
+interface RawStudentOption {
+  id: number;
+  admissionNumber?: string;
+  admission_number?: string;
+  firstName?: string;
+  first_name?: string;
+  lastName?: string;
+  last_name?: string;
+  grade?: string;
+  stream?: string;
+}
+
+interface RawRouteOption {
+  id: number;
+  routeId?: string;
+  route_id?: string;
+  routeName?: string;
+  route_name?: string;
+}
+
+interface RawStopOption {
+  id: number;
+  stopId?: string;
+  stop_id?: string;
+  stopName?: string;
+  stop_name?: string;
+  routeId?: number;
+  route_id?: number;
+  routeCode?: string;
+  route_code?: string;
+  routeName?: string;
+  route_name?: string;
+}
+
+interface RawAssignmentRecord {
+  id: number;
+  studentId?: number;
+  student_id?: number;
+  firstName?: string;
+  first_name?: string;
+  lastName?: string;
+  last_name?: string;
+  studentName?: string;
+  admissionNumber?: string;
+  admission_number?: string;
+  grade?: string;
+  stream?: string;
+  routeId?: number;
+  route_id?: number;
+  routeName?: string;
+  route_name?: string;
+  stopId?: number;
+  stop_id?: number;
+  stopName?: string;
+  stop_name?: string;
+  tripType: 'Morning' | 'Evening' | 'Both';
+  status: 'Active' | 'Inactive' | 'Temporary';
+  effectiveFrom: string;
+  effectiveTo: string | null;
+}
+
+// ─── API Setup ────────────────────────────────────────────────────────────────
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -57,16 +125,27 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
+// ─── Helper Functions ─────────────────────────────────────────────────────────
+
 const extractArray = <T,>(payload: unknown, key?: string): T[] => {
   if (Array.isArray(payload)) return payload as T[];
+
   const response = payload as { data?: unknown; [key: string]: unknown } | undefined;
   if (Array.isArray(response?.data)) return response.data as T[];
   if (key && response?.data && typeof response.data === 'object') {
     const nested = response.data as Record<string, unknown>;
     if (Array.isArray(nested[key])) return nested[key] as T[];
   }
+  
+  const raw = payload as Record<string, unknown>;
+  if (key && raw && typeof raw === 'object' && Array.isArray(raw[key])) {
+    return raw[key] as T[];
+  }
+
   return [];
 };
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 const Assignments = () => {
   const [assignments, setAssignments] = useState<AssignmentRecord[]>([]);
@@ -87,6 +166,8 @@ const Assignments = () => {
     effectiveTo: '',
   });
 
+  // ─── Data Loading ───────────────────────────────────────────────────────────
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -97,15 +178,64 @@ const Assignments = () => {
         axiosInstance.get('/stops'),
       ]);
 
-      const nextAssignments = extractArray<AssignmentRecord>(assignmentsRes.data, 'assignments');
-      const nextStudents = extractArray<StudentOption>(studentsRes.data, 'students');
-      const nextRoutes = extractArray<RouteOption>(routesRes.data, 'routes');
-      const nextStops = extractArray<StopOption>(stopsRes.data, 'stops');
+      // Normalize students
+      const rawStudents = extractArray<RawStudentOption>(studentsRes.data, 'students');
+      const nextStudents: StudentOption[] = rawStudents.map((s) => ({
+        id: s.id,
+        admissionNumber: String(s.admissionNumber || s.admission_number || ''),
+        firstName: String(s.firstName || s.first_name || ''),
+        lastName: String(s.lastName || s.last_name || ''),
+        grade: String(s.grade || ''),
+        stream: String(s.stream || ''),
+      }));
+
+      // Normalize routes - store numeric id for internal use, routeId for display
+      const rawRoutes = extractArray<RawRouteOption>(routesRes.data, 'routes');
+      const nextRoutes: RouteOption[] = rawRoutes.map((r) => ({
+        id: r.id,
+        routeId: String(r.routeId || r.route_id || ''),
+        routeName: String(r.routeName || r.route_name || ''),
+      }));
+
+      // Normalize stops - ensure routeId is numeric (foreign key to routes.id)
+      const rawStops = extractArray<RawStopOption>(stopsRes.data, 'stops');
+      const nextStops: StopOption[] = rawStops.map((s) => ({
+        id: s.id,
+        stopId: String(s.stopId || s.stop_id || ''),
+        stopName: String(s.stopName || s.stop_name || ''),
+        routeId: Number(s.routeId ?? s.route_id ?? 0), // Numeric foreign key
+        routeCode: String(s.routeCode || s.route_code || ''),
+        routeName: String(s.routeName || s.route_name || ''),
+      }));
+
+      // Normalize assignments
+      const rawAssignments = extractArray<RawAssignmentRecord>(assignmentsRes.data, 'assignments');
+      const nextAssignments: AssignmentRecord[] = rawAssignments.map((a) => ({
+        id: a.id,
+        studentId: Number(a.student_id ?? a.studentId),
+        studentName: a.studentName || `${a.firstName || a.first_name || ''} ${a.lastName || a.last_name || ''}`.trim(),
+        admissionNumber: String(a.admissionNumber || a.admission_number || ''),
+        grade: String(a.grade || ''),
+        stream: String(a.stream || ''),
+        routeId: Number(a.route_id ?? a.routeId),
+        routeName: String(a.routeName || a.route_name || ''),
+        stopId: Number(a.stop_id ?? a.stopId),
+        stopName: String(a.stopName || a.stop_name || ''),
+        tripType: a.tripType,
+        status: a.status,
+        effectiveFrom: String(a.effectiveFrom),
+        effectiveTo: a.effectiveTo ?? null,
+      }));
 
       setAssignments(nextAssignments);
       setStudents(nextStudents);
       setRoutes(nextRoutes);
       setStops(nextStops);
+
+      if (nextRoutes.length === 0) {
+        setMessageType('error');
+        setMessage('No routes found. Please create routes first.');
+      }
     } catch (error) {
       console.error(error);
       setMessageType('error');
@@ -125,6 +255,8 @@ const Assignments = () => {
       return () => clearTimeout(timer);
     }
   }, [message]);
+
+  // ─── Handlers ───────────────────────────────────────────────────────────────
 
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -175,11 +307,13 @@ const Assignments = () => {
     }
   };
 
-  // Get stops for selected route (using route.id for comparison)
-  const getStopsForRoute = () => {
+  // Get stops filtered by selected route (using numeric routeId comparison)
+  const getFilteredStops = () => {
     if (!form.routeId) return [];
-    return stops.filter(stop => stop.route_id === Number(form.routeId));
+    return stops.filter((stop) => stop.routeId === Number(form.routeId));
   };
+
+  // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="assignments-container">
@@ -196,6 +330,7 @@ const Assignments = () => {
 
       <form onSubmit={handleCreate} className="assignments-form">
         <div className="assignments-form-grid">
+          {/* Student Dropdown */}
           <div className="assignments-form-field">
             <label className="assignments-form-label">
               Student
@@ -213,8 +348,12 @@ const Assignments = () => {
                 ))}
               </select>
             </label>
+            {students.length === 0 && !loading && (
+              <span className="assignments-form-hint">No students found. Please add students first.</span>
+            )}
           </div>
 
+          {/* Route Dropdown - uses numeric id as value */}
           <div className="assignments-form-field">
             <label className="assignments-form-label">
               Route
@@ -229,13 +368,17 @@ const Assignments = () => {
                 <option value="">Select route</option>
                 {routes.map((route) => (
                   <option key={route.id} value={route.id}>
-                    {route.route_id} · {route.route_name}
+                    {route.routeId} · {route.routeName}
                   </option>
                 ))}
               </select>
             </label>
+            {routes.length === 0 && !loading && (
+              <span className="assignments-form-hint">No routes found. Please create routes first.</span>
+            )}
           </div>
 
+          {/* Stop Dropdown - filters by numeric routeId */}
           <div className="assignments-form-field">
             <label className="assignments-form-label">
               Stop
@@ -247,9 +390,9 @@ const Assignments = () => {
                 disabled={!form.routeId}
               >
                 <option value="">Select stop</option>
-                {getStopsForRoute().map((stop) => (
+                {getFilteredStops().map((stop) => (
                   <option key={stop.id} value={stop.id}>
-                    {stop.stop_id} · {stop.stop_name}
+                    {stop.stopId} · {stop.stopName}
                   </option>
                 ))}
               </select>
@@ -257,8 +400,12 @@ const Assignments = () => {
             {!form.routeId && (
               <span className="assignments-form-hint">Please select a route first</span>
             )}
+            {form.routeId && getFilteredStops().length === 0 && (
+              <span className="assignments-form-hint">No stops found for this route. Please add stops first.</span>
+            )}
           </div>
 
+          {/* Trip Type Dropdown */}
           <div className="assignments-form-field">
             <label className="assignments-form-label">
               Trip Type
@@ -274,6 +421,7 @@ const Assignments = () => {
             </label>
           </div>
 
+          {/* Status Dropdown */}
           <div className="assignments-form-field">
             <label className="assignments-form-label">
               Status
@@ -289,6 +437,7 @@ const Assignments = () => {
             </label>
           </div>
 
+          {/* Effective From Date */}
           <div className="assignments-form-field">
             <label className="assignments-form-label">
               Effective From
@@ -302,6 +451,7 @@ const Assignments = () => {
             </label>
           </div>
 
+          {/* Effective To Date (Optional) */}
           <div className="assignments-form-field">
             <label className="assignments-form-label">
               Effective To (Optional)
@@ -324,6 +474,7 @@ const Assignments = () => {
         </button>
       </form>
 
+      {/* Assignments Table */}
       <div className="assignments-table-container">
         {loading && assignments.length === 0 ? (
           <div className="assignments-loading">Loading assignments...</div>

@@ -390,4 +390,44 @@
     border: 1px solid #ccc;
     color: #000 !important;
   }
+
+/* Add these styles to your existing Assignments.css */
+
+/* Form hint text */
+.assignments-form-hint {
+  font-size: 11px;
+  color: #b45309;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Student and Route info containers */
+.assignments-student-info,
+.assignments-route-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.assignments-student-name,
+.assignments-route-name {
+  font-weight: 600;
+  color: #3f4650;
+}
+
+/* Effective dates container */
+.assignments-effective-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+/* Empty state subtext */
+.assignments-empty-sub {
+  color: #5d636b !important;
+  font-size: 13px !important;
+  font-weight: normal !important;
+  margin-top: 8px !important;
+}
 }
