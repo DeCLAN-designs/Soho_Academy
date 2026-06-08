@@ -1,21 +1,19 @@
-import type { ComponentType } from 'react'
-import type { RoleSection } from '../../../dashboard.types'
-import { Assignments, StudentAttendance, ChangeRequests } from './Tabs'
+// studentsSubTabs.ts
+import { lazy } from 'react';
 
-export type StudentsSubTabType = 'assignments' | 'attendance' | 'change-requests'
+export const STUDENTS_SUB_TABS = [
+    {
+        id: 'assignments',
+        label: 'Assignments',
+        component: lazy(() => import('./Tabs/Assignments'))
+    },
+    {
+        id: 'attendance',
+        label: 'Attendance',
+        component: lazy(() => import('./Tabs/StudentAttendance'))
+    }
+];
 
-type StudentsSubTab = {
-    id: StudentsSubTabType
-    label: string
-    component: ComponentType<{ section: RoleSection }>
-}
-
-export const STUDENTS_SUB_TABS: StudentsSubTab[] = [
-    { id: 'assignments', label: 'Assignments', component: Assignments },
-    { id: 'attendance', label: 'StudentAttendance', component: StudentAttendance },
-    { id: 'change-requests', label: 'Change Requests', component: ChangeRequests },
-]
-
-export const isStudentsSubTab = (sectionId: string): sectionId is StudentsSubTabType => {
-    return STUDENTS_SUB_TABS.some((tab) => tab.id === sectionId)
-}
+export const isStudentsSubTab = (section: string): boolean => {
+    return STUDENTS_SUB_TABS.some(tab => tab.id === section);
+};

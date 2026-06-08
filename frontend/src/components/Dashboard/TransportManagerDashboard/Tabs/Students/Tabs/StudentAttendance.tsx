@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
@@ -103,13 +102,11 @@ axiosInstance.interceptors.response.use(
 
 const normalizeListResponse = <T,>(payload: unknown, key?: string): T[] => {
   if (Array.isArray(payload)) return payload as T[];
-
   const response = payload as { data?: unknown; [key: string]: unknown } | undefined;
   if (Array.isArray(response?.data)) return response.data as T[];
   if (key && response?.data && typeof response.data === 'object' && Array.isArray((response.data as Record<string, unknown>)[key])) {
     return ((response.data as Record<string, unknown>)[key] as T[]);
   }
-
   return [];
 };
 
@@ -297,377 +294,6 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ record, onClose, onSave }) =>
   );
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-
-const StudentAttendance: React.FC<Props> = ({ section }) => {
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
-  const [selectedTripType, setSelectedTripType] = useState<'Morning' | 'Evening'>('Morning');
-  const [trips, setTrips] = useState<TripOption[]>([]);
-  const [selectedTrip, setSelectedTrip] = useState<TripOption | null>(null);
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [tripsLoading, setTripsLoading] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterBoarding, setFilterBoarding] = useState<string>('All');
-  const [filterStop, setFilterStop] = useState<string>('All');
-  const [groupByStop, setGroupByStop] = useState(true);
-  const isMounted = useRef(true);
-  const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
-  const [activeTab, setActiveTab] = useState<'attendance' | 'log'>('attendance');
-
-  // ── Fetch trips for date + type ──────────────────────────────────────────────
-  const fetchTrips = useCallback(async (date: string, tripType: 'Morning' | 'Evening') => {
-    setTripsLoading(true);
-    setApiError(null);
-    try {
-      const data = await apiService.getTrips(date, tripType);
-      setTrips(data);
-      if (data.length > 0 && (!selectedTrip || selectedTrip.trip_type !== tripType)) {
-        if (!isMounted.current) return;
-        setSelectedTrip(data[0]);
-      } else if (data.length === 0) {
-        setSelectedTrip(null);
-        setAttendance([]);
-      }
-    } catch (err) {
-      if (isApiError(err)) {
-        if (!isMounted.current) return;
-        setApiError(err.response?.data?.message || 'Failed to load trips');
-      } else {
-        if (!isMounted.current) return;
-        setApiError('Network error. Please check your connection.');
-      }
-      console.error('Fetch trips error:', err);
-      setTrips([]);
-      setSelectedTrip(null);
-    } finally {
-      setTripsLoading(false);
-    }
-  }, [selectedTrip]);
-
-  // ── Fetch attendance for selected trip ───────────────────────────────────────
-  const fetchAttendance = useCallback(async (tripId: number) => {
-    setLoading(true);
-    setApiError(null);
-    try {
-      const data = await apiService.getAttendance(tripId);
-      setAttendance(data);
-    } catch (err) {
-      if (isApiError(err)) {
-        if (!isMounted.current) return;
-        setApiError(err.response?.data?.message || 'Failed to load attendance');
-      } else {
-        if (!isMounted.current) return;
-        setApiError('Failed to load attendance records');
-      }
-      console.error('Fetch attendance error:', err);
-      setAttendance([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    isMounted.current = true;
-    fetchTrips(selectedDate, selectedTripType);
-    return () => {
-      isMounted.current = false;
-    };
-  }, [selectedDate, selectedTripType, fetchTrips]);
-
-  useEffect(() => {
-    if (selectedTrip) {
-      fetchAttendance(selectedTrip.id);
-    } else {
-      setAttendance([]);
-    }
-  }, [selectedTrip, fetchAttendance]);
-
-  // ── Update handler ───────────────────────────────────────────────────────────
-  const handleUpdate = async (id: number, payload: UpdatePayload) => {
-    try {
-      const updated = await apiService.updateAttendance(id, payload);
-      setAttendance(prev => prev.map(r => r.id === id ? updated : r));
-    } catch (err) {
-      console.error('Update error:', err);
-      throw err;
-    }
-  };
-
-  // ── Filtered records ─────────────────────────────────────────────────────────
-  const stops = Array.from(new Set(attendance.map(r => r.stop_name)));
-
-  const filtered = attendance.filter(r => {
-    const q = searchQuery.toLowerCase();
-    const matchSearch = !q || r.student_name.toLowerCase().includes(q) || r.admission_number.toLowerCase().includes(q);
-    const matchBoarding = filterBoarding === 'All' || r.boarding_status === filterBoarding;
-    const matchStop = filterStop === 'All' || r.stop_name === filterStop;
-    return matchSearch && matchBoarding && matchStop;
-  });
-
-  // ── Group by stop ────────────────────────────────────────────────────────────
-  const grouped: Record<string, AttendanceRecord[]> = {};
-  if (groupByStop) {
-    filtered.forEach(r => {
-      if (!grouped[r.stop_name]) grouped[r.stop_name] = [];
-      grouped[r.stop_name].push(r);
-    });
-  }
-
-  const summary = computeSummary(attendance);
-  const boardingPct = summary.total ? Math.round((summary.boarded / summary.total) * 100) : 0;
-
-  return (
-    <div className="sa-root">
-      {/* ── Page Header ── */}
-      <div className="sa-page-header">
-        <div>
-          <h1 className="sa-page-title">{section.heading}</h1>
-          <p className="sa-page-desc">{section.description}</p>
-        </div>
-      </div>
-
-      {/* ── Error Banner ── */}
-      {apiError && (
-        <div className="sa-error-banner">
-          {apiError}
-          <button className="sa-error-dismiss" onClick={() => setApiError(null)}>✕</button>
-        </div>
-      )}
-
-      {/* ── Filters Bar ── */}
-      <div className="sa-filters-bar">
-        <div className="sa-filters-left">
-          <div className="sa-field-group">
-            <label className="sa-field-label">Date</label>
-            <input
-              type="date"
-              className="sa-input"
-              value={selectedDate}
-              onChange={e => setSelectedDate(e.target.value)}
-            />
-          </div>
-          <div className="sa-field-group">
-            <label className="sa-field-label">Trip</label>
-            <div className="sa-toggle-group">
-              {(['Morning', 'Evening'] as const).map(t => (
-                <button
-                  key={t}
-                  className={`sa-toggle-btn${selectedTripType === t ? ' sa-toggle-btn--active' : ''}`}
-                  onClick={() => setSelectedTripType(t)}
-                >
-                  {t === 'Morning' ? (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                      <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                    </svg>
-                  ) : (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                  )}
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="sa-filters-right">
-          <span className="sa-date-display">{formatDate(selectedDate)}</span>
-        </div>
-      </div>
-
-      {/* ── Trip Selector ── */}
-      <div className="sa-section">
-        <h2 className="sa-section-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="1" y="3" width="15" height="13" rx="1" /><path d="M16 8h4l3 3v5h-7V8z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" />
-          </svg>
-          Select Route / Trip
-        </h2>
-        {tripsLoading ? (
-          <div className="sa-loading">Loading trips...</div>
-        ) : trips.length === 0 ? (
-          <EmptyState message="No trips found" sub={`No ${selectedTripType.toLowerCase()} trips scheduled for ${formatDate(selectedDate)}`} />
-        ) : (
-          <div className="sa-trip-grid">
-            {trips.map(trip => (
-              <button
-                key={trip.id}
-                className={`sa-trip-card${selectedTrip?.id === trip.id ? ' sa-trip-card--active' : ''}`}
-                onClick={() => setSelectedTrip(trip)}
-              >
-                <div className="sa-trip-card__top">
-                  <span className="sa-trip-card__id">{trip.trip_id}</span>
-                  <TripStatusBadge status={trip.status} />
-                </div>
-                <div className="sa-trip-card__name">{trip.route_name}</div>
-                <div className="sa-trip-card__meta">
-                  <span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="1" y="3" width="15" height="13" rx="1" /><path d="M16 8h4l3 3v5h-7V8z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" />
-                    </svg>
-                    {trip.vehicle_plate}
-                  </span>
-                  <span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-                    </svg>
-                    {trip.driver_name}
-                  </span>
-                  <span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                    </svg>
-                    {formatTime(trip.departure_time)}
-                  </span>
-                </div>
-                <div className="sa-trip-card__progress">
-                  <div className="sa-progress-bar">
-                    <div
-                      className="sa-progress-bar__fill"
-                      style={{ width: `${trip.total_stops ? (trip.stops_completed / trip.total_stops) * 100 : 0}%` }}
-                    />
-                  </div>
-                  <span className="sa-trip-card__progress-text">{trip.stops_completed}/{trip.total_stops} stops</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Attendance Section ── */}
-      {selectedTrip && (
-        <>
-          {/* Summary Cards */}
-          <div className="sa-summary-row">
-            <div className="sa-stat-card">
-              <span className="sa-stat-card__value">{summary.total}</span>
-              <span className="sa-stat-card__label">Total Students</span>
-            </div>
-            <div className="sa-stat-card sa-stat-card--green">
-              <span className="sa-stat-card__value">{summary.boarded}</span>
-              <span className="sa-stat-card__label">Boarded</span>
-            </div>
-            <div className="sa-stat-card sa-stat-card--red">
-              <span className="sa-stat-card__value">{summary.absent}</span>
-              <span className="sa-stat-card__label">Absent</span>
-            </div>
-            <div className="sa-stat-card sa-stat-card--orange">
-              <span className="sa-stat-card__value">{summary.missed_pickup}</span>
-              <span className="sa-stat-card__label">Missed Pickup</span>
-            </div>
-            <div className="sa-stat-card sa-stat-card--purple">
-              <span className="sa-stat-card__value">{summary.parent_pickup}</span>
-              <span className="sa-stat-card__label">Parent Pickup</span>
-            </div>
-            <div className="sa-stat-card sa-stat-card--blue">
-              <span className="sa-stat-card__value">{boardingPct}%</span>
-              <span className="sa-stat-card__label">Boarding Rate</span>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="sa-tabs">
-            <button
-              className={`sa-tab${activeTab === 'attendance' ? ' sa-tab--active' : ''}`}
-              onClick={() => setActiveTab('attendance')}
-            >
-              Attendance Register
-            </button>
-            <button
-              className={`sa-tab${activeTab === 'log' ? ' sa-tab--active' : ''}`}
-              onClick={() => setActiveTab('log')}
-            >
-              Missed / Absent Log
-            </button>
-          </div>
-
-          {activeTab === 'attendance' && (
-            <div className="sa-section">
-              {/* Table controls */}
-              <div className="sa-table-controls">
-                <div className="sa-search-wrap">
-                  <svg className="sa-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                  <input
-                    className="sa-search-input"
-                    placeholder="Search student name or admission no..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <select className="sa-select" value={filterBoarding} onChange={e => setFilterBoarding(e.target.value)}>
-                  <option value="All">All Statuses</option>
-                  <option value="Boarded">Boarded</option>
-                  <option value="Absent">Absent</option>
-                  <option value="Missed Pickup">Missed Pickup</option>
-                  <option value="Parent Pickup">Parent Pickup</option>
-                </select>
-                <select className="sa-select" value={filterStop} onChange={e => setFilterStop(e.target.value)}>
-                  <option value="All">All Stops</option>
-                  {stops.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <button
-                  className={`sa-btn sa-btn--ghost sa-btn--sm${groupByStop ? ' sa-btn--active' : ''}`}
-                  onClick={() => setGroupByStop(v => !v)}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
-                    <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
-                  </svg>
-                  Group by Stop
-                </button>
-              </div>
-
-              {loading ? (
-                <div className="sa-loading">Loading attendance records...</div>
-              ) : filtered.length === 0 ? (
-                <EmptyState message="No records found" sub="Try adjusting your filters" />
-              ) : groupByStop ? (
-                Object.entries(grouped).map(([stopName, records]) => (
-                  <div key={stopName} className="sa-stop-group">
-                    <div className="sa-stop-group__header">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-                      </svg>
-                      <span>{stopName}</span>
-                      <span className="sa-stop-group__count">{records.length} student{records.length !== 1 ? 's' : ''}</span>
-                    </div>
-                    <AttendanceTable records={records} onEdit={setEditingRecord} />
-                  </div>
-                ))
-              ) : (
-                <AttendanceTable records={filtered} onEdit={setEditingRecord} />
-              )}
-            </div>
-          )}
-
-          {activeTab === 'log' && (
-            <div className="sa-section">
-              <MissedLog records={attendance.filter(r => r.boarding_status === 'Absent' || r.boarding_status === 'Missed Pickup')} />
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ── Edit Modal ── */}
-      {editingRecord && (
-        <UpdateModal
-          record={editingRecord}
-          onClose={() => setEditingRecord(null)}
-          onSave={handleUpdate}
-        />
-      )}
-    </div>
-  );
-};
-
 // ─── Attendance Table ─────────────────────────────────────────────────────────
 
 interface TableProps {
@@ -757,6 +383,378 @@ const MissedLog: React.FC<{ records: AttendanceRecord[] }> = ({ records }) => {
           </div>
         </div>
       ))}
+    </div>
+  );
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+const StudentAttendance: React.FC<Props> = ({ section }) => {
+  const [isFirstPaint, setIsFirstPaint] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [selectedTripType, setSelectedTripType] = useState<'Morning' | 'Evening'>('Morning');
+  const [trips, setTrips] = useState<TripOption[]>([]);
+  const [selectedTrip, setSelectedTrip] = useState<TripOption | null>(null);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [tripsLoading, setTripsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterBoarding, setFilterBoarding] = useState<string>('All');
+  const [filterStop, setFilterStop] = useState<string>('All');
+  const [groupByStop, setGroupByStop] = useState(true);
+  const isMounted = useRef(true);
+  const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
+  const [activeTab, setActiveTab] = useState<'attendance' | 'log'>('attendance');
+
+  // LCP Optimization: Defer data fetching until after first paint
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      setIsFirstPaint(false);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // ── FIXED: Fetch trips with functional update (no selectedTrip dependency) ──
+  const fetchTrips = useCallback(async (date: string, tripType: 'Morning' | 'Evening') => {
+    if (!isMounted.current) return;
+    setTripsLoading(true);
+    setApiError(null);
+    try {
+      const data = await apiService.getTrips(date, tripType);
+      if (!isMounted.current) return;
+      setTrips(data);
+      
+      // Use functional update to avoid selectedTrip dependency
+      setSelectedTrip(current => {
+        if (data.length > 0 && (!current || current.trip_type !== tripType)) {
+          return data[0];
+        }
+        if (data.length === 0) return null;
+        return current;
+      });
+      
+      if (data.length === 0) setAttendance([]);
+    } catch (err) {
+      if (!isMounted.current) return;
+      setApiError(isApiError(err)
+        ? err.response?.data?.message || 'Failed to load trips'
+        : 'Network error. Please check your connection.');
+      setTrips([]);
+      setSelectedTrip(null);
+    } finally {
+      if (isMounted.current) setTripsLoading(false);
+    }
+  }, []); // ← Stable! No dependencies
+
+  // ── Fetch attendance for selected trip ───────────────────────────────────────
+  const fetchAttendance = useCallback(async (tripId: number) => {
+    if (!isMounted.current) return;
+    setLoading(true);
+    setApiError(null);
+    try {
+      const data = await apiService.getAttendance(tripId);
+      if (!isMounted.current) return;
+      setAttendance(data);
+    } catch (err) {
+      if (isMounted.current) {
+        setApiError(isApiError(err)
+          ? err.response?.data?.message || 'Failed to load attendance'
+          : 'Failed to load attendance records');
+      }
+      console.error('Fetch attendance error:', err);
+      setAttendance([]);
+    } finally {
+      if (isMounted.current) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    isMounted.current = true;
+    fetchTrips(selectedDate, selectedTripType);
+    return () => {
+      isMounted.current = false;
+    };
+  }, [selectedDate, selectedTripType, fetchTrips]); // fetchTrips is now stable
+
+  useEffect(() => {
+    if (selectedTrip) {
+      fetchAttendance(selectedTrip.id);
+    } else {
+      setAttendance([]);
+    }
+  }, [selectedTrip, fetchAttendance]);
+
+  // ── Update handler ───────────────────────────────────────────────────────────
+  const handleUpdate = async (id: number, payload: UpdatePayload) => {
+    try {
+      const updated = await apiService.updateAttendance(id, payload);
+      setAttendance(prev => prev.map(r => r.id === id ? updated : r));
+    } catch (err) {
+      console.error('Update error:', err);
+      throw err;
+    }
+  };
+
+  // ── Filtered records ─────────────────────────────────────────────────────────
+  const stops = Array.from(new Set(attendance.map(r => r.stop_name)));
+
+  const filtered = attendance.filter(r => {
+    const q = searchQuery.toLowerCase();
+    const matchSearch = !q || r.student_name.toLowerCase().includes(q) || r.admission_number.toLowerCase().includes(q);
+    const matchBoarding = filterBoarding === 'All' || r.boarding_status === filterBoarding;
+    const matchStop = filterStop === 'All' || r.stop_name === filterStop;
+    return matchSearch && matchBoarding && matchStop;
+  });
+
+  // ── Group by stop ────────────────────────────────────────────────────────────
+  const grouped: Record<string, AttendanceRecord[]> = {};
+  if (groupByStop) {
+    filtered.forEach(r => {
+      if (!grouped[r.stop_name]) grouped[r.stop_name] = [];
+      grouped[r.stop_name].push(r);
+    });
+  }
+
+  const summary = computeSummary(attendance);
+  const boardingPct = summary.total ? Math.round((summary.boarded / summary.total) * 100) : 0;
+
+  return (
+    <div className="sa-root">
+      {/* ── Page Header - Paints immediately (becomes LCP) ── */}
+      <div className="sa-page-header">
+        <div>
+          <h1 className="sa-page-title">{section.heading}</h1>
+          <p className="sa-page-desc">{section.description}</p>
+        </div>
+      </div>
+
+      {/* ── Defer everything else until after first paint for LCP optimization ── */}
+      {!isFirstPaint && (
+        <>
+          {/* Error Banner */}
+          {apiError && (
+            <div className="sa-error-banner">
+              {apiError}
+              <button className="sa-error-dismiss" onClick={() => setApiError(null)}>✕</button>
+            </div>
+          )}
+
+          {/* Filters Bar */}
+          <div className="sa-filters-bar">
+            <div className="sa-filters-left">
+              <div className="sa-field-group">
+                <label className="sa-field-label">Date</label>
+                <input
+                  type="date"
+                  className="sa-input"
+                  value={selectedDate}
+                  onChange={e => setSelectedDate(e.target.value)}
+                />
+              </div>
+              <div className="sa-field-group">
+                <label className="sa-field-label">Trip</label>
+                <div className="sa-toggle-group">
+                  {(['Morning', 'Evening'] as const).map(t => (
+                    <button
+                      key={t}
+                      className={`sa-toggle-btn${selectedTripType === t ? ' sa-toggle-btn--active' : ''}`}
+                      onClick={() => setSelectedTripType(t)}
+                    >
+                      {t === 'Morning' ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                          <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                        </svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                        </svg>
+                      )}
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="sa-filters-right">
+              <span className="sa-date-display">{formatDate(selectedDate)}</span>
+            </div>
+          </div>
+
+          {/* Trip Selector */}
+          <div className="sa-section">
+            <h2 className="sa-section-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="1" y="3" width="15" height="13" rx="1" /><path d="M16 8h4l3 3v5h-7V8z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" />
+              </svg>
+              Select Route / Trip
+            </h2>
+            {tripsLoading ? (
+              <div className="sa-loading">Loading trips...</div>
+            ) : trips.length === 0 ? (
+              <EmptyState message="No trips found" sub={`No ${selectedTripType.toLowerCase()} trips scheduled for ${formatDate(selectedDate)}`} />
+            ) : (
+              <div className="sa-trip-grid">
+                {trips.map(trip => (
+                  <button
+                    key={trip.id}
+                    className={`sa-trip-card${selectedTrip?.id === trip.id ? ' sa-trip-card--active' : ''}`}
+                    onClick={() => setSelectedTrip(trip)}
+                  >
+                    <div className="sa-trip-card__top">
+                      <span className="sa-trip-card__id">{trip.trip_id}</span>
+                      <TripStatusBadge status={trip.status} />
+                    </div>
+                    <div className="sa-trip-card__name">{trip.route_name}</div>
+                    <div className="sa-trip-card__meta">
+                      <span>{trip.vehicle_plate}</span>
+                      <span>{trip.driver_name}</span>
+                      <span>{formatTime(trip.departure_time)}</span>
+                    </div>
+                    <div className="sa-trip-card__progress">
+                      <div className="sa-progress-bar">
+                        <div
+                          className="sa-progress-bar__fill"
+                          style={{ width: `${trip.total_stops ? (trip.stops_completed / trip.total_stops) * 100 : 0}%` }}
+                        />
+                      </div>
+                      <span className="sa-trip-card__progress-text">{trip.stops_completed}/{trip.total_stops} stops</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Attendance Section */}
+          {selectedTrip && (
+            <>
+              {/* Summary Cards */}
+              <div className="sa-summary-row">
+                <div className="sa-stat-card">
+                  <span className="sa-stat-card__value">{summary.total}</span>
+                  <span className="sa-stat-card__label">Total Students</span>
+                </div>
+                <div className="sa-stat-card sa-stat-card--green">
+                  <span className="sa-stat-card__value">{summary.boarded}</span>
+                  <span className="sa-stat-card__label">Boarded</span>
+                </div>
+                <div className="sa-stat-card sa-stat-card--red">
+                  <span className="sa-stat-card__value">{summary.absent}</span>
+                  <span className="sa-stat-card__label">Absent</span>
+                </div>
+                <div className="sa-stat-card sa-stat-card--orange">
+                  <span className="sa-stat-card__value">{summary.missed_pickup}</span>
+                  <span className="sa-stat-card__label">Missed Pickup</span>
+                </div>
+                <div className="sa-stat-card sa-stat-card--purple">
+                  <span className="sa-stat-card__value">{summary.parent_pickup}</span>
+                  <span className="sa-stat-card__label">Parent Pickup</span>
+                </div>
+                <div className="sa-stat-card sa-stat-card--blue">
+                  <span className="sa-stat-card__value">{boardingPct}%</span>
+                  <span className="sa-stat-card__label">Boarding Rate</span>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div className="sa-tabs">
+                <button
+                  className={`sa-tab${activeTab === 'attendance' ? ' sa-tab--active' : ''}`}
+                  onClick={() => setActiveTab('attendance')}
+                >
+                  Attendance Register
+                </button>
+                <button
+                  className={`sa-tab${activeTab === 'log' ? ' sa-tab--active' : ''}`}
+                  onClick={() => setActiveTab('log')}
+                >
+                  Missed / Absent Log
+                </button>
+              </div>
+
+              {activeTab === 'attendance' && (
+                <div className="sa-section">
+                  {/* Table controls */}
+                  <div className="sa-table-controls">
+                    <div className="sa-search-wrap">
+                      <svg className="sa-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                      <input
+                        className="sa-search-input"
+                        placeholder="Search student name or admission no..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <select className="sa-select" value={filterBoarding} onChange={e => setFilterBoarding(e.target.value)}>
+                      <option value="All">All Statuses</option>
+                      <option value="Boarded">Boarded</option>
+                      <option value="Absent">Absent</option>
+                      <option value="Missed Pickup">Missed Pickup</option>
+                      <option value="Parent Pickup">Parent Pickup</option>
+                    </select>
+                    <select className="sa-select" value={filterStop} onChange={e => setFilterStop(e.target.value)}>
+                      <option value="All">All Stops</option>
+                      {stops.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <button
+                      className={`sa-btn sa-btn--ghost sa-btn--sm${groupByStop ? ' sa-btn--active' : ''}`}
+                      onClick={() => setGroupByStop(v => !v)}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
+                        <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
+                      </svg>
+                      Group by Stop
+                    </button>
+                  </div>
+
+                  {loading ? (
+                    <div className="sa-loading">Loading attendance records...</div>
+                  ) : filtered.length === 0 ? (
+                    <EmptyState message="No records found" sub="Try adjusting your filters" />
+                  ) : groupByStop ? (
+                    Object.entries(grouped).map(([stopName, records]) => (
+                      <div key={stopName} className="sa-stop-group">
+                        <div className="sa-stop-group__header">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+                          </svg>
+                          <span>{stopName}</span>
+                          <span className="sa-stop-group__count">{records.length} student{records.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <AttendanceTable records={records} onEdit={setEditingRecord} />
+                      </div>
+                    ))
+                  ) : (
+                    <AttendanceTable records={filtered} onEdit={setEditingRecord} />
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'log' && (
+                <div className="sa-section">
+                  <MissedLog records={attendance.filter(r => r.boarding_status === 'Absent' || r.boarding_status === 'Missed Pickup')} />
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Edit Modal */}
+          {editingRecord && (
+            <UpdateModal
+              record={editingRecord}
+              onClose={() => setEditingRecord(null)}
+              onSave={handleUpdate}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 };

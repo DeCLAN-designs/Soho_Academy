@@ -1,12 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { busAssistantDashboardConfig } from '../Dashboard/BusAssistantDashboard/BusAssistantDashboard'
-import { transportManagerDashboardConfig } from '../Dashboard/TransportManagerDashboard/transportManagerDashboard.config'
-import { driverDashboardConfig } from '../Dashboard/DriverDashboard/DriverDashboard'
-import { parentDashboardConfig } from '../Dashboard/ParentDashboard/ParentDashboard'
-import { schoolAdminDashboardConfig } from '../Dashboard/SchoolAdminDashboard/SchoolAdminDashboard'
-import type { DashboardRoleConfig } from '../Dashboard/dashboard.types'
+import { ROLE_CONFIG_MAP, FALLBACK_HEADER_CONFIG } from '../Dashboard/DashboardRoleConfigs'
 import DashboardHeader from '../DashboardHeader/DashboardHeader'
 import Loader from '../Loader/Loader'
 import SideBar from '../SideBar/SideBar'
@@ -21,28 +16,6 @@ const ROLE_BASE_PATH: Record<string, string> = {
   'Bus Assistant': 'bus-assistant',
   'Transport Manager': 'transport-manager',
   'School Admin': 'school-admin',
-}
-
-const ROLE_CONFIG_MAP: Record<string, DashboardRoleConfig> = {
-  Parent: parentDashboardConfig,
-  Driver: driverDashboardConfig,
-  'Bus Assistant': busAssistantDashboardConfig,
-  'Transport Manager': transportManagerDashboardConfig,
-  'School Admin': schoolAdminDashboardConfig,
-}
-
-const FALLBACK_HEADER_CONFIG: DashboardRoleConfig = {
-  title: 'Dashboard',
-  subtitle: 'Role not configured yet.',
-  quickActions: ['Help'],
-  navigation: [{ id: 'overview', label: 'Overview' }],
-  sections: {
-    overview: {
-      heading: 'Overview',
-      description: 'No role-specific dashboard setup available for this account.',
-      cards: [],
-    },
-  },
 }
 
 const resolveActiveSection = (role: string, pathname: string) => {

@@ -1,33 +1,39 @@
-import './Loader.css'
+import React from 'react';
+import './Loader.css';
 
-type LoaderVariant = 'page' | 'section' | 'inline'
+type LoaderVariant = 'page' | 'section' | 'inline';
 
-type LoaderProps = {
-    label?: string
-    variant?: LoaderVariant
-    className?: string
+interface LoaderProps {
+    label?: string;
+    variant?: LoaderVariant;
+    className?: string;
 }
 
-const Loader = ({
+const Loader: React.FC<LoaderProps> = ({ 
     label = 'Loading',
     variant = 'inline',
-    className = '',
-}: LoaderProps) => {
+    className = ''
+}) => {
     const classes = ['loaderContainer', `loaderContainer--${variant}`, className]
         .filter(Boolean)
-        .join(' ')
+        .join(' ');
 
     return (
-        <div className={classes} role="status" aria-live="polite" aria-label={`${label}...`}>
-            <div className="loader" aria-hidden="true"></div>
-            <div className="loadingText">
+        <div 
+            className={classes} 
+            role="status" 
+            aria-live="polite" 
+            aria-label={`${label}...`}
+        >
+            <div className="loader" aria-hidden="true" />
+            <div className="loadingText" aria-hidden="true">
                 {label}
                 <span>.</span>
                 <span>.</span>
                 <span>.</span>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default Loader
+export default Loader;
