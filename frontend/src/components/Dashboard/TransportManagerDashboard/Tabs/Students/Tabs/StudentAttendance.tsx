@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
@@ -38,6 +39,12 @@ interface TripOption {
   trip_type: 'Morning' | 'Evening';
   stops_completed: number;
   total_stops: number;
+}
+
+interface RouteOption {
+  id: number;
+  route_id: string;
+  route_name: string;
 }
 
 interface AttendanceSummary {
@@ -111,8 +118,19 @@ const normalizeListResponse = <T,>(payload: unknown, key?: string): T[] => {
 };
 
 const apiService = {
-  getTrips: async (date: string, tripType: 'Morning' | 'Evening'): Promise<TripOption[]> => {
-    const res = await axiosInstance.get('/trips', { params: { date, trip_type: tripType } });
+  getRoutes: async (): Promise<RouteOption[]> => {
+    const res = await axiosInstance.get('/routes');
+    const raw = normalizeListResponse<Record<string, unknown>>(res.data, 'routes');
+    return raw.map(r => ({
+      id: Number(r.id),
+      route_id: String(r.routeId ?? r.route_id ?? ''),
+      route_name: String(r.routeName ?? r.route_name ?? ''),
+    }));
+  },
+  getTrips: async (date: string, tripType: 'Morning' | 'Evening', routeId?: string): Promise<TripOption[]> => {
+    const params: Record<string, string> = { date, trip_type: tripType };
+    if (routeId && routeId !== 'All') params.route_id = routeId;
+    const res = await axiosInstance.get('/trips', { params });
     return normalizeListResponse<TripOption>(res.data, 'trips');
   },
   getAttendance: async (tripId: number): Promise<AttendanceRecord[]> => {
@@ -125,6 +143,16 @@ const apiService = {
     return Array.isArray(data) ? data.find(item => item.id === id) ?? data[0] : data as AttendanceRecord;
   },
 };
+
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+
+const MOCK_ROUTES: RouteOption[] = [
+  { id: 1, route_id: 'RT-001', route_name: 'Westlands Route' },
+  { id: 2, route_id: 'RT-002', route_name: 'Karen Route' },
+  { id: 3, route_id: 'RT-003', route_name: 'Lavington Route' },
+  { id: 4, route_id: 'RT-004', route_name: 'Langata Route' },
+  { id: 5, route_id: 'RT-005', route_name: 'Kilimani Route' },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -393,6 +421,12 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
   const [isFirstPaint, setIsFirstPaint] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [selectedTripType, setSelectedTripType] = useState<'Morning' | 'Evening'>('Morning');
+
+  // ── NEW: Route filter state ───────────────────────────────────────────────
+  const [routes, setRoutes] = useState<RouteOption[]>([]);
+  const [filterRoute, setFilterRoute] = useState<string>('All');
+  const [routesLoading, setRoutesLoading] = useState(false);
+
   const [trips, setTrips] = useState<TripOption[]>([]);
   const [selectedTrip, setSelectedTrip] = useState<TripOption | null>(null);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
@@ -402,6 +436,10 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBoarding, setFilterBoarding] = useState<string>('All');
   const [filterStop, setFilterStop] = useState<string>('All');
+
+  // ── NEW: Grade filter state ───────────────────────────────────────────────
+  const [filterGrade, setFilterGrade] = useState<string>('All');
+
   const [groupByStop, setGroupByStop] = useState(true);
   const isMounted = useRef(true);
   const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
@@ -415,25 +453,36 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // ── FIXED: Fetch trips with functional update (no selectedTrip dependency) ──
-  const fetchTrips = useCallback(async (date: string, tripType: 'Morning' | 'Evening') => {
+  // ── NEW: Fetch routes once on mount ──────────────────────────────────────
+  useEffect(() => {
+    if (isFirstPaint) return;
+    setRoutesLoading(true);
+    apiService.getRoutes()
+      .then(data => {
+        if (isMounted.current) setRoutes(data.length > 0 ? data : MOCK_ROUTES);
+      })
+      .catch(() => {
+        if (isMounted.current) setRoutes(MOCK_ROUTES);
+      })
+      .finally(() => {
+        if (isMounted.current) setRoutesLoading(false);
+      });
+  }, [isFirstPaint]);
+
+  // ── Fetch trips — now includes route filter ───────────────────────────────
+  const fetchTrips = useCallback(async (date: string, tripType: 'Morning' | 'Evening', routeId: string) => {
     if (!isMounted.current) return;
     setTripsLoading(true);
     setApiError(null);
     try {
-      const data = await apiService.getTrips(date, tripType);
+      const data = await apiService.getTrips(date, tripType, routeId !== 'All' ? routeId : undefined);
       if (!isMounted.current) return;
       setTrips(data);
-      
-      // Use functional update to avoid selectedTrip dependency
       setSelectedTrip(current => {
-        if (data.length > 0 && (!current || current.trip_type !== tripType)) {
-          return data[0];
-        }
+        if (data.length > 0 && (!current || current.trip_type !== tripType)) return data[0];
         if (data.length === 0) return null;
         return current;
       });
-      
       if (data.length === 0) setAttendance([]);
     } catch (err) {
       if (!isMounted.current) return;
@@ -445,9 +494,9 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
     } finally {
       if (isMounted.current) setTripsLoading(false);
     }
-  }, []); // ← Stable! No dependencies
+  }, []);
 
-  // ── Fetch attendance for selected trip ───────────────────────────────────────
+  // ── Fetch attendance for selected trip ───────────────────────────────────
   const fetchAttendance = useCallback(async (tripId: number) => {
     if (!isMounted.current) return;
     setLoading(true);
@@ -456,6 +505,8 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
       const data = await apiService.getAttendance(tripId);
       if (!isMounted.current) return;
       setAttendance(data);
+      // Reset grade filter when trip changes (new data may have different grades)
+      setFilterGrade('All');
     } catch (err) {
       if (isMounted.current) {
         setApiError(isApiError(err)
@@ -471,21 +522,24 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
 
   useEffect(() => {
     isMounted.current = true;
-    fetchTrips(selectedDate, selectedTripType);
-    return () => {
-      isMounted.current = false;
-    };
-  }, [selectedDate, selectedTripType, fetchTrips]); // fetchTrips is now stable
+    return () => { isMounted.current = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!isFirstPaint) {
+      void fetchTrips(selectedDate, selectedTripType, filterRoute);
+    }
+  }, [selectedDate, selectedTripType, filterRoute, fetchTrips, isFirstPaint]);
 
   useEffect(() => {
     if (selectedTrip) {
-      fetchAttendance(selectedTrip.id);
+      void fetchAttendance(selectedTrip.id);
     } else {
       setAttendance([]);
     }
   }, [selectedTrip, fetchAttendance]);
 
-  // ── Update handler ───────────────────────────────────────────────────────────
+  // ── Update handler ───────────────────────────────────────────────────────
   const handleUpdate = async (id: number, payload: UpdatePayload) => {
     try {
       const updated = await apiService.updateAttendance(id, payload);
@@ -496,18 +550,27 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
     }
   };
 
-  // ── Filtered records ─────────────────────────────────────────────────────────
+  // ── Derived filter options ───────────────────────────────────────────────
   const stops = Array.from(new Set(attendance.map(r => r.stop_name)));
 
+  // NEW: Derive unique grades from loaded attendance (no extra API call)
+  const grades = Array.from(new Set(attendance.map(r => r.grade))).sort((a, b) => {
+    const numA = parseInt(a.replace(/\D/g, ''), 10);
+    const numB = parseInt(b.replace(/\D/g, ''), 10);
+    return (isNaN(numA) || isNaN(numB)) ? a.localeCompare(b) : numA - numB;
+  });
+
+  // ── Filtered records — now includes grade filter ─────────────────────────
   const filtered = attendance.filter(r => {
     const q = searchQuery.toLowerCase();
     const matchSearch = !q || r.student_name.toLowerCase().includes(q) || r.admission_number.toLowerCase().includes(q);
     const matchBoarding = filterBoarding === 'All' || r.boarding_status === filterBoarding;
     const matchStop = filterStop === 'All' || r.stop_name === filterStop;
-    return matchSearch && matchBoarding && matchStop;
+    const matchGrade = filterGrade === 'All' || r.grade === filterGrade;
+    return matchSearch && matchBoarding && matchStop && matchGrade;
   });
 
-  // ── Group by stop ────────────────────────────────────────────────────────────
+  // ── Group by stop ────────────────────────────────────────────────────────
   const grouped: Record<string, AttendanceRecord[]> = {};
   if (groupByStop) {
     filtered.forEach(r => {
@@ -519,9 +582,26 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
   const summary = computeSummary(attendance);
   const boardingPct = summary.total ? Math.round((summary.boarded / summary.total) * 100) : 0;
 
+  // ── Active filter count badge ────────────────────────────────────────────
+  const activeFilterCount = [
+    filterRoute !== 'All',
+    filterBoarding !== 'All',
+    filterStop !== 'All',
+    filterGrade !== 'All',
+    searchQuery.trim() !== '',
+  ].filter(Boolean).length;
+
+  const clearAllFilters = () => {
+    setFilterRoute('All');
+    setFilterBoarding('All');
+    setFilterStop('All');
+    setFilterGrade('All');
+    setSearchQuery('');
+  };
+
   return (
     <div className="sa-root">
-      {/* ── Page Header - Paints immediately (becomes LCP) ── */}
+      {/* ── Page Header ── */}
       <div className="sa-page-header">
         <div>
           <h1 className="sa-page-title">{section.heading}</h1>
@@ -529,7 +609,6 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
         </div>
       </div>
 
-      {/* ── Defer everything else until after first paint for LCP optimization ── */}
       {!isFirstPaint && (
         <>
           {/* Error Banner */}
@@ -540,7 +619,7 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
             </div>
           )}
 
-          {/* Filters Bar */}
+          {/* ── Filters Bar — Date, Trip Type, Route ── */}
           <div className="sa-filters-bar">
             <div className="sa-filters-left">
               <div className="sa-field-group">
@@ -552,6 +631,7 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
                   onChange={e => setSelectedDate(e.target.value)}
                 />
               </div>
+
               <div className="sa-field-group">
                 <label className="sa-field-label">Trip</label>
                 <div className="sa-toggle-group">
@@ -578,7 +658,33 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
                   ))}
                 </div>
               </div>
+
+              {/* ── NEW: Route Filter ── */}
+              <div className="sa-field-group">
+                <label className="sa-field-label">Route</label>
+                <div className="sa-select-wrap">
+                  <svg className="sa-select-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 12h18M3 6h18M3 18h18" />
+                  </svg>
+                  <select
+                    className="sa-select sa-select--with-icon"
+                    value={filterRoute}
+                    onChange={e => {
+                      setFilterRoute(e.target.value);
+                      setSelectedTrip(null);
+                      setAttendance([]);
+                    }}
+                    disabled={routesLoading}
+                  >
+                    <option value="All">All Routes</option>
+                    {routes.map(r => (
+                      <option key={r.id} value={r.route_id}>{r.route_name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
+
             <div className="sa-filters-right">
               <span className="sa-date-display">{formatDate(selectedDate)}</span>
             </div>
@@ -591,11 +697,21 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
                 <rect x="1" y="3" width="15" height="13" rx="1" /><path d="M16 8h4l3 3v5h-7V8z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" />
               </svg>
               Select Route / Trip
+              {filterRoute !== 'All' && (
+                <span className="sa-section-title__route-pill">
+                  {routes.find(r => r.route_id === filterRoute)?.route_name ?? filterRoute}
+                </span>
+              )}
             </h2>
             {tripsLoading ? (
               <div className="sa-loading">Loading trips...</div>
             ) : trips.length === 0 ? (
-              <EmptyState message="No trips found" sub={`No ${selectedTripType.toLowerCase()} trips scheduled for ${formatDate(selectedDate)}`} />
+              <EmptyState
+                message="No trips found"
+                sub={filterRoute !== 'All'
+                  ? `No ${selectedTripType.toLowerCase()} trips for the selected route on ${formatDate(selectedDate)}`
+                  : `No ${selectedTripType.toLowerCase()} trips scheduled for ${formatDate(selectedDate)}`}
+              />
             ) : (
               <div className="sa-trip-grid">
                 {trips.map(trip => (
@@ -678,7 +794,7 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
 
               {activeTab === 'attendance' && (
                 <div className="sa-section">
-                  {/* Table controls */}
+                  {/* ── Table Controls — search, status, stop, grade (NEW) ── */}
                   <div className="sa-table-controls">
                     <div className="sa-search-wrap">
                       <svg className="sa-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -690,7 +806,15 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                       />
+                      {searchQuery && (
+                        <button className="sa-search-clear" onClick={() => setSearchQuery('')} title="Clear search">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
+
                     <select className="sa-select" value={filterBoarding} onChange={e => setFilterBoarding(e.target.value)}>
                       <option value="All">All Statuses</option>
                       <option value="Boarded">Boarded</option>
@@ -698,10 +822,23 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
                       <option value="Missed Pickup">Missed Pickup</option>
                       <option value="Parent Pickup">Parent Pickup</option>
                     </select>
+
                     <select className="sa-select" value={filterStop} onChange={e => setFilterStop(e.target.value)}>
                       <option value="All">All Stops</option>
                       {stops.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
+
+                    {/* ── NEW: Grade Filter ── */}
+                    <select
+                      className="sa-select"
+                      value={filterGrade}
+                      onChange={e => setFilterGrade(e.target.value)}
+                      disabled={grades.length === 0}
+                    >
+                      <option value="All">All Grades</option>
+                      {grades.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+
                     <button
                       className={`sa-btn sa-btn--ghost sa-btn--sm${groupByStop ? ' sa-btn--active' : ''}`}
                       onClick={() => setGroupByStop(v => !v)}
@@ -712,7 +849,57 @@ const StudentAttendance: React.FC<Props> = ({ section }) => {
                       </svg>
                       Group by Stop
                     </button>
+
+                    {/* ── NEW: Clear all filters ── */}
+                    {activeFilterCount > 0 && (
+                      <button className="sa-btn sa-btn--ghost sa-btn--sm sa-btn--clear" onClick={clearAllFilters}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                        Clear filters
+                        <span className="sa-filter-count">{activeFilterCount}</span>
+                      </button>
+                    )}
                   </div>
+
+                  {/* ── NEW: Active filter pills ── */}
+                  {activeFilterCount > 0 && (
+                    <div className="sa-filter-pills">
+                      {filterRoute !== 'All' && (
+                        <span className="sa-filter-pill">
+                          Route: {routes.find(r => r.route_id === filterRoute)?.route_name ?? filterRoute}
+                          <button onClick={() => setFilterRoute('All')}>×</button>
+                        </span>
+                      )}
+                      {filterBoarding !== 'All' && (
+                        <span className="sa-filter-pill">
+                          Status: {filterBoarding}
+                          <button onClick={() => setFilterBoarding('All')}>×</button>
+                        </span>
+                      )}
+                      {filterStop !== 'All' && (
+                        <span className="sa-filter-pill">
+                          Stop: {filterStop}
+                          <button onClick={() => setFilterStop('All')}>×</button>
+                        </span>
+                      )}
+                      {filterGrade !== 'All' && (
+                        <span className="sa-filter-pill">
+                          Grade: {filterGrade}
+                          <button onClick={() => setFilterGrade('All')}>×</button>
+                        </span>
+                      )}
+                      {searchQuery && (
+                        <span className="sa-filter-pill">
+                          Search: "{searchQuery}"
+                          <button onClick={() => setSearchQuery('')}>×</button>
+                        </span>
+                      )}
+                      <span className="sa-filter-results">
+                        {filtered.length} of {attendance.length} students
+                      </span>
+                    </div>
+                  )}
 
                   {loading ? (
                     <div className="sa-loading">Loading attendance records...</div>
