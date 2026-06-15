@@ -14,7 +14,7 @@ const getInitials = (userName: string) => {
     const initials = String(userName || '')
         .trim()
         .split(/\s+/)
-        .slice(0, 2)
+        .slice(0, 2)    
         .map((namePart) => namePart.charAt(0).toUpperCase())
         .filter(Boolean)
         .join('')
@@ -35,7 +35,7 @@ const DashboardHeader = ({
         <header className="dashboardHeader">
             <div className="dashboardHeader__intro">
                 <p className="dashboardHeader__welcome">{welcomeMessage}</p>
-                <h1>{title}</h1>
+                <p className="dashboardHeader__title">{title}</p>
                 <p className="dashboardHeader__subtitle">{subtitle}</p>
             </div>
 

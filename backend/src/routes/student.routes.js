@@ -20,9 +20,14 @@ const {
 
 const router = express.Router();
 
-router.use(authenticate, authorizeRoles("School Admin"));
+router.get(
+  "/",
+  authenticate,
+  authorizeRoles("School Admin", "Transport Manager"),
+  getStudentsDashboardData
+);
 
-router.get("/", getStudentsDashboardData);
+router.use(authenticate, authorizeRoles("School Admin"));
 
 router.post("/admissions", createStudentAdmissionValidator, validate, admitStudent);
 

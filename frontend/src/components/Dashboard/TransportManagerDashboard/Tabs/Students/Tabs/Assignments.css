@@ -1,0 +1,433 @@
+/* Assignments.css - Complete CSS for Student Assignments component */
+
+/* ─── Container ─────────────────────────────────────────────────────────────── */
+.assignments-container {
+  padding: 28px 32px;
+  background: #f4f4f6;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ─── Header ────────────────────────────────────────────────────────────────── */
+.assignments-header {
+  margin-bottom: 24px;
+}
+
+.assignments-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #670122;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.3px;
+}
+
+.assignments-description {
+  font-size: 15px;
+  color: #5d636b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ─── Message Banner ────────────────────────────────────────────────────────── */
+.assignments-message {
+  padding: 12px 16px;
+  border-left: 4px solid;
+  border-radius: 12px;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.assignments-message--success {
+  background: #eaf6ef;
+  border-left-color: #1a7a4a;
+  color: #1a7a4a;
+}
+
+.assignments-message--error {
+  background: #fee2e2;
+  border-left-color: #b91c1c;
+  color: #b91c1c;
+}
+
+/* ─── Form Styles ───────────────────────────────────────────────────────────── */
+.assignments-form {
+  background: white;
+  border: 1px solid #c7ccd2;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 28px;
+}
+
+.assignments-form-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-bottom: 24px;
+}
+
+.assignments-form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.assignments-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3f4650;
+}
+
+.assignments-form-select,
+.assignments-form-input {
+  padding: 10px 14px;
+  border: 1px solid #c7ccd2;
+  border-radius: 14px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.assignments-form-select:focus,
+.assignments-form-input:focus {
+  outline: none;
+  border-color: #670122;
+  box-shadow: 0 0 0 3px rgba(103, 1, 34, 0.1);
+}
+
+.assignments-form-select:disabled {
+  background: #f4f4f6;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.assignments-form-hint {
+  font-size: 11px;
+  color: #b45309;
+  margin-top: 4px;
+}
+
+.assignments-submit-btn {
+  padding: 10px 24px;
+  background: #670122;
+  color: white;
+  border: none;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  justify-self: start;
+}
+
+.assignments-submit-btn:hover:not(:disabled) {
+  background: #4f001b;
+  transform: translateY(-1px);
+}
+
+.assignments-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Table Styles ──────────────────────────────────────────────────────────── */
+.assignments-table-container {
+  background: white;
+  border: 1px solid #c7ccd2;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.assignments-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.assignments-table thead tr {
+  background: #f4f4f6;
+}
+
+.assignments-table th {
+  text-align: left;
+  padding: 16px 20px;
+  color: #5d636b;
+  font-weight: 600;
+  border-bottom: 1px solid #c7ccd2;
+}
+
+.assignments-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e6ea;
+  color: #3f4650;
+  vertical-align: top;
+}
+
+.assignments-table tr:last-child td {
+  border-bottom: none;
+}
+
+.assignments-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.01);
+}
+
+/* Table Cell Components */
+.assignments-table-cell {
+  vertical-align: top;
+}
+
+.assignments-student-info,
+.assignments-route-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.assignments-student-name,
+.assignments-route-name {
+  font-weight: 600;
+  color: #3f4650;
+}
+
+.assignments-table-sub {
+  color: #5d636b;
+  font-size: 12px;
+}
+
+.assignments-effective-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+/* ─── Trip Type Badge ───────────────────────────────────────────────────────── */
+.assignments-trip-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 40px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.assignments-trip-badge--morning {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.assignments-trip-badge--evening {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.assignments-trip-badge--both {
+  background: #eaf6ef;
+  color: #1a7a4a;
+}
+
+/* ─── Status Badge ──────────────────────────────────────────────────────────── */
+.assignments-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 40px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.assignments-status-badge--active {
+  background: #eaf6ef;
+  color: #1a7a4a;
+}
+
+.assignments-status-badge--inactive {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.assignments-status-badge--temporary {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* ─── Delete Button ─────────────────────────────────────────────────────────── */
+.assignments-delete-btn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.assignments-delete-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* ─── Loading & Empty States ───────────────────────────────────────────────── */
+.assignments-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #5d636b;
+  font-size: 14px;
+}
+
+.assignments-empty {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.assignments-empty svg {
+  color: #c7ccd2;
+  margin-bottom: 16px;
+}
+
+.assignments-empty p {
+  margin: 0;
+  color: #3f4650;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.assignments-empty-sub {
+  color: #5d636b !important;
+  font-size: 13px !important;
+  font-weight: normal !important;
+  margin-top: 8px !important;
+}
+
+/* ─── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .assignments-container {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .assignments-container {
+    padding: 20px;
+  }
+
+  .assignments-form {
+    padding: 20px;
+  }
+
+  .assignments-form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .assignments-submit-btn {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .assignments-table th,
+  .assignments-table td {
+    padding: 12px;
+  }
+
+  .assignments-table {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 640px) {
+  .assignments-table {
+    font-size: 12px;
+  }
+
+  .assignments-table th,
+  .assignments-table td {
+    padding: 10px;
+  }
+
+  .assignments-delete-btn {
+    padding: 4px 12px;
+    font-size: 11px;
+  }
+
+  .assignments-status-badge,
+  .assignments-trip-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+}
+
+/* ─── Print Styles ──────────────────────────────────────────────────────────── */
+@media print {
+  .assignments-container {
+    padding: 0;
+    background: white;
+  }
+
+  .assignments-submit-btn,
+  .assignments-delete-btn,
+  .assignments-message {
+    display: none;
+  }
+
+  .assignments-table-container {
+    border: 1px solid #ccc;
+    box-shadow: none;
+  }
+
+  .assignments-table th {
+    background: #f0f0f0;
+  }
+
+  .assignments-status-badge,
+  .assignments-trip-badge {
+    background: none !important;
+    border: 1px solid #ccc;
+    color: #000 !important;
+  }
+
+/* Add these styles to your existing Assignments.css */
+
+/* Form hint text */
+.assignments-form-hint {
+  font-size: 11px;
+  color: #b45309;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Student and Route info containers */
+.assignments-student-info,
+.assignments-route-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.assignments-student-name,
+.assignments-route-name {
+  font-weight: 600;
+  color: #3f4650;
+}
+
+/* Effective dates container */
+.assignments-effective-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+/* Empty state subtext */
+.assignments-empty-sub {
+  color: #5d636b !important;
+  font-size: 13px !important;
+  font-weight: normal !important;
+  margin-top: 8px !important;
+}
+}

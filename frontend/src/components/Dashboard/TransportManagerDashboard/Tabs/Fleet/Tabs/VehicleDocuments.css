@@ -1,0 +1,36 @@
+.subTabContent {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 8px;
+    background: #f9f9fb;
+}
+
+.subTabContent h3 {
+    margin: 0 0 0.4rem;
+    color: #670122;
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.subTabContent p {
+    margin: 0 0 0.8rem;
+    color: #5d636b;
+    line-height: 1.4;
+    font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+    .subTabContent {
+        padding: 0.75rem;
+    }
+
+    .subTabContent h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .subTabContent p {
+        font-size: 0.9rem;
+    }
+}

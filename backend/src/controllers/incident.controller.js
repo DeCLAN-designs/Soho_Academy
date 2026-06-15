@@ -1,6 +1,8 @@
 const {
   createIncidentReport,
   listIncidentReportsByUser,
+  updateIncidentStatus,
+  listAllIncidentReports,
 } = require("../services/incident.service.js");
 
 const createReport = async (req, res) => {
@@ -88,7 +90,82 @@ const getReports = async (req, res) => {
   }
 };
 
+const updateStatus = async (req, res) => {
+  try {
+    const { status } = req.body || {};
+    const incidentId = Number(req.params.id);
+    const confirmedBy = [req.user.firstName, req.user.lastName]
+      .filter((part) => Boolean(String(part || "").trim()))
+      .join(" ")
+      .trim();
+
+    const updatedReport = await updateIncidentStatus({
+      incidentId,
+      status,
+      confirmedBy,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Incident status updated successfully.",
+      data: {
+        report: updatedReport,
+      },
+    });
+  } catch (error) {
+    if (error && error.code === "INVALID_STATUS") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status. Status must be Pending, Approved, or Rejected.",
+      });
+    }
+
+    if (error && error.code === "INCIDENT_NOT_FOUND") {
+      return res.status(404).json({
+        success: false,
+        message: "Incident report not found.",
+      });
+    }
+
+    console.error("Update incident status error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update incident status.",
+    });
+  }
+};
+
+const getAllReports = async (req, res) => {
+  try {
+    const pageNumber = Number(req.query.page) || 1;
+    const pageSize = Number(req.query.pageSize) || 50;
+
+    const reports = await listAllIncidentReports({
+      pageNumber,
+      pageSize,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "All incident reports retrieved successfully.",
+      data: {
+        reports,
+      },
+    });
+  } catch (error) {
+    console.error("Get all incident reports error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch all incident reports.",
+    });
+  }
+};
+
 module.exports = {
   createReport,
   getReports,
+  updateStatus,
+  getAllReports,
 };

@@ -303,6 +303,12 @@ export type FuelMaintenanceCategory =
   | "RSL"
   | "Inspection / Speed Governors";
 
+export type FuelMaintenanceRequestStatus =
+  | "Pending"
+  | "Approved"
+  | "Rejected"
+  | "Completed";
+
 export type CreateFuelMaintenanceRequestPayload = {
   requestDate: string;
   requestTime: string;
@@ -313,6 +319,12 @@ export type CreateFuelMaintenanceRequestPayload = {
   description: string;
   amount?: number;
   confirmedBy: string;
+};
+
+export type UpdateFuelMaintenanceRequestPayload = CreateFuelMaintenanceRequestPayload;
+
+export type UpdateFuelMaintenanceRequestStatusPayload = {
+  status: FuelMaintenanceRequestStatus;
 };
 
 export type FuelMaintenanceRequestRecord = {
@@ -327,6 +339,7 @@ export type FuelMaintenanceRequestRecord = {
   description: string;
   amount: number | null;
   confirmedBy: string;
+  status: FuelMaintenanceRequestStatus;
   createdByUserId: number;
   createdAt: string;
   updatedAt: string;
@@ -350,6 +363,8 @@ export type DriverIncidentReportRecord = {
   description: string;
   actionTaken: string;
   numberPlate: string;
+  status: "Pending" | "Approved" | "Rejected";
+  confirmedBy: string | null;
   createdByUserId: number;
   createdAt: string;
   updatedAt: string;
@@ -395,6 +410,8 @@ export type DriverComplaintReportRecord = {
   complaintType: ComplaintType;
   learnerName: string | null;
   details: string;
+  status: "Pending" | "Approved" | "Rejected";
+  confirmedBy: string | null;
   createdByUserId: number;
   createdAt: string;
   updatedAt: string;
@@ -438,6 +455,45 @@ export type AuthenticatedUserRecord = {
   role: string;
   numberPlate: string | null;
   profilePhotoUrl: string | null;
+};
+
+export type RouteStatus = "Active" | "Inactive" | "Draft";
+
+export type RouteRecord = {
+  id: number;
+  routeId: string;
+  routeName: string;
+  description: string | null;
+  vehiclePlate: string | null;
+  vehicleModel: string | null;
+  assignedDriver: string | null;
+  assignedAssistant: string | null;
+  totalStops: number;
+  status: RouteStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type RoutePayload = {
+  routeId?: string;
+  routeName: string;
+  description?: string | null;
+  vehiclePlate?: string | null;
+  vehicleModel?: string | null;
+  assignedDriver?: string | null;
+  assignedAssistant?: string | null;
+  totalStops?: number;
+  status?: RouteStatus;
+};
+
+export type UserRecord = AuthenticatedUserRecord;
+
+export type NumberPlateRecord = {
+  id: number;
+  plate_number: string;
+  status: "active" | "inactive";
+  created_at: string;
+  updated_at: string;
 };
 
 const toUrl = (path: string) => {
@@ -689,6 +745,41 @@ const patchFormData = async <TResponse>(
   }
 };
 
+const put = async <TPayload, TResponse>(
+  path: string,
+  payload: TPayload
+): Promise<ApiEnvelope<TResponse>> => {
+  const response = await fetch(toUrl(path), {
+    method: "PUT",
+    headers: buildHeaders(true),
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+
+  const parsedPayload = await parsePayload(response);
+
+  if (!response.ok) {
+    const errorPayload =
+      parsedPayload && typeof parsedPayload === "object"
+        ? (parsedPayload as ErrorEnvelope)
+        : null;
+    const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+    const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
+    const message =
+      firstValidationMessage ||
+      readMessage(parsedPayload) ||
+      `Request failed with status ${response.status}.`;
+
+    throw new ApiError(message, response.status, errors);
+  }
+
+  if (!parsedPayload || typeof parsedPayload !== "object") {
+    throw new Error("Invalid response from server.");
+  }
+
+  return parsedPayload as ApiEnvelope<TResponse>;
+};
+
 const get = async <TResponse>(path: string): Promise<ApiEnvelope<TResponse>> => {
   try {
     const response = await enhancedFetch(toUrl(path), {
@@ -729,6 +820,69 @@ const get = async <TResponse>(path: string): Promise<ApiEnvelope<TResponse>> => 
   }
 };
 
+const getRaw = async <TResponse>(path: string): Promise<TResponse> => {
+  const response = await fetch(toUrl(path), {
+    method: "GET",
+    headers: buildHeaders(false),
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  const parsedPayload = await parsePayload(response);
+
+  if (!response.ok) {
+    const errorPayload =
+      parsedPayload && typeof parsedPayload === "object"
+        ? (parsedPayload as ErrorEnvelope)
+        : null;
+    const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+    const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
+    const message =
+      firstValidationMessage ||
+      readMessage(parsedPayload) ||
+      `Request failed with status ${response.status}.`;
+
+    throw new ApiError(message, response.status, errors);
+  }
+
+  if (parsedPayload === null || typeof parsedPayload !== "object") {
+    throw new Error("Invalid response from server.");
+  }
+
+  return parsedPayload as TResponse;
+};
+
+const del = async <TResponse>(path: string): Promise<ApiEnvelope<TResponse>> => {
+  const response = await fetch(toUrl(path), {
+    method: "DELETE",
+    headers: buildHeaders(false),
+    credentials: "include",
+  });
+
+  const parsedPayload = await parsePayload(response);
+
+  if (!response.ok) {
+    const errorPayload =
+      parsedPayload && typeof parsedPayload === "object"
+        ? (parsedPayload as ErrorEnvelope)
+        : null;
+    const errors = Array.isArray(errorPayload?.errors) ? errorPayload.errors : [];
+    const firstValidationMessage = errors.length > 0 ? errors[0].message : null;
+    const message =
+      firstValidationMessage ||
+      readMessage(parsedPayload) ||
+      `Request failed with status ${response.status}.`;
+
+    throw new ApiError(message, response.status, errors);
+  }
+
+  if (!parsedPayload || typeof parsedPayload !== "object") {
+    throw new Error("Invalid response from server.");
+  }
+
+  return parsedPayload as ApiEnvelope<TResponse>;
+};
+
 export const authApi = {
   login: (payload: LoginPayload) =>
     post<
@@ -759,7 +913,39 @@ export const authApi = {
   updateProfile: (payload: FormData) =>
     patchFormData<{ user: AuthenticatedUserRecord }>("/auth/profile", payload),
   logout: () =>
-    post<{}, {}>("/auth/logout", {}),
+    post<Record<string, never>, Record<string, never>>("/auth/logout", {}),
+};
+
+export const fleetApi = {
+  getNumberPlates: () => getRaw<NumberPlateRecord[]>("/number-plates"),
+  getActiveNumberPlates: () => getRaw<NumberPlateRecord[]>("/number-plates/active"),
+};
+
+export const routeApi = {
+  getRoutes: () => get<{ routes: RouteRecord[] }>("/routes"),
+  createRoute: (payload: RoutePayload) =>
+    post<RoutePayload, { route: RouteRecord }>("/routes", payload),
+  updateRoute: (
+    routeId: number,
+    payload: Partial<RoutePayload>
+  ) => put<Partial<RoutePayload>, { route: RouteRecord }>(
+    `/routes/${routeId}`,
+    payload
+  ),
+  updateRouteStatus: (routeId: number, status: RouteStatus) =>
+    patch<{ status: RouteStatus }, { route: RouteRecord }>(
+      `/routes/${routeId}/status`,
+      { status }
+    ),
+  deleteRoute: (routeId: number) =>
+    del<Record<string, never>>(`/routes/${routeId}`),
+};
+
+export const usersApi = {
+  getUsers: (role?: string) =>
+    get<{ users: UserRecord[] }>(
+      role ? `/users?role=${encodeURIComponent(role)}` : "/users"
+    ),
 };
 
 export const studentApi = {
@@ -813,10 +999,31 @@ export const parentApi = {
 export const fuelMaintenanceApi = {
   getRequests: () =>
     get<{ requests: FuelMaintenanceRequestRecord[] }>("/fuel-maintenance/requests"),
+  getRequest: (requestId: number) =>
+    get<{ request: FuelMaintenanceRequestRecord }>(
+      `/fuel-maintenance/requests/${requestId}`
+    ),
   createRequest: (payload: CreateFuelMaintenanceRequestPayload) =>
     post<CreateFuelMaintenanceRequestPayload, { request: FuelMaintenanceRequestRecord }>(
       "/fuel-maintenance/requests",
       payload
+    ),
+  updateRequest: (requestId: number, payload: UpdateFuelMaintenanceRequestPayload) =>
+    put<UpdateFuelMaintenanceRequestPayload, { request: FuelMaintenanceRequestRecord }>(
+      `/fuel-maintenance/requests/${requestId}`,
+      payload
+    ),
+  updateRequestStatus: (
+    requestId: number,
+    payload: UpdateFuelMaintenanceRequestStatusPayload
+  ) =>
+    patch<
+      UpdateFuelMaintenanceRequestStatusPayload,
+      { request: FuelMaintenanceRequestRecord }
+    >(`/fuel-maintenance/requests/${requestId}/status`, payload),
+  deleteRequest: (requestId: number) =>
+    del<{ request: FuelMaintenanceRequestRecord }>(
+      `/fuel-maintenance/requests/${requestId}`
     ),
 };
 

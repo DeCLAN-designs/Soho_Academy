@@ -1,0 +1,47 @@
+.tabContent {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 10px;
+    background: #f4f4f6;
+}
+
+.tabContent h2 {
+    margin: 0 0 0.5rem;
+    color: #670122;
+    font-size: clamp(1.4rem, 2vw, 2rem);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.tabContent p {
+    margin: 0 0 1rem;
+    color: #5d636b;
+    line-height: 1.4;
+    font-size: 1rem;
+}
+
+.subTabContent {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #e0e0e3;
+}
+
+@media (max-width: 768px) {
+    .tabContent {
+        padding: 0.75rem;
+    }
+
+    .tabContent h2 {
+        font-size: 1.3rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .tabContent p {
+        font-size: 0.95rem;
+    }
+
+    .subTabContent {
+        padding: 0.75rem;
+    }
+}

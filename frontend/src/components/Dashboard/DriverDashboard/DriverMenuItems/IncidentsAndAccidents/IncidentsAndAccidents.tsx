@@ -471,6 +471,31 @@ const DriverIncidentsAndAccidentsMenuItem = () => {
                                             <h4>Action taken</h4>
                                             <p>{report.actionTaken}</p>
                                         </div>
+
+                                        <div>
+                                            <h4>Status</h4>
+                                            <p>
+                                                <strong
+                                                    style={{
+                                                        color:
+                                                            report.status === 'Approved'
+                                                                ? '#22c55e'
+                                                                : report.status === 'Rejected'
+                                                                  ? '#ef4444'
+                                                                  : '#f59e0b',
+                                                    }}
+                                                >
+                                                    {report.status}
+                                                </strong>
+                                            </p>
+                                        </div>
+
+                                        {report.confirmedBy ? (
+                                            <div>
+                                                <h4>Confirmed By</h4>
+                                                <p>{report.confirmedBy}</p>
+                                            </div>
+                                        ) : null}
                                     </div>
 
                                     <div className="driverIncidentReport__gallerySection">

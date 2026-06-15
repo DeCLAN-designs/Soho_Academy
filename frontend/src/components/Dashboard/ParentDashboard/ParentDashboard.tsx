@@ -16,6 +16,7 @@ type ParentDashboardProps = {
     activeSection: string
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 const REQUEST_TYPE_LABELS: Record<ParentTransportRequestType, string> = {
     route_change: 'Route Change',
     complaint: 'Complaint',

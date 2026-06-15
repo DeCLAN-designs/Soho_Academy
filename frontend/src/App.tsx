@@ -1,79 +1,79 @@
 import './App.css'
+import React, { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import AuthProvider, { useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
-import Layout from './components/Layout/Layout'
-import Login from './components/Auth/Login/Login'
-import Register from './components/Auth/Register/Register'
-import Dashboard from './components/Dashboard/Dashboard'
 import Loader from './components/Loader/Loader'
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary'
 
-const FullPageLoading: React.FC = () => {
-  return <Loader variant="page" label="Loading" />
-}
+// ─── Lazy-loaded route components ────────────────────────────────────────────
+const Login    = lazy(() => import('./components/Auth/Login/Login'))
+const Register = lazy(() => import('./components/Auth/Register/Register'))
+const Dashboard = lazy(() => import('./components/Dashboard/Dashboard'))
+const Layout   = lazy(() => import('./components/Layout/Layout'))
 
+// ─── Loading fallback ─────────────────────────────────────────────────────────
+const FullPageLoading: React.FC = () => (
+  <Loader variant="page" label="Loading" />
+)
+
+// ─── Route guards ─────────────────────────────────────────────────────────────
 const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth()
-
-  if (isLoading) {
-    return <FullPageLoading />
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />
-  }
-
+  if (isLoading) return <FullPageLoading />
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />
   return <>{children}</>
 }
 
 const AuthAwareFallback: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
-
-  if (isLoading) {
-    return <FullPageLoading />
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />
-  }
-
+  if (isLoading) return <FullPageLoading />
+  if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />
   return <Navigate to="/dashboard" replace />
 }
 
-const AppRoutes: React.FC = () => {
-  return (
+// ─── Routes ───────────────────────────────────────────────────────────────────
+const AppRoutes: React.FC = () => (
+  // Suspense catches ALL lazy imports inside — one boundary for everything
+  <Suspense fallback={<FullPageLoading />}>
     <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+      {/* Public */}
+      <Route path="/login"    element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
       <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
 
-      {/* Auth aliases -> canonical routes */}
-      <Route path="/auth/login" element={<Navigate to="/login" replace />} />
+      {/* Canonical aliases */}
+      <Route path="/auth/login"    element={<Navigate to="/login" replace />} />
       <Route path="/auth/register" element={<Navigate to="/register" replace />} />
-      <Route path="/signin" element={<Navigate to="/login" replace />} />
-      <Route path="/signup" element={<Navigate to="/register" replace />} />
-      <Route path="/user/login" element={<Navigate to="/login" replace />} />
+      <Route path="/signin"        element={<Navigate to="/login" replace />} />
+      <Route path="/signup"        element={<Navigate to="/register" replace />} />
+      <Route path="/user/login"    element={<Navigate to="/login" replace />} />
       <Route path="/user/register" element={<Navigate to="/register" replace />} />
 
-      {/* Protected Routes */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Layout />
-        </ProtectedRoute>
-      }>
+      {/* Protected */}
+      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="dashboard/:sectionId" element={<Dashboard />} />
-
-        {/* Role/section routes (Layout keeps the URL in sync with the logged-in role) */}
-        <Route path=":roleSlug" element={<Dashboard />} />
-        <Route path=":roleSlug/:sectionId" element={<Dashboard />} />
+        <Route path="dashboard"              element={<Dashboard />} />
+        <Route path="dashboard/:sectionId"   element={<Dashboard />} />
+        <Route path=":roleSlug"              element={<Dashboard />} />
+        <Route path=":roleSlug/:sectionId"   element={<Dashboard />} />
       </Route>
 
       <Route path="*" element={<AuthAwareFallback />} />
     </Routes>
+  </Suspense>
+)
+
+// ─── Root ─────────────────────────────────────────────────────────────────────
+const App: React.FC = () => (
+  <BrowserRouter>
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
+  </BrowserRouter>
+)
+
+export default App
   )
 }
 

@@ -2,6 +2,8 @@ const {
   createComplaintReport,
   getComplaintFormMeta,
   listComplaintReportsByUser,
+  updateComplaintStatus,
+  listAllComplaintReports,
 } = require("../services/complaint.service.js");
 
 const getFormMeta = async (req, res) => {
@@ -103,8 +105,83 @@ const getReports = async (req, res) => {
   }
 };
 
+const updateStatus = async (req, res) => {
+  try {
+    const { status } = req.body || {};
+    const complaintId = Number(req.params.id);
+    const confirmedBy = [req.user.firstName, req.user.lastName]
+      .filter((part) => Boolean(String(part || "").trim()))
+      .join(" ")
+      .trim();
+
+    const updatedReport = await updateComplaintStatus({
+      complaintId,
+      status,
+      confirmedBy,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Complaint status updated successfully.",
+      data: {
+        report: updatedReport,
+      },
+    });
+  } catch (error) {
+    if (error && error.code === "INVALID_STATUS") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status. Status must be Pending, Approved, or Rejected.",
+      });
+    }
+
+    if (error && error.code === "COMPLAINT_NOT_FOUND") {
+      return res.status(404).json({
+        success: false,
+        message: "Complaint report not found.",
+      });
+    }
+
+    console.error("Update complaint status error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update complaint status.",
+    });
+  }
+};
+
+const getAllReports = async (req, res) => {
+  try {
+    const pageNumber = Number(req.query.page) || 1;
+    const pageSize = Number(req.query.pageSize) || 50;
+
+    const reports = await listAllComplaintReports({
+      pageNumber,
+      pageSize,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "All complaint reports retrieved successfully.",
+      data: {
+        reports,
+      },
+    });
+  } catch (error) {
+    console.error("Get all complaint reports error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch all complaint reports.",
+    });
+  }
+};
+
 module.exports = {
   getFormMeta,
   createReport,
   getReports,
+  updateStatus,
+  getAllReports,
 };

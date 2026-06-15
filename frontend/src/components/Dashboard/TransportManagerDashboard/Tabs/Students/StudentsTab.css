@@ -1,0 +1,88 @@
+/* StudentsTab.css - Add these styles */
+
+/* Quick Stats Placeholder - Critical for LCP */
+.students-tab__stats-placeholder {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md, 1rem);
+    margin-bottom: var(--spacing-xl, 2rem);
+    padding: var(--spacing-md, 1rem);
+}
+
+.students-tab__stat-card {
+    background: linear-gradient(135deg, var(--color-bg-card, #f6f6f8) 0%, white 100%);
+    border: 1px solid var(--color-border, #c7ccd2);
+    border-radius: var(--radius-lg, 0.75rem);
+    padding: var(--spacing-lg, 1.5rem);
+    text-align: center;
+    transition: var(--transition-default, all 0.2s ease);
+}
+
+.students-tab__stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+    border-color: var(--color-primary-light, #8a1a3d);
+}
+
+.students-tab__stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-tertiary, #3f4650);
+    margin-bottom: var(--spacing-xs, 0.25rem);
+}
+
+.students-tab__stat-label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #718096);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Placeholder for initial render */
+.students-tab__placeholder {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Sub-tab content area */
+.subTabContent {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .students-tab__stats-placeholder {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm, 0.5rem);
+        padding: var(--spacing-sm, 0.5rem);
+    }
+    
+    .students-tab__stat-card {
+        padding: var(--spacing-md, 1rem);
+    }
+    
+    .students-tab__stat-value {
+        font-size: 1.5rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .students-tab__stats-placeholder {
+        display: none;
+    }
+}

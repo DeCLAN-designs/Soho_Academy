@@ -1,15 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { busAssistantDashboardConfig } from '../Dashboard/BusAssistantDashboard/BusAssistantDashboard'
-import { transportManagerDashboardConfig } from '../Dashboard/TransportManagerDashboard/TransportManagerDashboard'
-import { driverDashboardConfig } from '../Dashboard/DriverDashboard/DriverDashboard'
-import { parentDashboardConfig } from '../Dashboard/ParentDashboard/ParentDashboard'
-import { schoolAdminDashboardConfig } from '../Dashboard/SchoolAdminDashboard/SchoolAdminDashboard'
-import type { DashboardRoleConfig } from '../Dashboard/dashboard.types'
+import { ROLE_CONFIG_MAP, FALLBACK_HEADER_CONFIG } from '../Dashboard/DashboardRoleConfigs'
 import DashboardHeader from '../DashboardHeader/DashboardHeader'
 import Loader from '../Loader/Loader'
-import SideBar, { getSidebarNavigationItems } from '../SideBar/SideBar'
+import SideBar from '../SideBar/SideBar'
+import { getSidebarNavigationFlatItems } from '../SideBar/sidebarNavigation'
 import './Layout.css'
 
 const MIN_SECTION_TRANSITION_MS = 550
@@ -22,30 +18,8 @@ const ROLE_BASE_PATH: Record<string, string> = {
   'School Admin': 'school-admin',
 }
 
-const ROLE_CONFIG_MAP: Record<string, DashboardRoleConfig> = {
-  Parent: parentDashboardConfig,
-  Driver: driverDashboardConfig,
-  'Bus Assistant': busAssistantDashboardConfig,
-  'Transport Manager': transportManagerDashboardConfig,
-  'School Admin': schoolAdminDashboardConfig,
-}
-
-const FALLBACK_HEADER_CONFIG: DashboardRoleConfig = {
-  title: 'Dashboard',
-  subtitle: 'Role not configured yet.',
-  quickActions: ['Help'],
-  navigation: [{ id: 'overview', label: 'Overview' }],
-  sections: {
-    overview: {
-      heading: 'Overview',
-      description: 'No role-specific dashboard setup available for this account.',
-      cards: [],
-    },
-  },
-}
-
 const resolveActiveSection = (role: string, pathname: string) => {
-  const navigationItems = getSidebarNavigationItems(role)
+  const navigationItems = getSidebarNavigationFlatItems(role)
   const defaultSectionId = navigationItems[0]?.id || 'overview'
   const pathSegments = pathname.split('/').filter(Boolean)
   const basePath = ROLE_BASE_PATH[role]
@@ -127,6 +101,7 @@ export const Layout: React.FC = () => {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMobileMenuOpen(false)
 
     if (contentRef.current) {
@@ -222,7 +197,7 @@ export const Layout: React.FC = () => {
           activeItem={activeSection}
           onLogout={logout}
           onSelect={(section) => {
-            const navigationItems = getSidebarNavigationItems(role)
+            const navigationItems = getSidebarNavigationFlatItems(role)
             const sectionLabel =
               navigationItems.find((item) => item.id === section)?.label || 'Section'
             const targetPath = buildSectionPath(role, section)

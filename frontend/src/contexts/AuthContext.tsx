@@ -37,6 +37,24 @@ const getStoredValue = (key: string) => {
   return window.localStorage.getItem(key)?.trim() || ''
 }
 
+// Parse JWT token expiry without verification
+const getTokenExpiry = (token: string): number | null => {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    
+    const decoded = JSON.parse(atob(parts[1]))
+    return decoded.exp ? decoded.exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
+// Check if token has expired
+const isTokenExpired = (token: string): boolean => {
+  const expiry = getTokenExpiry(token)
+  if (!expiry) return true
+  return Date.now() >= expiry
 // Enhanced error handling for server connection issues
 const isNetworkError = (error: any): boolean => {
   return (
@@ -121,6 +139,31 @@ const AuthProviderComponent: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    const token = getStoredValue(AUTH_TOKEN_KEY)
+    const role = getStoredValue(AUTH_ROLE_KEY)
+    const firstName = getStoredValue(AUTH_FIRST_NAME_KEY)
+    const lastName = getStoredValue(AUTH_LAST_NAME_KEY)
+    const numberPlate = getStoredValue(AUTH_NUMBER_PLATE_KEY)
+    const profilePhotoUrl = getStoredValue(AUTH_PROFILE_PHOTO_URL_KEY)
+
+    // Check if token exists and hasn't expired
+    if (token && !isTokenExpired(token)) {
+      setUser({
+        token,
+        firstName,
+        lastName,
+        role,
+        numberPlate: numberPlate || null,
+        profilePhotoUrl: profilePhotoUrl || null,
+      })
+      setIsAuthenticated(true)
+    } else {
+      // Clear expired token
+      if (token && isTokenExpired(token)) {
+        persistUser(null)
+      }
+      setUser(null)
+      setIsAuthenticated(false)
     const initializeAuth = async () => {
       try {
         const token = getStoredValue(AUTH_TOKEN_KEY)
@@ -270,6 +313,7 @@ const AuthProviderComponent: React.FC<AuthProviderProps> = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 // Export components separately for better Fast Refresh compatibility
 export const AuthProvider = AuthProviderComponent
 export const useAuth = (): AuthContextType => {

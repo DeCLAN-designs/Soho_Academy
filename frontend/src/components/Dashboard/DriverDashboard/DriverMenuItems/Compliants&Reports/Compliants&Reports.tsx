@@ -526,6 +526,31 @@ const DriverCompliantsReportsMenuItem = () => {
                                             <h4>Submitted</h4>
                                             <p>{formatDisplayDate(report.createdAt)}</p>
                                         </div>
+
+                                        <div>
+                                            <h4>Status</h4>
+                                            <p>
+                                                <strong
+                                                    style={{
+                                                        color:
+                                                            report.status === 'Approved'
+                                                                ? '#22c55e'
+                                                                : report.status === 'Rejected'
+                                                                  ? '#ef4444'
+                                                                  : '#f59e0b',
+                                                    }}
+                                                >
+                                                    {report.status}
+                                                </strong>
+                                            </p>
+                                        </div>
+
+                                        {report.confirmedBy ? (
+                                            <div>
+                                                <h4>Confirmed By</h4>
+                                                <p>{report.confirmedBy}</p>
+                                            </div>
+                                        ) : null}
                                     </div>
 
                                     {report.complaintType === 'Learner' && report.learnerName ? (

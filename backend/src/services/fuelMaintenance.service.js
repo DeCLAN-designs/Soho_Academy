@@ -21,6 +21,13 @@ const REQUEST_CATEGORIES = Object.freeze([
   "Inspection / Speed Governors",
 ]);
 
+const REQUEST_STATUSES = Object.freeze([
+  "Pending",
+  "Approved",
+  "Rejected",
+  "Completed",
+]);
+
 const SCHEMA_PATH = path.join(__dirname, "../migration/schema.sql");
 const rawSchemaSql = fs.readFileSync(SCHEMA_PATH, "utf8");
 
@@ -67,6 +74,7 @@ const fuelMaintenanceTableSql =
       description TEXT NOT NULL,
       amount DECIMAL(12, 2) NULL,
       confirmedBy VARCHAR(255) NOT NULL,
+      status ENUM('Pending', 'Approved', 'Rejected', 'Completed') NOT NULL DEFAULT 'Pending',
       createdByUserId INT NOT NULL,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -117,12 +125,32 @@ const ensureRequestTimeColumn = async () => {
   }
 };
 
+const ensureStatusColumn = async () => {
+  const [rows] = await pool.query(
+    `
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'fuel_maintenance_requests'
+        AND COLUMN_NAME = 'status'
+      LIMIT 1
+    `
+  );
+
+  if (rows.length === 0) {
+    await pool.query(
+      "ALTER TABLE fuel_maintenance_requests ADD COLUMN status ENUM('Pending', 'Approved', 'Rejected', 'Completed') NOT NULL DEFAULT 'Pending' AFTER confirmedBy"
+    );
+  }
+};
+
 const ensureFuelMaintenanceTables = () => {
   if (!ensureFuelMaintenanceTablesPromise) {
     ensureFuelMaintenanceTablesPromise = (async () => {
       await ensureUsersTable();
       await pool.query(fuelMaintenanceTableSql);
       await ensureRequestTimeColumn();
+      await ensureStatusColumn();
     })();
   }
 
@@ -141,6 +169,7 @@ const mapFuelMaintenanceRow = (row) => ({
   description: row.description,
   amount: row.amount,
   confirmedBy: row.confirmedBy,
+  status: row.status,
   confirmedByUserId: row.confirmedByUserId,
   confirmedByName: row.confirmedByName,
   confirmationStatus: row.confirmationStatus || "PENDING",
@@ -150,26 +179,10 @@ const mapFuelMaintenanceRow = (row) => ({
   updatedAt: row.updatedAt,
 });
 
-const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
-  await ensureFuelMaintenanceTables();
+const isManagerRole = (role) =>
+  ["Transport Manager", "School Admin"].includes(String(role || ""));
 
-  const normalized = {
-    requestDate: String(payload.requestDate || "").trim(),
-    requestTime: String(payload.requestTime || "").trim(),
-    numberPlate: String(payload.numberPlate || "").trim().toUpperCase(),
-    currentMileage: Number(payload.currentMileage),
-    requestType: String(payload.requestType || "").trim(),
-    category: String(payload.category || "").trim(),
-    description: String(payload.description || "").trim(),
-    amount:
-      typeof payload.amount === "undefined" ||
-      payload.amount === null ||
-      String(payload.amount).trim() === ""
-        ? null
-        : Number(payload.amount),
-    confirmedBy: String(payload.confirmedBy || "").trim(),
-  };
-
+const assertValidRequestPayload = (normalized) => {
   if (!REQUEST_TYPES.includes(normalized.requestType)) {
     const invalidTypeError = new Error("Invalid request type.");
     invalidTypeError.code = "INVALID_REQUEST_TYPE";
@@ -205,7 +218,9 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
   } else {
     normalized.amount = null;
   }
+};
 
+const getRequestCreator = async ({ createdByUserId }) => {
   const [creatorRows] = await pool.query(
     `
       SELECT id, firstName, lastName, role, numberPlate
@@ -222,12 +237,29 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
     throw missingCreatorError;
   }
 
-  const creator = creatorRows[0];
-  const requestedBy = [creator.firstName, creator.lastName]
-    .map((value) => String(value || "").trim())
-    .filter(Boolean)
-    .join(" ")
-    .trim();
+  return creatorRows[0];
+};
+
+const assertNumberPlateIsAvailable = async ({ numberPlate }) => {
+  const [numberPlateRows] = await pool.query(
+    `
+      SELECT plate_number
+      FROM number_plates
+      WHERE plate_number = ?
+        AND status = 'active'
+      LIMIT 1
+    `,
+    [numberPlate]
+  );
+
+  if (numberPlateRows.length === 0) {
+    const missingNumberPlateError = new Error("Selected number plate is not available.");
+    missingNumberPlateError.code = "NUMBER_PLATE_NOT_FOUND";
+    throw missingNumberPlateError;
+  }
+};
+
+const assertDriverCanUseNumberPlate = ({ creator, numberPlate }) => {
   const creatorNumberPlate = String(creator.numberPlate || "")
     .trim()
     .toUpperCase();
@@ -241,7 +273,7 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
       throw plateNotAssignedError;
     }
 
-    if (normalized.numberPlate !== creatorNumberPlate) {
+    if (numberPlate !== creatorNumberPlate) {
       const mismatchError = new Error(
         "Drivers can only submit requests for their assigned number plate."
       );
@@ -249,23 +281,91 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
       throw mismatchError;
     }
   }
+};
 
-  const [numberPlateRows] = await pool.query(
+const buildRequestedBy = (creator) =>
+  [creator.firstName, creator.lastName]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+const normalizeRequestPayload = (payload) => ({
+  requestDate: String(payload.requestDate || "").trim(),
+  requestTime: String(payload.requestTime || "").trim(),
+  numberPlate: String(payload.numberPlate || "").trim().toUpperCase(),
+  currentMileage: Number(payload.currentMileage),
+  requestType: String(payload.requestType || "").trim(),
+  category: String(payload.category || "").trim(),
+  description: String(payload.description || "").trim(),
+  amount:
+    typeof payload.amount === "undefined" ||
+    payload.amount === null ||
+    String(payload.amount).trim() === ""
+      ? null
+      : Number(payload.amount),
+  confirmedBy: String(payload.confirmedBy || "").trim(),
+});
+
+const selectRequestById = async ({ requestId }) => {
+  const [rows] = await pool.query(
     `
-      SELECT plate_number
-      FROM number_plates
-      WHERE plate_number = ?
-        AND status = 'active'
+      SELECT
+        id,
+        requestDate,
+        requestTime,
+        numberPlate,
+        currentMileage,
+        requestType,
+        requestedBy,
+        category,
+        description,
+        amount,
+        confirmedBy,
+        status,
+        createdByUserId,
+        createdAt,
+        updatedAt
+      FROM fuel_maintenance_requests
+      WHERE id = ?
       LIMIT 1
     `,
-    [normalized.numberPlate]
+    [requestId]
   );
 
-  if (numberPlateRows.length === 0) {
-    const missingNumberPlateError = new Error("Selected number plate is not available.");
-    missingNumberPlateError.code = "NUMBER_PLATE_NOT_FOUND";
-    throw missingNumberPlateError;
+  if (rows.length === 0) {
+    const notFoundError = new Error("Fuel and maintenance request was not found.");
+    notFoundError.code = "REQUEST_NOT_FOUND";
+    throw notFoundError;
   }
+
+  return rows[0];
+};
+
+const assertCanAccessRequest = ({ request, userId, role }) => {
+  if (isManagerRole(role) || Number(request.createdByUserId) === Number(userId)) {
+    return;
+  }
+
+  const forbiddenError = new Error("You do not have permission for this request.");
+  forbiddenError.code = "REQUEST_FORBIDDEN";
+  throw forbiddenError;
+};
+
+const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
+  await ensureFuelMaintenanceTables();
+
+  const normalized = normalizeRequestPayload(payload);
+  assertValidRequestPayload(normalized);
+
+  const creator = await getRequestCreator({ createdByUserId });
+  const requestedBy = buildRequestedBy(creator);
+
+  assertDriverCanUseNumberPlate({
+    creator,
+    numberPlate: normalized.numberPlate,
+  });
+  await assertNumberPlateIsAvailable({ numberPlate: normalized.numberPlate });
 
   const [insertResult] = await pool.query(
     `
@@ -313,6 +413,7 @@ const createFuelMaintenanceRequest = async ({ payload, createdByUserId }) => {
         description,
         amount,
         confirmedBy,
+        status,
         createdByUserId,
         createdAt,
         updatedAt
@@ -343,6 +444,7 @@ const listFuelMaintenanceRequestsByUser = async ({ createdByUserId }) => {
         description,
         amount,
         confirmedBy,
+        status,
         createdByUserId,
         createdAt,
         updatedAt
@@ -357,6 +459,36 @@ const listFuelMaintenanceRequestsByUser = async ({ createdByUserId }) => {
   return rows.map(mapFuelMaintenanceRow);
 };
 
+const listFuelMaintenanceRequests = async ({ userId, role }) => {
+  await ensureFuelMaintenanceTables();
+
+  if (!isManagerRole(role)) {
+    return listFuelMaintenanceRequestsByUser({ createdByUserId: userId });
+  }
+
+  const [rows] = await pool.query(
+    `
+      SELECT
+        id,
+        requestDate,
+        requestTime,
+        numberPlate,
+        currentMileage,
+        requestType,
+        requestedBy,
+        category,
+        description,
+        amount,
+        confirmedBy,
+        status,
+        createdByUserId,
+        createdAt,
+        updatedAt
+      FROM fuel_maintenance_requests
+      ORDER BY requestDate DESC, requestTime DESC, id DESC
+      LIMIT 500
+    `
+  );
 const listAllFuelMaintenanceRequests = async ({ 
   status = null,
   numberPlate = null,
@@ -413,6 +545,173 @@ const listAllFuelMaintenanceRequests = async ({
   return rows.map(mapFuelMaintenanceRow);
 };
 
+const listFuelMaintenanceRequestsByStatus = async ({ status }) => {
+  await ensureFuelMaintenanceTables();
+
+  const normalizedStatus = String(status || "").trim();
+
+  if (!REQUEST_STATUSES.includes(normalizedStatus)) {
+    const invalidStatusError = new Error("Invalid request status.");
+    invalidStatusError.code = "INVALID_REQUEST_STATUS";
+    throw invalidStatusError;
+  }
+
+  const [rows] = await pool.query(
+    `
+      SELECT
+        id,
+        requestDate,
+        requestTime,
+        numberPlate,
+        currentMileage,
+        requestType,
+        requestedBy,
+        category,
+        description,
+        amount,
+        confirmedBy,
+        status,
+        createdByUserId,
+        createdAt,
+        updatedAt
+      FROM fuel_maintenance_requests
+      WHERE status = ?
+      ORDER BY requestDate DESC, requestTime DESC, id DESC
+      LIMIT 500
+    `,
+    [normalizedStatus]
+  );
+
+  return rows.map(mapFuelMaintenanceRow);
+};
+
+const getFuelMaintenanceRequestById = async ({ requestId, userId, role }) => {
+  await ensureFuelMaintenanceTables();
+
+  const request = await selectRequestById({ requestId });
+  assertCanAccessRequest({ request, userId, role });
+
+  return mapFuelMaintenanceRow(request);
+};
+
+const updateFuelMaintenanceRequest = async ({
+  requestId,
+  payload,
+  userId,
+  role,
+}) => {
+  await ensureFuelMaintenanceTables();
+
+  const existingRequest = await selectRequestById({ requestId });
+  assertCanAccessRequest({ request: existingRequest, userId, role });
+
+  if (!isManagerRole(role) && existingRequest.status !== "Pending") {
+    const lockedError = new Error("Only pending requests can be edited.");
+    lockedError.code = "REQUEST_LOCKED";
+    throw lockedError;
+  }
+
+  const normalized = normalizeRequestPayload(payload);
+  assertValidRequestPayload(normalized);
+
+  const creator = await getRequestCreator({
+    createdByUserId: Number(existingRequest.createdByUserId),
+  });
+  assertDriverCanUseNumberPlate({
+    creator,
+    numberPlate: normalized.numberPlate,
+  });
+  await assertNumberPlateIsAvailable({ numberPlate: normalized.numberPlate });
+
+  await pool.query(
+    `
+      UPDATE fuel_maintenance_requests
+      SET
+        requestDate = ?,
+        requestTime = ?,
+        numberPlate = ?,
+        currentMileage = ?,
+        requestType = ?,
+        category = ?,
+        description = ?,
+        amount = ?,
+        confirmedBy = ?
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [
+      normalized.requestDate,
+      normalized.requestTime,
+      normalized.numberPlate,
+      normalized.currentMileage,
+      normalized.requestType,
+      normalized.category,
+      normalized.description,
+      normalized.amount,
+      normalized.confirmedBy,
+      requestId,
+    ]
+  );
+
+  const updatedRequest = await selectRequestById({ requestId });
+  return mapFuelMaintenanceRow(updatedRequest);
+};
+
+const updateFuelMaintenanceRequestStatus = async ({
+  requestId,
+  status,
+  userId,
+  role,
+}) => {
+  await ensureFuelMaintenanceTables();
+
+  if (!isManagerRole(role)) {
+    const forbiddenError = new Error("Only managers can update request status.");
+    forbiddenError.code = "REQUEST_FORBIDDEN";
+    throw forbiddenError;
+  }
+
+  const normalizedStatus = String(status || "").trim();
+
+  if (!REQUEST_STATUSES.includes(normalizedStatus)) {
+    const invalidStatusError = new Error("Invalid request status.");
+    invalidStatusError.code = "INVALID_REQUEST_STATUS";
+    throw invalidStatusError;
+  }
+
+  const existingRequest = await selectRequestById({ requestId });
+  assertCanAccessRequest({ request: existingRequest, userId, role });
+
+  await pool.query(
+    `
+      UPDATE fuel_maintenance_requests
+      SET status = ?
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [normalizedStatus, requestId]
+  );
+
+  const updatedRequest = await selectRequestById({ requestId });
+  return mapFuelMaintenanceRow(updatedRequest);
+};
+
+const deleteFuelMaintenanceRequest = async ({ requestId, userId, role }) => {
+  await ensureFuelMaintenanceTables();
+
+  const existingRequest = await selectRequestById({ requestId });
+  assertCanAccessRequest({ request: existingRequest, userId, role });
+
+  if (!isManagerRole(role) && existingRequest.status !== "Pending") {
+    const lockedError = new Error("Only pending requests can be deleted.");
+    lockedError.code = "REQUEST_LOCKED";
+    throw lockedError;
+  }
+
+  await pool.query(
+    `
+      DELETE FROM fuel_maintenance_requests
+      WHERE id = ?
 const confirmFuelMaintenanceRequest = async ({
   requestId,
   confirmedByUserId,
@@ -524,6 +823,7 @@ const confirmFuelMaintenanceRequest = async ({
     [requestId]
   );
 
+  return mapFuelMaintenanceRow(existingRequest);
   const updatedRequest = mapFuelMaintenanceRow(updatedRows[0]);
 
   // Log audit trail
@@ -567,9 +867,16 @@ const confirmFuelMaintenanceRequest = async ({
 module.exports = {
   REQUEST_TYPES,
   REQUEST_CATEGORIES,
+  REQUEST_STATUSES,
   ensureFuelMaintenanceTables,
   createFuelMaintenanceRequest,
+  deleteFuelMaintenanceRequest,
+  getFuelMaintenanceRequestById,
+  listFuelMaintenanceRequests,
+  listFuelMaintenanceRequestsByStatus,
   listFuelMaintenanceRequestsByUser,
+  updateFuelMaintenanceRequest,
+  updateFuelMaintenanceRequestStatus,
   listAllFuelMaintenanceRequests,
   confirmFuelMaintenanceRequest,
 };

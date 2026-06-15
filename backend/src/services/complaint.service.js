@@ -68,6 +68,8 @@ const complaintReportsTableSql =
       complaintType ENUM('Learner', 'Driver', 'Bus', 'Community', 'Bus Assistant', 'Other') NOT NULL,
       learnerName VARCHAR(255) NULL,
       details TEXT NOT NULL,
+      confirmedBy VARCHAR(255) NULL,
+      status ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending',
       createdByUserId INT NOT NULL,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -144,6 +146,8 @@ const mapComplaintRow = (row) => ({
   complaintType: row.complaintType,
   learnerName: row.learnerName,
   details: row.details,
+  confirmedBy: row.confirmedBy || null,
+  status: row.status || 'Pending',
   createdByUserId: row.createdByUserId,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
@@ -400,6 +404,8 @@ const createComplaintReport = async ({
           complaintType,
           learnerName,
           details,
+          confirmedBy,
+          status,
           createdByUserId,
           createdAt,
           updatedAt
@@ -444,6 +450,8 @@ const listComplaintReportsByUser = async ({ createdByUserId }) => {
         complaintType,
         learnerName,
         details,
+        confirmedBy,
+        status,
         createdByUserId,
         createdAt,
         updatedAt
@@ -466,6 +474,108 @@ const listComplaintReportsByUser = async ({ createdByUserId }) => {
   }));
 };
 
+const updateComplaintStatus = async ({
+  complaintId,
+  status,
+  confirmedBy,
+}) => {
+  await ensureComplaintTables();
+
+  const VALID_STATUSES = ['Pending', 'Approved', 'Rejected'];
+  if (!VALID_STATUSES.includes(status)) {
+    const error = new Error("Invalid status.");
+    error.code = "INVALID_STATUS";
+    throw error;
+  }
+
+  if (!confirmedBy || String(confirmedBy).trim() === '') {
+    const error = new Error("confirmedBy is required.");
+    error.code = "CONFIRMED_BY_REQUIRED";
+    throw error;
+  }
+
+  const [result] = await pool.query(
+    `
+      UPDATE complaint_reports
+      SET status = ?, confirmedBy = ?, updatedAt = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `,
+    [status, String(confirmedBy).trim(), complaintId]
+  );
+
+  if (result.affectedRows === 0) {
+    const error = new Error("Complaint report not found.");
+    error.code = "COMPLAINT_NOT_FOUND";
+    throw error;
+  }
+
+  const [updatedRows] = await pool.query(
+    `
+      SELECT
+        id,
+        requestedBy,
+        contactPhoneNumber,
+        numberPlate,
+        timing,
+        tripNumber,
+        complaintType,
+        learnerName,
+        details,
+        confirmedBy,
+        status,
+        createdByUserId,
+        createdAt,
+        updatedAt
+      FROM complaint_reports
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [complaintId]
+  );
+
+  return mapComplaintRow(updatedRows[0]);
+};
+
+const listAllComplaintReports = async ({ pageSize = 50, pageNumber = 1 } = {}) => {
+  await ensureComplaintTables();
+
+  const offset = (pageNumber - 1) * pageSize;
+
+  const [rows] = await pool.query(
+    `
+      SELECT
+        id,
+        requestedBy,
+        contactPhoneNumber,
+        numberPlate,
+        timing,
+        tripNumber,
+        complaintType,
+        learnerName,
+        details,
+        confirmedBy,
+        status,
+        createdByUserId,
+        createdAt,
+        updatedAt
+      FROM complaint_reports
+      ORDER BY createdAt DESC, id DESC
+      LIMIT ? OFFSET ?
+    `,
+    [pageSize, offset]
+  );
+
+  const complaints = rows.map(mapComplaintRow);
+  const attachmentByComplaintId = await getComplaintUploads({
+    complaintIds: complaints.map((complaint) => complaint.id),
+  });
+
+  return complaints.map((complaint) => ({
+    ...complaint,
+    attachment: attachmentByComplaintId.get(complaint.id) || null,
+  }));
+};
+
 module.exports = {
   TIMING_OPTIONS,
   TRIP_NUMBERS,
@@ -474,4 +584,6 @@ module.exports = {
   getComplaintFormMeta,
   createComplaintReport,
   listComplaintReportsByUser,
+  updateComplaintStatus,
+  listAllComplaintReports,
 };

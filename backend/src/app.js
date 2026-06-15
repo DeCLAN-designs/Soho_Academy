@@ -4,14 +4,26 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const {
+  requestErrorLogStream,
+  requestLogStream,
+} = require("./utils/logger.js");
 
 const authRoutes = require("./routes/auth.routes.js");
 const complianceDocumentRoutes = require("./routes/complianceDocument.routes.js");
 const complaintRoutes = require("./routes/complaint.routes.js");
+const fleetRoutes = require("./routes/fleet.routes.js");
 const fuelMaintenanceRoutes = require("./routes/fuelMaintenance.routes.js");
+const fuelRequestsRoutes = require("./routes/fuelRequests.routes.js");
 const incidentRoutes = require("./routes/incident.routes.js");
 const parentRoutes = require("./routes/parent.routes.js");
+const routeRoutes = require("./routes/routes.routes.js");
+const stopRoutes = require("./routes/stops.routes.js");
+const studentAssignmentsRoutes = require("./routes/studentAssignments.routes.js");
+const studentAttendanceRoutes = require("./routes/studentAttendance.routes.js");
 const studentRoutes = require("./routes/student.routes.js");
+const tripsRoutes = require("./routes/trips.routes.js");
+const usersRoutes = require("./routes/users.routes.js");
 const routeRoutes = require("./routes/route.routes.js");
 const fleetRoutes = require("./routes/fleet.routes.js");
 const staffRoutes = require("./routes/staff.routes.js");
@@ -40,7 +52,20 @@ app.use(
 );
 
 // Logging
-app.use(morgan("dev"));
+const requestLogFormat =
+  ":method :url :status :response-time ms - :res[content-length]";
+
+app.use(
+  morgan(requestLogFormat, {
+    stream: requestLogStream,
+  })
+);
+app.use(
+  morgan(requestLogFormat, {
+    skip: (_req, res) => res.statusCode < 400,
+    stream: requestErrorLogStream,
+  })
+);
 
 // Body parsing
 app.use(express.json({ limit: "10kb" }));
@@ -56,12 +81,20 @@ app.use("/api", (_req, res, next) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api", fleetRoutes);
 app.use("/api/compliance-documents", complianceDocumentRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/fuel-maintenance", fuelMaintenanceRoutes);
+app.use("/api/fuel-requests", fuelRequestsRoutes);
 app.use("/api/incidents", incidentRoutes);
 app.use("/api/parent", parentRoutes);
+app.use("/api", routeRoutes);
+app.use("/api", stopRoutes);
+app.use("/api", studentAssignmentsRoutes);
+app.use("/api", studentAttendanceRoutes);
+app.use("/api", tripsRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/users", usersRoutes);
 app.use("/api/transport-manager", routeRoutes);
 app.use("/api/transport-manager", fleetRoutes);
 app.use("/api/transport-manager", staffRoutes);
