@@ -9,8 +9,11 @@ const {
   patchAttendanceRecord,
   postBulkAttendanceUpdate,
 } = require("../controllers/studentAttendance.controller.js");
+const { authenticate } = require("../middlewares/auth.middleware.js");
 
 const router = express.Router();
+
+router.use(authenticate);
 
 router.get("/attendance/trips", getTripsForDate);
 router.get("/trips", getAllTrips);

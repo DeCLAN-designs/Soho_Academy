@@ -106,6 +106,8 @@ const updateAttendanceRecord = async ({ id, payload }) => {
 
     if (payload.boarding_status === "Boarded") {
       updates.push("boarded_at = COALESCE(boarded_at, NOW())");
+    } else {
+      updates.push("boarded_at = NULL");
     }
   }
 
@@ -115,6 +117,8 @@ const updateAttendanceRecord = async ({ id, payload }) => {
 
     if (payload.dropoff_status === "Dropped Off") {
       updates.push("dropped_off_at = COALESCE(dropped_off_at, NOW())");
+    } else {
+      updates.push("dropped_off_at = NULL");
     }
   }
 

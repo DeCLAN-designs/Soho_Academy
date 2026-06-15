@@ -773,6 +773,7 @@ CREATE TABLE student_attendance (
         ON DELETE SET NULL
 );
 
+
 DELIMITER $$
 
 CREATE TRIGGER after_insert_trip_create_attendance
@@ -815,4 +816,6 @@ BEGIN
 END$$
 
 DELIMITER ;
+*/
+
 

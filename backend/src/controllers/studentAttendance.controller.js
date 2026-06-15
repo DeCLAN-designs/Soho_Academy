@@ -45,8 +45,20 @@ const getAllTrips = async (req, res) => {
 const getAttendanceByTrip = async (req, res) => {
   try {
     const attendance = await listAttendanceForTrip(Number(req.params.tripId));
+    const summary = {
+      total: attendance.length,
+      boarded: attendance.filter(r => r.boarding_status === "Boarded").length,
+      absent: attendance.filter(r => r.boarding_status === "Absent").length,
+      missed_pickup: attendance.filter(r => r.boarding_status === "Missed Pickup").length,
+      parent_pickup: attendance.filter(r => r.boarding_status === "Parent Pickup").length,
+      dropped_off: attendance.filter(r => r.dropoff_status === "Dropped Off").length,
+      pending_dropoff: attendance.filter(r => r.dropoff_status === "Pending").length,
+    };
 
-    return res.status(200).json({ success: true, data: attendance });
+    return res.status(200).json({
+      success: true,
+      data: { attendance, summary },
+    });
   } catch (error) {
     return handleAttendanceError(res, error, "Failed to fetch attendance records.");
   }
@@ -54,7 +66,16 @@ const getAttendanceByTrip = async (req, res) => {
 
 const patchAttendanceRecord = async (req, res) => {
   try {
-    const attendance = await updateAttendanceRecord({ id: Number(req.params.id), payload: req.body || {} });
+    const userId = req.user ? Number(req.user.sub) : null;
+    const payload = {
+      ...(req.body || {}),
+      confirmed_by_user_id: userId,
+    };
+
+    const attendance = await updateAttendanceRecord({
+      id: Number(req.params.id),
+      payload,
+    });
 
     return res.status(200).json({ success: true, message: "Attendance updated successfully.", data: attendance });
   } catch (error) {
@@ -64,7 +85,12 @@ const patchAttendanceRecord = async (req, res) => {
 
 const postBulkAttendanceUpdate = async (req, res) => {
   try {
-    const attendance = await bulkUpdateAttendance(req.body || []);
+    const userId = req.user ? Number(req.user.sub) : null;
+    const records = (req.body || []).map(r => ({
+      ...r,
+      confirmed_by_user_id: userId,
+    }));
+    const attendance = await bulkUpdateAttendance(records);
 
     return res.status(200).json({ success: true, message: "Attendance records updated successfully.", data: attendance });
   } catch (error) {
