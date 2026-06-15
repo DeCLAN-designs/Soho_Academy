@@ -174,6 +174,18 @@ Transport Manager has the broadest dashboard surface. Major areas include:
 - InnoDB-style relational schema
 - Foreign keys for key transport relationships
 - Manual schema file rather than a full migration framework
+## Overview
+This repository contains two separate applications:
+- `backend/`: Express REST API, MySQL integration, file uploads, and authentication
+- `frontend/`: React SPA with authenticated dashboard flows
+
+The backend routes are mounted under `/api/*`, and the frontend development server proxies requests to the backend.
+
+## Tech Stack
+- Frontend: React 19, TypeScript, Vite, React Router
+- Backend: Node.js, Express 5, MySQL, bcrypt, jsonwebtoken, helmet, cors, cookie-parser
+- Dev tools: nodemon, ESLint, Vite
+- Deployment: Docker Compose
 
 ## Repository Structure
 
@@ -195,6 +207,15 @@ Soho/
 │       ├── routes/
 │       ├── services/
 │       ├── utils/
+│   ├── package.json
+│   └── src/
+│       ├── app.js
+│       ├── config/db.js
+│       ├── migration/schema.sql
+│       ├── controllers/
+│       ├── middlewares/
+│       ├── routes/
+│       ├── services/
 │       └── validators/
 ├── frontend/
 │   ├── package.json
@@ -233,13 +254,28 @@ Install these before running the project locally:
 
 Clone the repository and install dependencies separately for the backend and frontend.
 
+│       ├── components/
+│       └── lib/
+├── docker-compose.yml
+└── docs/
+    ├── architecture/
+    ├── deployment/
+    └── postman/
+```
+
+## Getting Started
+### Prerequisites
+- Node.js 18+ (recommended 20+)
+- npm 9+
+- MySQL 8+
+
+### Install dependencies
 ```bash
 git clone <repository-url>
 cd Soho
 
 cd backend
 npm install
-
 cd ../frontend
 npm install
 ```
@@ -248,6 +284,8 @@ Create local environment files:
 
 ```bash
 cd /path/to/Soho
+### Configure environment files
+```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
@@ -290,10 +328,48 @@ Backend variable notes:
 ### Frontend: `frontend/.env`
 
 Example values:
+### Create the database and apply schema
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS soho_transport;"
+mysql -u root -p soho_transport < backend/src/migration/schema.sql
+```
 
+Then update `backend/.env` so that `DB_NAME` matches your created database.
+
+### Seed number plates
+Driver and Bus Assistant registration require existing number plates. Example:
+```sql
+INSERT INTO number_plates (plate_number, status) VALUES
+  ('KDA123A', 'active'),
+  ('KDB456B', 'active'),
+  ('KDC789C', 'inactive');
+```
+
+## Environment Variables
+### Backend
+Use `backend/.env.example` as a template.
+
+Important variables:
+- `PORT` (default `5000`)
+- `DB_HOST`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_NAME`
+- `JWT_SECRET`
+- `JWT_EXPIRES_IN`
+- `JWT_REFRESH_SECRET`
+- `JWT_REFRESH_EXPIRES_IN`
+- `FRONTEND_ORIGIN`
+- Cloudflare R2 upload settings if file uploads are enabled
+
+### Frontend
+Use `frontend/.env.example` as a template.
+
+Example:
 ```env
 VITE_BACKEND_URL=http://localhost:5000
 # Optional: use full backend URL instead of Vite proxy for API requests.
+# Optional: use full backend URL instead of Vite proxy.
 # VITE_API_BASE_URL=http://localhost:5000/api
 # REACT_APP_API_URL=http://localhost:5000/api
 ```
@@ -308,6 +384,8 @@ Frontend variable notes:
 
 Create the database:
 
+## Running Locally
+### Backend
 ```bash
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS Soho_Academy;"
 ```
@@ -354,6 +432,8 @@ Run the backend:
 cd backend
 npm run dev
 ```
+- Backend listens on `http://localhost:5000` by default.
+- API root: `http://localhost:5000/api`
 
 Run the frontend in another terminal:
 
@@ -361,6 +441,8 @@ Run the frontend in another terminal:
 cd frontend
 npm run dev
 ```
+- Frontend dev server runs on `http://localhost:5173`
+- API requests are proxied to the backend.
 
 Default local URLs:
 
@@ -383,6 +465,9 @@ npm test         # currently placeholder only
 
 Frontend:
 
+## Docker
+### Development
+From the repository root:
 ```bash
 cd frontend
 npm run dev      # start Vite dev server
@@ -390,6 +475,7 @@ npm run build    # TypeScript build plus Vite production build
 npm run lint     # run ESLint
 npm run preview  # preview production build locally
 ```
+- The `frontend` service is available at `http://localhost:5173`
 
 ## Frontend Architecture
 
@@ -420,7 +506,28 @@ frontend/src/components/Dashboard/
 ├── ParentDashboard/
 ├── SchoolAdminDashboard/
 └── TransportManagerDashboard/
+### Production frontend
+```bash
+docker compose --profile prod up --build frontend-prod
 ```
+- The production frontend is available at `http://localhost:8080`
+
+## API Summary
+Authentication endpoints:
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+
+Example module endpoints:
+- `POST /api/fuel-maintenance`
+- `GET /api/fuel-maintenance`
+- `GET /api/students`
+- `POST /api/students`
+- `POST /api/complaints`
+- `POST /api/compliance-documents`
+- `POST /api/incidents`
 
 Transport Manager tabs are subdivided by domain:
 
@@ -1053,5 +1160,11 @@ The frontend production build may warn that a JS chunk is larger than 500 kB. Th
 - Architecture notes: `docs/architecture/ARCHITECTURE.md`
 - Deployment guide: `docs/deployment/DEPLOYMENT.md`
 - Security policy: `SECURITY.md`
+Health check:
+- `GET /health`
+
+## Documentation
+- Architecture: `docs/architecture/ARCHITECTURE.md`
+- Deployment: `docs/deployment/DEPLOYMENT.md`
 - Postman collection: `docs/postman/Soho-Transport-API.postman_collection.json`
 - Postman environment: `docs/postman/Soho-Transport-Local.postman_environment.json`

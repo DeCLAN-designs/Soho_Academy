@@ -17,7 +17,7 @@ const {
 
 const router = express.Router();
 
-router.use(authenticate, authorizeRoles("Driver"));
+router.use(authenticate, authorizeRoles("Driver", "Transport Manager", "School Admin"));
 
 router.get("/documents", getDocuments);
 

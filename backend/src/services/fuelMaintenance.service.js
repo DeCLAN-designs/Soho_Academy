@@ -170,6 +170,10 @@ const mapFuelMaintenanceRow = (row) => ({
   amount: row.amount,
   confirmedBy: row.confirmedBy,
   status: row.status,
+  confirmedByUserId: row.confirmedByUserId,
+  confirmedByName: row.confirmedByName,
+  confirmationStatus: row.confirmationStatus || "PENDING",
+  confirmedAt: row.confirmedAt,
   createdByUserId: row.createdByUserId,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
@@ -485,6 +489,58 @@ const listFuelMaintenanceRequests = async ({ userId, role }) => {
       LIMIT 500
     `
   );
+const listAllFuelMaintenanceRequests = async ({ 
+  status = null,
+  numberPlate = null,
+  limit = 100,
+  offset = 0,
+} = {}) => {
+  await ensureFuelMaintenanceTables();
+
+  let query = `
+    SELECT
+      fmr.id,
+      fmr.requestDate,
+      fmr.requestTime,
+      fmr.numberPlate,
+      fmr.currentMileage,
+      fmr.requestType,
+      fmr.requestedBy,
+      fmr.category,
+      fmr.description,
+      fmr.amount,
+      fmr.confirmedBy,
+      fmr.confirmedByUserId,
+      COALESCE(CONCAT(u.firstName, ' ', u.lastName), 'Unconfirmed') as confirmedByName,
+      COALESCE(fmr.confirmationStatus, 'PENDING') as confirmationStatus,
+      fmr.confirmedAt,
+      fmr.createdByUserId,
+      CONCAT(u2.firstName, ' ', u2.lastName) as requestedByName,
+      fmr.createdAt,
+      fmr.updatedAt
+    FROM fuel_maintenance_requests fmr
+    LEFT JOIN users u ON fmr.confirmedByUserId = u.id
+    LEFT JOIN users u2 ON fmr.createdByUserId = u2.id
+    WHERE 1=1
+  `;
+
+  const params = [];
+
+  if (status) {
+    query += ` AND COALESCE(fmr.confirmationStatus, 'PENDING') = ?`;
+    params.push(status);
+  }
+
+  if (numberPlate) {
+    query += ` AND fmr.numberPlate = ?`;
+    params.push(numberPlate.toUpperCase());
+  }
+
+  query += ` ORDER BY fmr.requestDate DESC, fmr.requestTime DESC, fmr.id DESC`;
+  query += ` LIMIT ? OFFSET ?`;
+  params.push(limit, offset);
+
+  const [rows] = await pool.query(query, params);
 
   return rows.map(mapFuelMaintenanceRow);
 };
@@ -656,12 +712,156 @@ const deleteFuelMaintenanceRequest = async ({ requestId, userId, role }) => {
     `
       DELETE FROM fuel_maintenance_requests
       WHERE id = ?
+const confirmFuelMaintenanceRequest = async ({
+  requestId,
+  confirmedByUserId,
+  confirmationStatus = "CONFIRMED",
+}) => {
+  await ensureFuelMaintenanceTables();
+
+  if (!["CONFIRMED", "REJECTED"].includes(confirmationStatus)) {
+    const error = new Error("Invalid confirmation status.");
+    error.code = "INVALID_CONFIRMATION_STATUS";
+    throw error;
+  }
+
+  // Get the existing request
+  const [requestRows] = await pool.query(
+    `
+      SELECT id, createdByUserId, numberPlate, requestType, description, amount
+      FROM fuel_maintenance_requests
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [requestId]
+  );
+
+  if (requestRows.length === 0) {
+    const error = new Error("Fuel maintenance request not found.");
+    error.code = "REQUEST_NOT_FOUND";
+    throw error;
+  }
+
+  const request = requestRows[0];
+
+  // Get the transport manager user info
+  const [managerRows] = await pool.query(
+    `
+      SELECT id, firstName, lastName, role
+      FROM users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [confirmedByUserId]
+  );
+
+  if (managerRows.length === 0) {
+    const error = new Error("Confirming user not found.");
+    error.code = "CONFIRMING_USER_NOT_FOUND";
+    throw error;
+  }
+
+  const manager = managerRows[0];
+
+  if (manager.role !== "Transport Manager") {
+    const error = new Error("Only Transport Managers can confirm requests.");
+    error.code = "UNAUTHORIZED_CONFIRMATION";
+    throw error;
+  }
+
+  const confirmedByName = [manager.firstName, manager.lastName]
+    .filter(Boolean)
+    .join(" ");
+
+  // Update the request
+  const [updateResult] = await pool.query(
+    `
+      UPDATE fuel_maintenance_requests
+      SET
+        confirmedByUserId = ?,
+        confirmationStatus = ?,
+        confirmedAt = NOW(),
+        updatedAt = NOW()
+      WHERE id = ?
+    `,
+    [confirmedByUserId, confirmationStatus, requestId]
+  );
+
+  if (updateResult.affectedRows === 0) {
+    const error = new Error("Failed to update confirmation status.");
+    error.code = "UPDATE_FAILED";
+    throw error;
+  }
+
+  // Get the updated request
+  const [updatedRows] = await pool.query(
+    `
+      SELECT
+        fmr.id,
+        fmr.requestDate,
+        fmr.requestTime,
+        fmr.numberPlate,
+        fmr.currentMileage,
+        fmr.requestType,
+        fmr.requestedBy,
+        fmr.category,
+        fmr.description,
+        fmr.amount,
+        fmr.confirmedBy,
+        fmr.confirmedByUserId,
+        CONCAT(u.firstName, ' ', u.lastName) as confirmedByName,
+        fmr.confirmationStatus,
+        fmr.confirmedAt,
+        fmr.createdByUserId,
+        fmr.createdAt,
+        fmr.updatedAt
+      FROM fuel_maintenance_requests fmr
+      LEFT JOIN users u ON fmr.confirmedByUserId = u.id
+      WHERE fmr.id = ?
       LIMIT 1
     `,
     [requestId]
   );
 
   return mapFuelMaintenanceRow(existingRequest);
+  const updatedRequest = mapFuelMaintenanceRow(updatedRows[0]);
+
+  // Log audit trail
+  const auditLogQuery = `
+    INSERT INTO audit_logs (
+      actorUserId,
+      domain,
+      entityType,
+      entityId,
+      action,
+      previousStateJson,
+      newStateJson
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  const previousState = {
+    confirmationStatus: "PENDING",
+    confirmedByUserId: null,
+    confirmedAt: null,
+  };
+
+  const newState = {
+    confirmationStatus: updatedRequest.confirmationStatus,
+    confirmedByUserId: updatedRequest.confirmedByUserId,
+    confirmedAt: updatedRequest.confirmedAt,
+  };
+
+  await pool.query(auditLogQuery, [
+    confirmedByUserId,
+    "fuel_maintenance",
+    "FuelMaintenanceRequest",
+    requestId,
+    `CONFIRMED_${confirmationStatus}`,
+    JSON.stringify(previousState),
+    JSON.stringify(newState),
+  ]);
+
+  return updatedRequest;
 };
 
 module.exports = {
@@ -677,4 +877,6 @@ module.exports = {
   listFuelMaintenanceRequestsByUser,
   updateFuelMaintenanceRequest,
   updateFuelMaintenanceRequestStatus,
+  listAllFuelMaintenanceRequests,
+  confirmFuelMaintenanceRequest,
 };

@@ -55,6 +55,45 @@ const isTokenExpired = (token: string): boolean => {
   const expiry = getTokenExpiry(token)
   if (!expiry) return true
   return Date.now() >= expiry
+// Enhanced error handling for server connection issues
+const isNetworkError = (error: any): boolean => {
+  return (
+    error instanceof TypeError && 
+    (error.message === 'Failed to fetch' || 
+     error.message.includes('NetworkError') ||
+     error.message.includes('fetch') ||
+     error.message.includes('ERR_NETWORK') ||
+     error.message.includes('ERR_INTERNET_DISCONNECTED'))
+  ) || (
+    // Handle DOMException timeout errors
+    error instanceof DOMException && error.name === 'TimeoutError'
+  )
+}
+
+const isServerError = (error: any): boolean => {
+  return error && (error.status >= 500 || error.status === 0)
+}
+
+const isConnectionError = (error: any): boolean => {
+  return isNetworkError(error) || isServerError(error)
+}
+
+// Clear all authentication data
+const clearAuthData = (): void => {
+  if (typeof window === 'undefined') return
+
+  const keysToRemove = [
+    AUTH_TOKEN_KEY,
+    AUTH_ROLE_KEY,
+    AUTH_NUMBER_PLATE_KEY,
+    AUTH_FIRST_NAME_KEY,
+    AUTH_LAST_NAME_KEY,
+    AUTH_PROFILE_PHOTO_URL_KEY
+  ]
+
+  keysToRemove.forEach(key => {
+    localStorage.removeItem(key)
+  })
 }
 
 interface AuthProviderProps {
@@ -94,7 +133,7 @@ const persistUser = (nextUser: AuthUser | null) => {
   }
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+const AuthProviderComponent: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -125,9 +164,76 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       setUser(null)
       setIsAuthenticated(false)
+    const initializeAuth = async () => {
+      try {
+        const token = getStoredValue(AUTH_TOKEN_KEY)
+        const role = getStoredValue(AUTH_ROLE_KEY)
+        const firstName = getStoredValue(AUTH_FIRST_NAME_KEY)
+        const lastName = getStoredValue(AUTH_LAST_NAME_KEY)
+        const numberPlate = getStoredValue(AUTH_NUMBER_PLATE_KEY)
+        const profilePhotoUrl = getStoredValue(AUTH_PROFILE_PHOTO_URL_KEY)
+
+        if (token) {
+          // Validate token with server
+          try {
+            const response = await authApi.me()
+            if (response.success && response.data) {
+              const userData = response.data
+              const nextUser: AuthUser = {
+                token,
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                role: userData.role,
+                numberPlate: userData.numberPlate,
+                profilePhotoUrl: userData.profilePhotoUrl,
+              }
+              persistUser(nextUser)
+              setUser(nextUser)
+              setIsAuthenticated(true)
+            } else {
+              // Token is invalid, clear auth data
+              clearAuthData()
+              setUser(null)
+              setIsAuthenticated(false)
+            }
+          } catch (error) {
+            console.error('Token validation failed:', error)
+            
+            // If it's a connection error, don't clear auth data yet
+            if (isConnectionError(error)) {
+              console.log('Connection error during token validation, keeping existing session')
+              // Keep existing user data but mark as potentially offline
+              const nextUser: AuthUser = {
+                token,
+                firstName,
+                lastName,
+                role,
+                numberPlate: numberPlate || null,
+                profilePhotoUrl: profilePhotoUrl || null,
+              }
+              setUser(nextUser)
+              setIsAuthenticated(true)
+            } else {
+              // For other errors (401, 403), clear auth data
+              clearAuthData()
+              setUser(null)
+              setIsAuthenticated(false)
+            }
+          }
+        } else {
+          setUser(null)
+          setIsAuthenticated(false)
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error)
+        setUser(null)
+        setIsAuthenticated(false)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    setIsLoading(false)
+    initializeAuth()
   }, [])
 
   const login = async (email: string, password: string) => {
@@ -161,6 +267,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     } catch (error) {
       console.error('Login error:', error)
+      
+      // Handle connection errors during login
+      if (isConnectionError(error)) {
+        if (error instanceof DOMException && error.name === 'TimeoutError') {
+          throw new Error('Login request timed out. Please check your internet connection and try again.')
+        } else {
+          throw new Error('Unable to connect to server. Please check your internet connection and try again.')
+        }
+      }
+      
       throw error
     }
   }
@@ -177,6 +293,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await authApi.logout()
     } catch (error) {
       console.error('Logout API error:', error)
+      // Even if logout API fails, clear local auth data
     } finally {
       persistUser(null)
       setUser(null)
@@ -197,6 +314,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
+// Export components separately for better Fast Refresh compatibility
+export const AuthProvider = AuthProviderComponent
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext)
   if (context === undefined) {
@@ -204,3 +323,6 @@ export const useAuth = (): AuthContextType => {
   }
   return context
 }
+
+// Default export
+export default AuthProvider

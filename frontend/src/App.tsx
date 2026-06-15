@@ -1,9 +1,10 @@
 import './App.css'
 import React, { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
+import AuthProvider, { useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import Loader from './components/Loader/Loader'
+import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary'
 
 // ─── Lazy-loaded route components ────────────────────────────────────────────
 const Login    = lazy(() => import('./components/Auth/Login/Login'))
@@ -71,5 +72,21 @@ const App: React.FC = () => (
     </AuthProvider>
   </BrowserRouter>
 )
+
+export default App
+  )
+}
+
+const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
+  )
+}
 
 export default App

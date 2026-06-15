@@ -11,6 +11,8 @@ type RegisterFormData = {
     lastName: string
     phoneNumber: string
     numberPlate: string
+    parentIdType: string
+    parentIdNumber: string
     role: string
     password: string
     confirmPassword: string
@@ -22,6 +24,8 @@ const initialFormData: RegisterFormData = {
     lastName: '',
     phoneNumber: '',
     numberPlate: '',
+    parentIdType: 'ID',
+    parentIdNumber: '',
     role: '',
     password: '',
     confirmPassword: '',
@@ -222,6 +226,34 @@ const Register = () => {
                             <option value="School Admin">School Admin</option>
                         </select>
                     </label>
+
+                    {formData.role === 'Parent' ? (
+                        <label className={styles.fullWidth}>
+                            <span>Parent ID / Passport</span>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <select
+                                    name="parentIdType"
+                                    value={formData.parentIdType}
+                                    onChange={handleChange}
+                                    disabled={isSubmitting}
+                                    required
+                                    style={{ flex: 1 }}
+                                >
+                                    <option value="ID">ID</option>
+                                    <option value="PASSPORT">Passport</option>
+                                </select>
+                                <input
+                                    name="parentIdNumber"
+                                    value={formData.parentIdNumber}
+                                    onChange={handleChange}
+                                    disabled={isSubmitting}
+                                    required
+                                    placeholder="Enter identifier number"
+                                    style={{ flex: 1 }}
+                                />
+                            </div>
+                        </label>
+                    ) : null}
 
                     {needsNumberPlate ? (
                         <label>

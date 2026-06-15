@@ -4,12 +4,16 @@ CREATE TABLE users (
     lastName VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     phoneNumber VARCHAR(20) NOT NULL UNIQUE,
+    -- Used to link a Parent account to student records (replaces phone-based matching)
+    parentIdType VARCHAR(10) NULL,
+    parentIdNumber VARCHAR(50) NULL,
     numberPlate VARCHAR(20),
     profilePhotoUrl VARCHAR(500) NULL,
     profilePhotoKey VARCHAR(255) NULL,
     password VARCHAR(255) NOT NULL,
     role ENUM('Parent', 'Driver', 'Bus Assistant', 'Transport Manager', 'School Admin') NOT NULL,
     CONSTRAINT chk_phoneNumber_numeric CHECK (phoneNumber REGEXP '^[0-9]+$'),
+    CONSTRAINT uq_parent_identifier UNIQUE (parentIdType, parentIdNumber),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -20,6 +24,10 @@ CREATE TABLE number_plates (
     plate_number VARCHAR(20) NOT NULL,
     
     status ENUM('active', 'inactive') DEFAULT 'active',
+    -- Fleet constraints used during route assignment.
+    capacity INT NOT NULL DEFAULT 0,
+    insuranceExpiryDate DATE NULL,
+    inspectionExpiryDate DATE NULL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
@@ -48,6 +56,39 @@ CREATE TABLE vehicle_details (
     CONSTRAINT uq_vehicle_details_plate UNIQUE (plate_number),
     CONSTRAINT fk_vehicle_details_plate
         FOREIGN KEY (plate_number) REFERENCES number_plates(plate_number)
+-- ============================================================
+-- Transport Manager: Route domain (MVP)
+-- ============================================================
+
+CREATE TABLE routes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    routeCode VARCHAR(50) NOT NULL UNIQUE,
+    routeName VARCHAR(255) NOT NULL,
+    routeDate DATE NOT NULL,
+    startTime TIME NOT NULL,
+    endTime TIME NOT NULL,
+    status ENUM('active', 'inactive', 'completed') NOT NULL DEFAULT 'active',
+    createdByUserId INT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_routes_created_by
+        FOREIGN KEY (createdByUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE route_stops (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    routeId INT NOT NULL,
+    stopType ENUM('pickup', 'dropoff') NOT NULL,
+    stopOrder INT NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    timeAllocation TIME NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uq_route_stop_order UNIQUE (routeId, stopOrder),
+    CONSTRAINT fk_route_stops_route
+        FOREIGN KEY (routeId) REFERENCES routes(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
@@ -66,6 +107,124 @@ CREATE TABLE routes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT uq_routes_route_id UNIQUE (route_id)
+CREATE TABLE route_assignments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    routeId INT NOT NULL,
+    numberPlate VARCHAR(20) NOT NULL,
+    driverUserId INT NOT NULL,
+    assistantUserId INT NULL,
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    assignedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uq_route_assignment UNIQUE (routeId, status),
+    CONSTRAINT fk_route_assign_numberplate
+        FOREIGN KEY (numberPlate) REFERENCES number_plates(plate_number)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_route_assign_driver
+        FOREIGN KEY (driverUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_route_assign_assistant
+        FOREIGN KEY (assistantUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE route_student_assignments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    routeId INT NOT NULL,
+    studentId INT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uq_route_student UNIQUE (routeId, studentId),
+    CONSTRAINT fk_route_student_route
+        FOREIGN KEY (routeId) REFERENCES routes(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_route_student_student
+        FOREIGN KEY (studentId) REFERENCES students(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE trips (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    routeId INT NOT NULL,
+    routeAssignmentId INT NOT NULL,
+    numberPlate VARCHAR(20) NOT NULL,
+    driverUserId INT NOT NULL,
+    assistantUserId INT NULL,
+    tripDate DATE NOT NULL,
+    scheduledStartTime TIME NOT NULL,
+    status ENUM('scheduled', 'started', 'in_progress', 'completed') NOT NULL DEFAULT 'scheduled',
+    startedAt TIMESTAMP NULL,
+    inProgressAt TIMESTAMP NULL,
+    completedAt TIMESTAMP NULL,
+    createdByUserId INT NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_trips_route
+        FOREIGN KEY (routeId) REFERENCES routes(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_trips_route_assignment
+        FOREIGN KEY (routeAssignmentId) REFERENCES route_assignments(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_trips_numberplate
+        FOREIGN KEY (numberPlate) REFERENCES number_plates(plate_number)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_trips_driver
+        FOREIGN KEY (driverUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_trips_assistant
+        FOREIGN KEY (assistantUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_trips_created_by
+        FOREIGN KEY (createdByUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE trip_student_attendance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tripId INT NOT NULL,
+    studentId INT NOT NULL,
+    boardingStatus ENUM('not_boarded', 'boarded', 'dropped_off') NOT NULL DEFAULT 'not_boarded',
+    boardedAt TIMESTAMP NULL,
+    droppedOffAt TIMESTAMP NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uq_trip_student_attendance UNIQUE (tripId, studentId),
+    CONSTRAINT fk_trip_attendance_trip
+        FOREIGN KEY (tripId) REFERENCES trips(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_trip_attendance_student
+        FOREIGN KEY (studentId) REFERENCES students(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE trip_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tripId INT NOT NULL,
+    eventType ENUM('scheduled', 'started', 'in_progress', 'completed', 'attendance_updated') NOT NULL,
+    description VARCHAR(500) NOT NULL,
+    actorUserId INT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_trip_events_trip
+        FOREIGN KEY (tripId) REFERENCES trips(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_trip_events_actor
+        FOREIGN KEY (actorUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
 );
 
 CREATE TABLE fuel_maintenance_requests (
@@ -237,6 +396,9 @@ CREATE TABLE students (
     grade VARCHAR(100) NOT NULL,
     stream VARCHAR(50) NOT NULL,
     parentContact VARCHAR(20) NOT NULL,
+    -- Used to link student records to a Parent account (replaces phone-based matching)
+    parentIdType VARCHAR(10) NULL,
+    parentIdNumber VARCHAR(50) NULL,
     admissionDate DATE NOT NULL,
     status ENUM('active', 'withdrawn') NOT NULL DEFAULT 'active',
     withdrawalDate DATE NULL,
@@ -630,6 +792,37 @@ CREATE TABLE route_optimization_logs (
         ON DELETE SET NULL,
     CONSTRAINT fk_opt_applied_by 
         FOREIGN KEY (applied_by_user_id) REFERENCES users(id)
+CREATE TABLE parent_transport_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    parentUserId INT NOT NULL,
+    studentId INT NOT NULL,
+    currentRouteId INT NULL,
+    requestType ENUM('route_change', 'complaint', 'general_support') NOT NULL,
+    requestTitle VARCHAR(255) NOT NULL,
+    requestDetails TEXT NOT NULL,
+    requestedPickupLocation VARCHAR(255) NULL,
+    requestedDropoffLocation VARCHAR(255) NULL,
+    preferredEffectiveDate DATE NULL,
+    status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+    managerReviewNotes TEXT NULL,
+    reviewedByUserId INT NULL,
+    reviewedAt TIMESTAMP NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_parent_transport_request_parent
+        FOREIGN KEY (parentUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_parent_transport_request_student
+        FOREIGN KEY (studentId) REFERENCES students(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_parent_transport_request_route
+        FOREIGN KEY (currentRouteId) REFERENCES routes(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_parent_transport_request_reviewed_by
+        FOREIGN KEY (reviewedByUserId) REFERENCES users(id)
         ON UPDATE CASCADE
         ON DELETE SET NULL
 );
@@ -819,3 +1012,18 @@ DELIMITER ;
 */
 
 
+CREATE TABLE audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    actorUserId INT NULL,
+    domain VARCHAR(100) NOT NULL,
+    entityType VARCHAR(100) NOT NULL,
+    entityId INT NOT NULL,
+    action VARCHAR(100) NOT NULL,
+    previousStateJson LONGTEXT NULL,
+    newStateJson LONGTEXT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_audit_log_actor
+        FOREIGN KEY (actorUserId) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+);

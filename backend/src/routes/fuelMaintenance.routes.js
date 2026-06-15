@@ -6,6 +6,8 @@ const {
   getRequests,
   updateRequest,
   updateRequestStatus,
+  getAllRequests,
+  confirmRequest,
 } = require("../controllers/fuelMaintenance.controller.js");
 const {
   createFuelMaintenanceRequestValidator,
@@ -22,6 +24,8 @@ const {
 const router = express.Router();
 
 router.use(authenticate);
+// Driver/Bus Assistant endpoints
+router.use(authenticate, authorizeRoles("Driver", "Bus Assistant", "Transport Manager"));
 
 router.get(
   "/requests",
@@ -69,6 +73,13 @@ router.delete(
   fuelMaintenanceRequestIdValidator,
   validate,
   deleteRequest
+// Transport Manager endpoints
+router.get("/all", authorizeRoles("Transport Manager"), getAllRequests);
+
+router.post(
+  "/:requestId/confirm",
+  authorizeRoles("Transport Manager"),
+  confirmRequest
 );
 
 module.exports = router;
