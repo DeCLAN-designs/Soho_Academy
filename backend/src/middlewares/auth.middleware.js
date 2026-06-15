@@ -43,6 +43,7 @@ const authorizeRoles = (...roles) => (req, res, next) => {
   }
 
   if (roles.length > 0 && !roles.includes(req.user.role)) {
+    console.error(`Authorization failed. User role: "${req.user.role}", Expected one of: ${JSON.stringify(roles)}`);
     return res.status(403).json({
       success: false,
       message: "You do not have permission for this resource.",

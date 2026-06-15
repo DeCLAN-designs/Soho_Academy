@@ -1,5 +1,7 @@
-import React, { Suspense } from 'react'
-import type { DashboardRoleConfig } from '../dashboard.types'
+dashboard_path = "src/components/Dashboard/TransportManagerDashboard/TransportManagerDashboard.tsx"
+
+new_content = """import React, { Suspense } from 'react'
+import type { TransportManagerDashboardProps, TabComponentProps } from '../dashboard.types'
 import { isFleetSubTab } from './Tabs/Fleet/fleetSubTabs'
 import { isRoutesSubTab } from './Tabs/Routes/routesSubTabs'
 import { isStudentsSubTab } from './Tabs/Students/studentsSubTabs'
@@ -25,15 +27,6 @@ import AuditLogsTab from './Tabs/AuditLogs/AuditLogsTab'
 import SettingsTab from './Tabs/Settings/SettingsTab'
 
 import './TransportManagerDashboard.css'
-
-interface TransportManagerDashboardProps {
-    activeSection?: string
-}
-
-export interface TabComponentProps {
-    section: DashboardRoleConfig['sections'][string]
-    activeSection: string
-}
 
 const TAB_COMPONENTS: Record<string, React.ComponentType<TabComponentProps>> = {
     dashboard: DashboardTab,
@@ -103,3 +96,9 @@ const TransportManagerDashboard = ({ activeSection }: TransportManagerDashboardP
 }
 
 export default TransportManagerDashboard
+"""
+
+with open(dashboard_path, "w") as f:
+    f.write(new_content)
+
+print("Updated TransportManagerDashboard.tsx")

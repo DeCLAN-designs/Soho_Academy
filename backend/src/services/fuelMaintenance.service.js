@@ -489,6 +489,7 @@ const listFuelMaintenanceRequests = async ({ userId, role }) => {
       LIMIT 500
     `
   );
+};
 const listAllFuelMaintenanceRequests = async ({ 
   status = null,
   numberPlate = null,
@@ -712,6 +713,11 @@ const deleteFuelMaintenanceRequest = async ({ requestId, userId, role }) => {
     `
       DELETE FROM fuel_maintenance_requests
       WHERE id = ?
+    `,
+    [requestId]
+  );
+};
+
 const confirmFuelMaintenanceRequest = async ({
   requestId,
   confirmedByUserId,
@@ -823,7 +829,6 @@ const confirmFuelMaintenanceRequest = async ({
     [requestId]
   );
 
-  return mapFuelMaintenanceRow(existingRequest);
   const updatedRequest = mapFuelMaintenanceRow(updatedRows[0]);
 
   // Log audit trail

@@ -55,6 +55,8 @@ const isTokenExpired = (token: string): boolean => {
   const expiry = getTokenExpiry(token)
   if (!expiry) return true
   return Date.now() >= expiry
+}
+
 // Enhanced error handling for server connection issues
 const isNetworkError = (error: any): boolean => {
   return (
@@ -164,6 +166,8 @@ const AuthProviderComponent: React.FC<AuthProviderProps> = ({ children }) => {
       }
       setUser(null)
       setIsAuthenticated(false)
+    }
+
     const initializeAuth = async () => {
       try {
         const token = getStoredValue(AUTH_TOKEN_KEY)

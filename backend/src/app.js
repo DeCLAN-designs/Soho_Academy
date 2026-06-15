@@ -24,10 +24,10 @@ const studentAttendanceRoutes = require("./routes/studentAttendance.routes.js");
 const studentRoutes = require("./routes/student.routes.js");
 const tripsRoutes = require("./routes/trips.routes.js");
 const usersRoutes = require("./routes/users.routes.js");
-const routeRoutes = require("./routes/route.routes.js");
-const fleetRoutes = require("./routes/fleet.routes.js");
-const staffRoutes = require("./routes/staff.routes.js");
-const tripRoutes = require("./routes/trip.routes.js");
+const tmRouteRoutes = require("./routes/route.routes.js");
+const tmFleetRoutes = require("./routes/fleet.routes.js");
+const tmStaffRoutes = require("./routes/staff.routes.js");
+const tmTripRoutes = require("./routes/trip.routes.js");
 const studentTransportRoutes = require("./routes/studentTransport.routes.js");
 
 const app = express();
@@ -95,10 +95,10 @@ app.use("/api", studentAttendanceRoutes);
 app.use("/api", tripsRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/users", usersRoutes);
-app.use("/api/transport-manager", routeRoutes);
-app.use("/api/transport-manager", fleetRoutes);
-app.use("/api/transport-manager", staffRoutes);
-app.use("/api/transport-manager", tripRoutes);
+app.use("/api/transport-manager", tmRouteRoutes);
+app.use("/api/transport-manager", tmFleetRoutes);
+app.use("/api/transport-manager", tmStaffRoutes);
+app.use("/api/transport-manager", tmTripRoutes);
 app.use("/api/transport-manager", studentTransportRoutes);
 
 // Health check

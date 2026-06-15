@@ -1034,7 +1034,7 @@ export const preloadCriticalResources = (customResources?: PreloadConfig[]) => {
     { href: '/src/main.tsx', as: 'script', type: 'module', importance: 'high' },
     { href: '/src/App.tsx', as: 'script', type: 'module', importance: 'high' },
     { href: '/src/components/DashboardHeader/DashboardHeader.tsx', as: 'script', type: 'module' },
-    { href: '/src/assets/Logo-1 (1).png', as: 'image', importance: 'high' }
+    { href: '/logo.png', as: 'image', importance: 'high' }
   ]
   
   const resources = customResources || defaultResources

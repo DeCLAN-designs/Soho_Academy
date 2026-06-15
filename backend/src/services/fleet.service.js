@@ -402,23 +402,13 @@ const updateVehicleDetails = async ({ plateNumber, payload }) => {
   return getVehicleDetails({ plateNumber: normalizedPlateNumber });
 };
 
-module.exports = {
-  createNumberPlate,
-  deleteNumberPlate,
-  getVehicleDetails,
-  listNumberPlates,
-  listUsersByRole,
-  listVehicleDetails,
-  updateNumberPlateStatus,
-  updateVehicleDetails,
-};
+
 /**
  * Fleet Management Service
  * Domain: Fleet Management
  * Responsibilities: Vehicle lifecycle, compliance, maintenance tracking
  */
 
-const pool = require("../config/db.js");
 const { EventPublisher } = require("../utils/eventPublisher.js");
 const { AuditLogger } = require("../utils/auditLogger.js");
 
@@ -948,4 +938,14 @@ class FleetService {
   }
 }
 
-module.exports = { FleetService };
+module.exports = { 
+  FleetService,
+  createNumberPlate,
+  deleteNumberPlate,
+  getVehicleDetails,
+  listNumberPlates,
+  listUsersByRole,
+  listVehicleDetails,
+  updateNumberPlateStatus,
+  updateVehicleDetails,
+};

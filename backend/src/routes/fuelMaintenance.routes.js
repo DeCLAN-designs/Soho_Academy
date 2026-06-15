@@ -73,6 +73,8 @@ router.delete(
   fuelMaintenanceRequestIdValidator,
   validate,
   deleteRequest
+);
+
 // Transport Manager endpoints
 router.get("/all", authorizeRoles("Transport Manager"), getAllRequests);
 

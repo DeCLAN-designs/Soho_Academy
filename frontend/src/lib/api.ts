@@ -1091,7 +1091,7 @@ export type CreateRoutePayload = {
   stops: RouteStopPayload[];
 };
 
-export type RouteRecord = {
+export type TransportManagerRouteRecord = {
   id: number;
   routeCode: string;
   routeName: string;
@@ -1177,7 +1177,7 @@ export type UpdateTripAttendancePayload = {
 };
 
 export const transportManagerApi = {
-  getRoutes: () => get<{ routes: RouteRecord[] }>("/transport-manager/routes"),
+  getRoutes: () => get<{ routes: TransportManagerRouteRecord[] }>("/transport-manager/routes"),
   getVehicles: () =>
     get<{ vehicles: TransportVehicleRecord[] }>("/transport-manager/vehicles"),
   getStaff: () => get<{ staff: TransportStaffRecord[] }>("/transport-manager/staff"),
@@ -1194,7 +1194,7 @@ export const transportManagerApi = {
     ),
 
   createRoute: (payload: CreateRoutePayload) =>
-    post<CreateRoutePayload, { route: RouteRecord }>("/transport-manager/routes", payload),
+    post<CreateRoutePayload, { route: TransportManagerRouteRecord }>("/transport-manager/routes", payload),
 
   assignVehicleStaff: (
     routeId: number,

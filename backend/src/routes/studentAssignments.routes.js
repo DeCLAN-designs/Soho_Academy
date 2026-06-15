@@ -12,12 +12,11 @@ const {
 
 const router = express.Router();
 
-router.use(authenticate);
-router.use(authorizeRoles("School Admin", "Transport Manager"));
+const adminAuth = [authenticate, authorizeRoles("School Admin", "Transport Manager")];
 
-router.get("/student-assignments", getStudentAssignments);
-router.post("/student-assignments", postStudentAssignment);
-router.patch("/student-assignments/:id", patchStudentAssignment);
-router.delete("/student-assignments/:id", deleteStudentAssignmentById);
+router.get("/student-assignments", ...adminAuth, getStudentAssignments);
+router.post("/student-assignments", ...adminAuth, postStudentAssignment);
+router.patch("/student-assignments/:id", ...adminAuth, patchStudentAssignment);
+router.delete("/student-assignments/:id", ...adminAuth, deleteStudentAssignmentById);
 
 module.exports = router;

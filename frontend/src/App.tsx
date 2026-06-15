@@ -64,18 +64,6 @@ const AppRoutes: React.FC = () => (
   </Suspense>
 )
 
-// ─── Root ─────────────────────────────────────────────────────────────────────
-const App: React.FC = () => (
-  <BrowserRouter>
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
-  </BrowserRouter>
-)
-
-export default App
-  )
-}
 
 const App: React.FC = () => {
   return (
