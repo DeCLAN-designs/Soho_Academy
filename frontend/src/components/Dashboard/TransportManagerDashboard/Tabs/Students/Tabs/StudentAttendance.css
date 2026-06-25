@@ -72,7 +72,8 @@
    ============================================ */
 
 .sa-root {
-  max-width: 1400px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   padding: var(--spacing-xl);
   background-color: var(--color-bg-page);

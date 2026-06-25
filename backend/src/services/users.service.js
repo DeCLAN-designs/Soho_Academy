@@ -46,6 +46,51 @@ const listUsers = async ({ role } = {}) => {
   }));
 };
 
+const updateUser = async (id, payload) => {
+  const { firstName, lastName, email, phoneNumber, numberPlate, role } = payload;
+  const query = `
+    UPDATE users
+    SET 
+      firstName = COALESCE(?, firstName),
+      lastName = COALESCE(?, lastName),
+      email = COALESCE(?, email),
+      phoneNumber = COALESCE(?, phoneNumber),
+      numberPlate = ?,
+      role = COALESCE(?, role)
+    WHERE id = ?
+  `;
+  const [result] = await pool.query(query, [
+    firstName, 
+    lastName, 
+    email, 
+    phoneNumber, 
+    numberPlate || null, 
+    role, 
+    id
+  ]);
+
+  if (result.affectedRows === 0) {
+    const error = new Error("User not found.");
+    error.code = "USER_NOT_FOUND";
+    throw error;
+  }
+  return { id, ...payload };
+};
+
+const deleteUser = async (id) => {
+  const query = "DELETE FROM users WHERE id = ?";
+  const [result] = await pool.query(query, [id]);
+
+  if (result.affectedRows === 0) {
+    const error = new Error("User not found.");
+    error.code = "USER_NOT_FOUND";
+    throw error;
+  }
+  return { id };
+};
+
 module.exports = {
   listUsers,
+  updateUser,
+  deleteUser,
 };
