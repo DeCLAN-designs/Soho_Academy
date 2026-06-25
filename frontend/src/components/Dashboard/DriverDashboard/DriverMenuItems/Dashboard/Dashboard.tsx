@@ -11,6 +11,7 @@ import {
 } from '../../../../../lib/api'
 import { useAuth } from '../../../../../contexts/AuthContext'
 import Loader from '../../../../Loader/Loader'
+import StaffTripOverview from '../../../shared/StaffTripOverview'
 import './Dashboard.css'
 
 type DashboardActivityItem = {
@@ -233,8 +234,8 @@ const DriverDashboardMenuItem = () => {
                         {fullName ? `${fullName}'s Dashboard` : 'Driver Dashboard'}
                     </h3>
                     <p className="driverMenuDashboard__description">
-                        Get a live overview of your reporting activity, incidents, accidents,
-                        and complaints.
+                        Track today&apos;s trips, student attendance, fuel requests, incidents,
+                        and complaints from one place.
                     </p>
                 </div>
 
@@ -277,6 +278,10 @@ const DriverDashboardMenuItem = () => {
             </div>
 
             <div className="driverMenuDashboard__content">
+                <section className="driverMenuDashboard__panel driverMenuDashboard__panel--wide">
+                    <StaffTripOverview roleLabel="Driver" />
+                </section>
+
                 <section className="driverMenuDashboard__panel">
                     <div className="driverMenuDashboard__panelHeader">
                         <h4>Recent Activity</h4>

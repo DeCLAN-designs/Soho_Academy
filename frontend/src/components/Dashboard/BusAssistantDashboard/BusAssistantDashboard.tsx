@@ -3,6 +3,7 @@ import BusAssistantDashboardMenuItem from './BusAssistantMenuItems/Dashboard/Das
 import BusAssistantAttendanceMenuItem from './BusAssistantMenuItems/Attendance/Attendance'
 import BusAssistantAccidentsReportsMenuItem from './BusAssistantMenuItems/AccidentsReports/AccidentsReports'
 import BusAssistantComplaintsIncidentsMenuItem from './BusAssistantMenuItems/ComplaintsIncidents/ComplaintsIncidents'
+import DriverFuelMaintenanceMenuItem from '../DriverDashboard/DriverMenuItems/Fuel & Maintenance/Fuel&Maintence'
 import BusAssistantProfileMenuItem from './BusAssistantMenuItems/Profile/Profile'
 import './BusAssistantDashboard.css'
 
@@ -17,6 +18,8 @@ const BusAssistantDashboard = ({ activeSection }: BusAssistantDashboardProps) =>
                 return <BusAssistantDashboardMenuItem />
             case 'attendance':
                 return <BusAssistantAttendanceMenuItem />
+            case 'fuelMaintenance':
+                return <DriverFuelMaintenanceMenuItem />
             case 'accidents-reports':
                 return <BusAssistantAccidentsReportsMenuItem />
             case 'complaints-incidents':
@@ -39,12 +42,13 @@ const BusAssistantDashboard = ({ activeSection }: BusAssistantDashboardProps) =>
 export const busAssistantDashboardConfig: DashboardRoleConfig = {
     title: 'Bus Assistant Dashboard',
     subtitle: 'Handle student boarding and safety support.',
-    quickActions: ['Boarding List', 'Safety Check', 'Notify Driver'],
+    quickActions: ['Mark Attendance', 'Report Incident', 'Submit Complaint'],
     navigation: [
         { id: 'overview', label: 'Dashboard' },
         { id: 'attendance', label: 'Attendance' },
+        { id: 'fuelMaintenance', label: 'Fuel & Maintenance' },
         { id: 'accidents-reports', label: 'Accidents and Reports' },
-        { id: 'complaints-incidents', label: 'Complaints and incidents' },
+        { id: 'complaints-incidents', label: 'Complaints and Incidents' },
         { id: 'profile', label: 'Profile' },
     ],
     sections: {
@@ -55,7 +59,12 @@ export const busAssistantDashboardConfig: DashboardRoleConfig = {
         },
         attendance: {
             heading: 'Attendance',
-            description: 'Track student boarding and drop-off attendance.',
+            description: 'Mark student boarding and drop-off for your assigned trips.',
+            cards: [],
+        },
+        fuelMaintenance: {
+            heading: 'Fuel & Maintenance',
+            description: 'Submit fuel and maintenance requests for your assigned vehicle.',
             cards: [],
         },
         'accidents-reports': {

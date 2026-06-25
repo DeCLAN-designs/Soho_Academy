@@ -4,10 +4,12 @@ import {
     parentApi,
     type CreateParentTransportRequestPayload,
     type ParentChildRecord,
+    type ParentChildTransportRecord,
     type ParentTransportRequestDetailRecord,
     type ParentTransportRequestRecord,
     type ParentTransportRequestStatus,
     type ParentTransportRequestType,
+    type ParentTransportStopRecord,
 } from '../../../lib/api'
 import Loader from '../../Loader/Loader'
 import './ParentDashboard.css'
@@ -32,6 +34,32 @@ const formatTimestampValue = (value: string | null) => {
     return parsed.toLocaleString()
 }
 
+const formatTimeValue = (value: string | null) => {
+    if (!value) return 'Not recorded yet'
+
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return value
+
+    return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+const formatStopLocation = (stop: ParentTransportStopRecord | null) => {
+    if (!stop) return 'Not assigned'
+
+    return [stop.stopName, stop.address, stop.landmark].filter(Boolean).join(' · ')
+}
+
+const formatAttendanceDateLabel = (value: string) => {
+    const parsed = new Date(`${value}T00:00:00`)
+    if (Number.isNaN(parsed.getTime())) return value
+
+    return parsed.toLocaleDateString(undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+    })
+}
+
 const getStatusBadgeClass = (status: ParentTransportRequestStatus) => {
     switch (status) {
         case 'APPROVED':
@@ -52,7 +80,7 @@ export const parentDashboardConfig: DashboardRoleConfig = {
         { id: 'overview', label: 'Overview' },
         { id: 'children', label: 'Children' },
         { id: 'trips', label: 'Trips' },
-        { id: 'requests', label: 'Requests' },
+        { id: 'requests', label: 'Request' },
         { id: 'alerts', label: 'Alerts' },
     ],
     sections: {
@@ -67,24 +95,24 @@ export const parentDashboardConfig: DashboardRoleConfig = {
         },
         children: {
             heading: 'Children Profiles',
-            description: 'Review linked child transport profiles.',
+            description: 'Review linked children, current routes, and assigned pickup and drop-off stops.',
             cards: [
-                'Assigned student accounts',
-                'Linked identity check',
-                'Transport workflow visibility',
+                'Current route assignment',
+                'Pickup stop location',
+                'Drop-off stop location',
             ],
         },
         trips: {
             heading: 'Trip Timeline',
-            description: 'Review transport activity and follow trip readiness.',
+            description: 'See pickup and drop-off locations, times, and recent attendance history.',
             cards: [
-                'Trip workflow readiness',
-                'Pickup and drop-off status',
-                'Recent transport activity',
+                'Today pickup times',
+                'Today drop-off times',
+                'Recent trip attendance',
             ],
         },
         requests: {
-            heading: 'Requests & Complaints',
+            heading: 'Request',
             description: 'Submit transport requests for manager review and track their outcomes.',
             cards: [
                 'Pending approvals',
@@ -114,6 +142,7 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
         : defaultSection
 
     const [children, setChildren] = useState<ParentChildRecord[]>([])
+    const [transportProfiles, setTransportProfiles] = useState<ParentChildTransportRecord[]>([])
     const [requests, setRequests] = useState<ParentTransportRequestRecord[]>([])
     const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null)
     const [selectedRequestDetail, setSelectedRequestDetail] =
@@ -158,6 +187,36 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
         }
     }, [children])
 
+    const transportSummary = useMemo(() => {
+        const boardedToday = transportProfiles.reduce((count, profile) => {
+            const boarded = profile.todayAttendance.some(
+                (record) =>
+                    record.tripType === 'Morning' && record.boardingStatus === 'Boarded'
+            )
+            return boarded ? count + 1 : count
+        }, 0)
+
+        const droppedToday = transportProfiles.reduce((count, profile) => {
+            const dropped = profile.todayAttendance.some(
+                (record) =>
+                    record.tripType === 'Evening' && record.dropoffStatus === 'Dropped Off'
+            )
+            return dropped ? count + 1 : count
+        }, 0)
+
+        const assignedRoutes = transportProfiles.filter((profile) => profile.route).length
+
+        return {
+            assignedRoutes,
+            boardedToday,
+            droppedToday,
+            recentEvents: transportProfiles.reduce(
+                (count, profile) => count + profile.recentAttendance.length,
+                0
+            ),
+        }
+    }, [transportProfiles])
+
     const sectionCards = useMemo(() => {
         if (resolvedSectionId === 'requests') {
             return [
@@ -178,25 +237,32 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
         if (resolvedSectionId === 'children') {
             return [
                 `${childrenSummary.total} linked children`,
-                `${childrenSummary.active} active students`,
-                `${requestSummary.pending} pending workflow items`,
+                `${transportSummary.assignedRoutes} assigned routes`,
+                `${transportSummary.boardedToday} picked up today`,
             ]
         }
 
         if (resolvedSectionId === 'trips') {
             return [
-                `${requestSummary.approved} approved requests`,
-                `${requestSummary.pending} items awaiting manager review`,
-                `${childrenSummary.active} active student profiles`,
+                `${transportSummary.boardedToday} morning pickups recorded`,
+                `${transportSummary.droppedToday} evening drop-offs recorded`,
+                `${transportSummary.recentEvents} recent attendance events`,
             ]
         }
 
         return [
             `${childrenSummary.total} linked children`,
-            `${requestSummary.pending} pending requests`,
-            `${requests.filter((request) => request.status !== 'PENDING').length} reviewed requests`,
+            `${transportSummary.assignedRoutes} active routes`,
+            `${transportSummary.boardedToday} picked up today`,
         ]
-    }, [childrenSummary, requestSummary, requests, resolvedSectionId, selectedRequestDetail])
+    }, [
+        childrenSummary,
+        requestSummary,
+        requests,
+        resolvedSectionId,
+        selectedRequestDetail,
+        transportSummary,
+    ])
 
     const reviewedRequests = useMemo(
         () => requests.filter((request) => request.status !== 'PENDING').slice(0, 5),
@@ -236,12 +302,14 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
         setErrorMessage('')
 
         try {
-            const [childrenResponse, requestsResponse] = await Promise.all([
+            const [childrenResponse, transportResponse, requestsResponse] = await Promise.all([
                 parentApi.getChildren(),
+                parentApi.getChildrenTransport(),
                 parentApi.getTransportRequests(),
             ])
 
             setChildren(childrenResponse.data?.children || [])
+            setTransportProfiles(transportResponse.data?.children || [])
             setRequests(requestsResponse.data?.requests || [])
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'Failed to load parent data.')
@@ -318,6 +386,73 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
         }
     }
 
+    const renderTransportProfileCard = (profile: ParentChildTransportRecord) => {
+        const morningRecord = profile.todayAttendance.find((record) => record.tripType === 'Morning')
+        const eveningRecord = profile.todayAttendance.find((record) => record.tripType === 'Evening')
+
+        return (
+            <article key={profile.studentId} className="parentTransportCard">
+                <div className="parentTransportCard__header">
+                    <div>
+                        <h4>
+                            {profile.admissionNumber} - {profile.firstName} {profile.lastName}
+                        </h4>
+                        <p className="parentHint">
+                            Grade {profile.grade} · {profile.stream}
+                        </p>
+                    </div>
+                    <span
+                        className={
+                            profile.status === 'active'
+                                ? 'parentBadge parentBadge--active'
+                                : 'parentBadge parentBadge--withdrawn'
+                        }
+                    >
+                        {profile.status}
+                    </span>
+                </div>
+
+                <div className="parentTransportCard__route">
+                    <span className="parentTransportCard__label">Current Route</span>
+                    <strong>
+                        {profile.route
+                            ? `${profile.route.routeCode} - ${profile.route.routeName}`
+                            : 'No route assigned yet'}
+                    </strong>
+                    {profile.route ? (
+                        <p className="parentHint">
+                            Vehicle {profile.route.vehiclePlate || 'TBD'} · Driver{' '}
+                            {profile.route.assignedDriver || 'TBD'}
+                        </p>
+                    ) : null}
+                </div>
+
+                <div className="parentTransportCard__stops">
+                    <div>
+                        <span className="parentTransportCard__label">Pickup Stop</span>
+                        <strong>{formatStopLocation(profile.pickupStop)}</strong>
+                        <p className="parentHint">
+                            Today: {morningRecord?.boardingStatus || 'Awaiting trip'}{' '}
+                            {morningRecord?.boardingStatus === 'Boarded'
+                                ? `at ${formatTimeValue(morningRecord.boardedAt)}`
+                                : ''}
+                        </p>
+                    </div>
+                    <div>
+                        <span className="parentTransportCard__label">Drop-off Stop</span>
+                        <strong>{formatStopLocation(profile.dropoffStop)}</strong>
+                        <p className="parentHint">
+                            Today: {eveningRecord?.dropoffStatus || 'Awaiting trip'}{' '}
+                            {eveningRecord?.dropoffStatus === 'Dropped Off'
+                                ? `at ${formatTimeValue(eveningRecord.droppedOffAt)}`
+                                : ''}
+                        </p>
+                    </div>
+                </div>
+            </article>
+        )
+    }
+
     const renderOverviewContent = () => (
         <div className="parentPanel">
             <div className="parentStats">
@@ -326,16 +461,44 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
                     <strong>{childrenSummary.total}</strong>
                 </article>
                 <article className="parentStatCard">
-                    <p>Pending Requests</p>
-                    <strong>{requestSummary.pending}</strong>
+                    <p>Picked Up Today</p>
+                    <strong>{transportSummary.boardedToday}</strong>
                 </article>
                 <article className="parentStatCard">
-                    <p>Reviewed Requests</p>
-                    <strong>{requestSummary.approved + requestSummary.rejected}</strong>
+                    <p>Dropped Off Today</p>
+                    <strong>{transportSummary.droppedToday}</strong>
                 </article>
             </div>
 
             <div className="parentLists">
+                <section className="parentRecords parentRecords--wide" aria-label="Transport snapshot">
+                    <div className="parentRecordsHeader">
+                        <div>
+                            <h3>Today&apos;s Transport</h3>
+                            <p className="parentHint">
+                                Pickup and drop-off times update when attendance is marked on the bus.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            className="parentGhostButton"
+                            onClick={() => void loadParentData(false)}
+                            disabled={isLoading}
+                        >
+                            Refresh
+                        </button>
+                    </div>
+                    {isLoading ? (
+                        <Loader variant="section" label="Loading transport details" />
+                    ) : transportProfiles.length === 0 ? (
+                        <p className="parentHint">No linked children with transport assignments yet.</p>
+                    ) : (
+                        <div className="parentTransportGrid">
+                            {transportProfiles.map((profile) => renderTransportProfileCard(profile))}
+                        </div>
+                    )}
+                </section>
+
                 <section className="parentRecords" aria-label="Children preview">
                     <div className="parentRecordsHeader">
                         <h3>My Children</h3>
@@ -406,12 +569,13 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
 
     const renderChildrenContent = () => (
         <div className="parentPanel">
-            <section className="parentRecords parentRecords--wide" aria-label="Children list">
+            <section className="parentRecords parentRecords--wide" aria-label="Children transport profiles">
                 <div className="parentRecordsHeader">
                     <div>
-                        <h3>Children Profiles</h3>
+                        <h3>Children & Current Routes</h3>
                         <p className="parentHint">
-                            Children are matched using your Parent ID or Passport identifier.
+                            View each child&apos;s assigned route, pickup stop, drop-off stop, and today&apos;s
+                            recorded times from attendance.
                         </p>
                     </div>
                     <button
@@ -424,53 +588,93 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
                     </button>
                 </div>
                 {isLoading ? (
-                    <Loader variant="section" label="Loading children" />
+                    <Loader variant="section" label="Loading children transport" />
+                ) : transportProfiles.length === 0 ? (
+                    <p className="parentHint">No children are linked to this parent account yet.</p>
                 ) : (
-                    <ul>
-                        {children.length === 0 ? (
-                            <li className="parentListItem parentListItem--empty">
-                                No children are linked to this parent account yet.
-                            </li>
-                        ) : null}
-                        {children.map((child) => (
-                            <li key={child.id} className="parentListItem">
-                                <span className="parentPrimary">{getChildLabel(child)}</span>
-                                <span className="parentMuted">
-                                    {child.grade} {child.stream}
-                                </span>
-                                <span
-                                    className={
-                                        child.status === 'active'
-                                            ? 'parentBadge parentBadge--active'
-                                            : 'parentBadge parentBadge--withdrawn'
-                                    }
-                                >
-                                    {child.status}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
+                    <div className="parentTransportGrid">
+                        {transportProfiles.map((profile) => renderTransportProfileCard(profile))}
+                    </div>
                 )}
             </section>
         </div>
     )
 
-    const renderTripsContent = () => (
-        <div className="parentPanel">
-            <section className="parentRecords parentRecords--wide" aria-label="Trips">
-                <h3>Trip Timeline</h3>
-                <p className="parentHint">
-                    Live trip tracking is not connected yet. You can now submit route-related requests
-                    through the workflow and follow the decision trail while trip telemetry is still being added.
-                </p>
-                <ul>
-                    <li className="parentListItem parentListItem--empty">
-                        No live trip events are available yet.
-                    </li>
-                </ul>
-            </section>
-        </div>
-    )
+    const renderTripsContent = () => {
+        const timeline = transportProfiles.flatMap((profile) =>
+            profile.recentAttendance.map((record) => ({
+                ...record,
+                studentName: `${profile.firstName} ${profile.lastName}`,
+                admissionNumber: profile.admissionNumber,
+            }))
+        )
+
+        return (
+            <div className="parentPanel">
+                <section className="parentRecords parentRecords--wide" aria-label="Trip attendance timeline">
+                    <div className="parentRecordsHeader">
+                        <div>
+                            <h3>Trip Timeline</h3>
+                            <p className="parentHint">
+                                Pickup and drop-off times are recorded automatically when bus staff mark
+                                attendance.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            className="parentGhostButton"
+                            onClick={() => void loadParentData(true)}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Refreshing...' : 'Refresh'}
+                        </button>
+                    </div>
+
+                    {isLoading ? (
+                        <Loader variant="section" label="Loading trip timeline" />
+                    ) : timeline.length === 0 ? (
+                        <p className="parentHint">No attendance records are available yet.</p>
+                    ) : (
+                        <ul className="parentTripTimeline">
+                            {timeline.map((record) => (
+                                <li key={`${record.id}-${record.studentName}`} className="parentTripTimeline__item">
+                                    <div className="parentTripTimeline__header">
+                                        <strong>
+                                            {record.studentName} · {record.tripType} Trip
+                                        </strong>
+                                        <span className="parentMuted">
+                                            {formatAttendanceDateLabel(record.attendanceDate)}
+                                        </span>
+                                    </div>
+                                    <p>
+                                        Route: {record.routeCode} - {record.routeName}
+                                    </p>
+                                    <p>Stop: {record.stopName}{record.stopAddress ? ` · ${record.stopAddress}` : ''}</p>
+                                    <div className="parentTripTimeline__times">
+                                        <span>
+                                            Pickup: {record.boardingStatus}
+                                            {record.boardedAt
+                                                ? ` at ${formatTimeValue(record.boardedAt)}`
+                                                : ''}
+                                        </span>
+                                        <span>
+                                            Drop-off: {record.dropoffStatus}
+                                            {record.droppedOffAt
+                                                ? ` at ${formatTimeValue(record.droppedOffAt)}`
+                                                : ''}
+                                        </span>
+                                    </div>
+                                    {record.notes ? (
+                                        <p className="parentHint">Notes: {record.notes}</p>
+                                    ) : null}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </section>
+            </div>
+        )
+    }
 
     const renderRequestsContent = () => (
         <div className="parentPanel">

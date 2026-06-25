@@ -17,6 +17,8 @@ const fuelMaintenanceRoutes = require("./routes/fuelMaintenance.routes.js");
 const fuelRequestsRoutes = require("./routes/fuelRequests.routes.js");
 const incidentRoutes = require("./routes/incident.routes.js");
 const parentRoutes = require("./routes/parent.routes.js");
+const parentTransportRoutes = require("./routes/parentTransport.routes.js");
+const staffAttendanceRoutes = require("./routes/staffAttendance.routes.js");
 const routeRoutes = require("./routes/routes.routes.js");
 const stopRoutes = require("./routes/stops.routes.js");
 const studentAssignmentsRoutes = require("./routes/studentAssignments.routes.js");
@@ -88,6 +90,7 @@ app.use("/api/fuel-maintenance", fuelMaintenanceRoutes);
 app.use("/api/fuel-requests", fuelRequestsRoutes);
 app.use("/api/incidents", incidentRoutes);
 app.use("/api/parent", parentRoutes);
+app.use("/api/staff", staffAttendanceRoutes);
 app.use("/api", routeRoutes);
 app.use("/api", stopRoutes);
 app.use("/api", studentAssignmentsRoutes);
@@ -100,6 +103,7 @@ app.use("/api/transport-manager", tmFleetRoutes);
 app.use("/api/transport-manager", tmStaffRoutes);
 app.use("/api/transport-manager", tmTripRoutes);
 app.use("/api/transport-manager", studentTransportRoutes);
+app.use("/api/transport-manager", parentTransportRoutes);
 
 // Health check
 app.get("/health", (_, res) => {

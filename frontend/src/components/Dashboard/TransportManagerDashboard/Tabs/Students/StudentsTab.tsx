@@ -6,11 +6,13 @@ import Loader from '../../../../../components/Loader/Loader';
 
 const Assignments = lazy(() => import('./Tabs/Assignments'));
 const Attendance = lazy(() => import('./Tabs/StudentAttendance'));
+const ChangeRequests = lazy(() => import('./Tabs/ChangeRequests'));
 
 // Create a mapping for lazy-loaded components
 const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
     assignments: Assignments,
     attendance: Attendance,
+    'change-requests': ChangeRequests,
 };
 
 interface StudentsTabProps {

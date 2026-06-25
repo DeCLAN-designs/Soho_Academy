@@ -1,14 +1,8 @@
+import StaffAttendancePanel from '../../../shared/StaffAttendancePanel'
 import './Attendance.css'
 
 const DriverAttendanceMenuItem = () => {
-    return (
-        <section className="driverMenuAttendance">
-            <h3 className="driverMenuAttendance__title">Attendance</h3>
-            <p className="driverMenuAttendance__description">
-                Mark student boarding and drop-off attendance for each stop.
-            </p>
-        </section>
-    )
+    return <StaffAttendancePanel roleLabel="Driver" />
 }
 
 export default DriverAttendanceMenuItem

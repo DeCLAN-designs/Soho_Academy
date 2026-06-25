@@ -158,6 +158,117 @@ export type ParentChildRecord = {
   withdrawalDate: string | null;
 };
 
+export type ParentTransportStopRecord = {
+  stopId: number;
+  stopName: string;
+  stopType: string;
+  address: string | null;
+  landmark: string | null;
+};
+
+export type ParentChildRouteRecord = {
+  routeId: number;
+  routeCode: string;
+  routeName: string;
+  vehiclePlate: string | null;
+  assignedDriver: string | null;
+  assignedAssistant: string | null;
+};
+
+export type ParentChildAttendanceRecord = {
+  id: number;
+  tripType: "Morning" | "Evening";
+  attendanceDate: string;
+  routeCode: string;
+  routeName: string;
+  stopName: string;
+  stopAddress: string | null;
+  boardingStatus: string;
+  dropoffStatus: string;
+  boardedAt: string | null;
+  droppedOffAt: string | null;
+  notes: string | null;
+  departureTime: string | null;
+};
+
+export type ParentChildTransportRecord = {
+  studentId: number;
+  admissionNumber: string;
+  firstName: string;
+  lastName: string;
+  grade: string;
+  stream: string;
+  status: "active" | "withdrawn";
+  route: ParentChildRouteRecord | null;
+  pickupStop: ParentTransportStopRecord | null;
+  dropoffStop: ParentTransportStopRecord | null;
+  todayAttendance: ParentChildAttendanceRecord[];
+  recentAttendance: ParentChildAttendanceRecord[];
+};
+
+export type StaffTripRecord = {
+  id: number;
+  tripId: string;
+  routeId: number;
+  routeCode: string;
+  routeName: string;
+  vehiclePlate: string;
+  driverName: string;
+  assistantName: string;
+  departureTime: string;
+  status: string;
+  tripType: "Morning" | "Evening";
+  stopsCompleted: number;
+  totalStops: number;
+};
+
+export type StaffAttendanceSummary = {
+  total: number;
+  boarded: number;
+  absent: number;
+  missedPickup: number;
+  parentPickup: number;
+  droppedOff: number;
+  pendingDropoff: number;
+};
+
+export type StaffAttendanceRecord = {
+  id: number;
+  student_id: number;
+  student_name: string;
+  admission_number: string;
+  grade: string;
+  stream: string;
+  stop_name: string;
+  stop_id: number;
+  trip_id: number;
+  trip_type: "Morning" | "Evening";
+  boarding_status: "Boarded" | "Absent" | "Missed Pickup" | "Parent Pickup";
+  dropoff_status: "Dropped Off" | "Not Dropped" | "Parent Pickup" | "Pending";
+  boarded_at: string | null;
+  dropped_off_at: string | null;
+  confirmed_by: string | null;
+  notes: string | null;
+  attendance_date: string;
+};
+
+export type StaffTodayOverview = {
+  trips: StaffTripRecord[];
+  summary: {
+    tripCount: number;
+    totalStudents: number;
+    boarded: number;
+    droppedOff: number;
+    pendingDropoff: number;
+  };
+};
+
+export type UpdateStaffAttendancePayload = {
+  boarding_status?: StaffAttendanceRecord["boarding_status"];
+  dropoff_status?: StaffAttendanceRecord["dropoff_status"];
+  notes?: string | null;
+};
+
 export type ParentTransportRequestType =
   | "route_change"
   | "complaint"
@@ -985,6 +1096,8 @@ export const studentApi = {
 
 export const parentApi = {
   getChildren: () => get<{ children: ParentChildRecord[] }>("/parent/children"),
+  getChildrenTransport: () =>
+    get<{ children: ParentChildTransportRecord[] }>("/parent/children/transport"),
   getTransportRequests: () =>
     get<{ requests: ParentTransportRequestRecord[] }>("/parent/transport-requests"),
   getTransportRequest: (requestId: number) =>
@@ -992,6 +1105,23 @@ export const parentApi = {
   createTransportRequest: (payload: CreateParentTransportRequestPayload) =>
     post<CreateParentTransportRequestPayload, ParentTransportRequestDetailRecord>(
       "/parent/transport-requests",
+      payload
+    ),
+};
+
+export const staffApi = {
+  getTodayOverview: () => get<StaffTodayOverview>("/staff/overview/today"),
+  getTrips: (date?: string) =>
+    get<{ trips: StaffTripRecord[] }>(
+      date ? `/staff/trips?date=${encodeURIComponent(date)}` : "/staff/trips"
+    ),
+  getTripAttendance: (tripId: number) =>
+    get<{ attendance: StaffAttendanceRecord[]; summary: StaffAttendanceSummary }>(
+      `/staff/trips/${tripId}/attendance`
+    ),
+  updateAttendance: (attendanceId: number, payload: UpdateStaffAttendancePayload) =>
+    patch<UpdateStaffAttendancePayload, { attendance: StaffAttendanceRecord }>(
+      `/staff/attendance/${attendanceId}`,
       payload
     ),
 };

@@ -131,6 +131,10 @@
     gap: 0.9rem;
 }
 
+.driverMenuDashboard__panel--wide {
+    grid-column: 1 / -1;
+}
+
 .driverMenuDashboard__panelHeader h4 {
     margin: 0;
     color: var(--driver-dashboard-primary);

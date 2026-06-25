@@ -70,6 +70,22 @@ const createParentTransportRequestValidator = [
     .withMessage("preferredEffectiveDate must be a valid date (YYYY-MM-DD)."),
 ];
 
+const reviewParentTransportRequestValidator = [
+  body("status")
+    .exists({ checkFalsy: true })
+    .withMessage("status is required.")
+    .bail()
+    .isIn(["APPROVED", "REJECTED"])
+    .withMessage("status must be APPROVED or REJECTED."),
+
+  body("managerReviewNotes")
+    .optional({ nullable: true })
+    .isString()
+    .trim()
+    .isLength({ max: 2000 })
+    .withMessage("managerReviewNotes is too long."),
+];
+
 const validate = (req, res, next) => {
   const errors = validationResult(req);
 
@@ -90,5 +106,6 @@ const validate = (req, res, next) => {
 module.exports = {
   createParentTransportRequestValidator,
   parentTransportRequestIdValidator,
+  reviewParentTransportRequestValidator,
   validate,
 };

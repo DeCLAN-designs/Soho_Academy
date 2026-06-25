@@ -11,6 +11,11 @@ export const STUDENTS_SUB_TABS = [
         id: 'attendance',
         label: 'Attendance',
         component: lazy(() => import('./Tabs/StudentAttendance'))
+    },
+    {
+        id: 'change-requests',
+        label: 'Change Requests',
+        component: lazy(() => import('./Tabs/ChangeRequests'))
     }
 ];
 

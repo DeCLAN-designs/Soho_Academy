@@ -9,6 +9,7 @@ import {
 } from '../../../../../lib/api'
 import { useAuth } from '../../../../../contexts/AuthContext'
 import Loader from '../../../../Loader/Loader'
+import StaffTripOverview from '../../../shared/StaffTripOverview'
 import './Dashboard.css'
 
 type DashboardActivityItem = {
@@ -213,8 +214,8 @@ const BusAssistantDashboardMenuItem = () => {
                         {fullName ? `${fullName}'s Dashboard` : 'Bus Assistant Dashboard'}
                     </h3>
                     <p className="driverMenuDashboard__description">
-                        Get a live overview of your reporting activity, incidents, accidents,
-                        and complaints.
+                        Coordinate boarding, drop-offs, safety reports, and today&apos;s assigned
+                        trips with the driver.
                     </p>
                 </div>
 
@@ -257,6 +258,10 @@ const BusAssistantDashboardMenuItem = () => {
             </div>
 
             <div className="driverMenuDashboard__content">
+                <section className="driverMenuDashboard__panel driverMenuDashboard__panel--wide">
+                    <StaffTripOverview roleLabel="Bus Assistant" />
+                </section>
+
                 <section className="driverMenuDashboard__panel">
                     <div className="driverMenuDashboard__panelHeader">
                         <h4>Recent Activity</h4>

@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   getMyChildren,
+  getMyChildrenTransport,
   getMyTransportRequests,
   getMyTransportRequest,
   createMyTransportRequest,
@@ -19,6 +20,7 @@ const router = express.Router();
 
 const parentAuth = [authenticate, authorizeRoles("Parent")];
 
+router.get("/children/transport", ...parentAuth, getMyChildrenTransport);
 router.get("/children", ...parentAuth, getMyChildren);
 router.get("/transport-requests", ...parentAuth, getMyTransportRequests);
 router.get(

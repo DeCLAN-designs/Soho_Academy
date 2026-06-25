@@ -28,7 +28,7 @@ router.put("/vehicles/:plateNumber", putVehicleDetailsByPlate);
 const pool = require("../config/db.js");
 const { authenticate, authorizeRoles } = require("../middlewares/auth.middleware.js");
 
-// GET /api/transport-manager/vehicles - Get all vehicles (number plates)
+  // GET /api/transport-manager/vehicles - Get all vehicles (number plates)
 router.get(
   "/vehicles",
   authenticate,

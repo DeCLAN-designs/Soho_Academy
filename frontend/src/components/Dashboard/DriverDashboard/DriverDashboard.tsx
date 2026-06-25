@@ -17,7 +17,7 @@ type DriverDashboardProps = {
 export const driverDashboardConfig: DashboardRoleConfig = {
     title: 'Driver Dashboard',
     subtitle: 'Run assigned routes, attendance, compliance, and incidents.',
-    quickActions: [],
+    quickActions: ['Mark Attendance', 'Fuel Request', 'Report Incident'],
     navigation: [
         { id: 'dashboard', label: 'Dashboard' },
         { id: 'attendance', label: 'Attendance' },
@@ -31,12 +31,12 @@ export const driverDashboardConfig: DashboardRoleConfig = {
     sections: {
         dashboard: {
             heading: 'Driver Dashboard',
-            description: 'Track route progress and student safety.',
+            description: 'Track today\'s trips, attendance, fuel, compliance, and safety reports.',
             cards: [],
         },
         attendance: {
             heading: 'Attendance',
-            description: 'Mark and review student attendance at every stop.',
+            description: 'Mark student pickup and drop-off for your assigned trips.',
             cards: [],
         },
         fuelMaintenance: {
