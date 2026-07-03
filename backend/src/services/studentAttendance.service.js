@@ -1,4 +1,9 @@
 const pool = require("../config/db.js");
+const { getTodayDateInTimezone } = require("../utils/date.js");
+
+const UTC_TIMEZONE = "+00:00";
+const DB_TIMEZONE = process.env.DB_TIMEZONE || "+03:00";
+const localDepartureTime = `CONVERT_TZ(tm.departure_time, '${UTC_TIMEZONE}', '${DB_TIMEZONE}')`;
 
 const normalizeDate = (value) => {
   if (!value) return null;
@@ -14,10 +19,10 @@ const normalizeDate = (value) => {
 const formatDateRange = (value) => normalizeDate(value) || null;
 
 const listTripsForDate = async ({ date, tripType } = {}) => {
-  const targetDate = formatDateRange(date) || new Date().toISOString().slice(0, 10);
+  const targetDate = formatDateRange(date) || getTodayDateInTimezone();
   const params = [targetDate];
   const tripTypeFilter = tripType
-    ? "AND CASE WHEN TIME(tm.departure_time) < '12:00:00' THEN 'Morning' ELSE 'Evening' END = ?"
+    ? `AND CASE WHEN TIME(${localDepartureTime}) < '12:00:00' THEN 'Morning' ELSE 'Evening' END = ?`
     : "";
 
   if (tripType) params.push(tripType);
@@ -36,10 +41,10 @@ const listTripsForDate = async ({ date, tripType } = {}) => {
         tm.status,
         tm.stops_completed,
         tm.total_stops,
-        CASE WHEN TIME(tm.departure_time) < '12:00:00' THEN 'Morning' ELSE 'Evening' END AS trip_type
+        CASE WHEN TIME(${localDepartureTime}) < '12:00:00' THEN 'Morning' ELSE 'Evening' END AS trip_type
       FROM trip_monitoring tm
       INNER JOIN routes r ON r.id = tm.route_id
-      WHERE DATE(tm.departure_time) = ?
+      WHERE DATE(${localDepartureTime}) = ?
       ${tripTypeFilter}
       ORDER BY tm.departure_time ASC
     `,
@@ -173,7 +178,7 @@ const bulkUpdateAttendance = async (records) => {
 };
 
 const getAttendanceSummary = async ({ from, to, routeId }) => {
-  const startDate = formatDateRange(from) || new Date().toISOString().slice(0, 10);
+  const startDate = formatDateRange(from) || getTodayDateInTimezone();
   const endDate = formatDateRange(to) || startDate;
 
   const params = [startDate, endDate];
@@ -245,7 +250,7 @@ const getStudentAttendanceReport = async (studentId) => {
 };
 
 const getAttendanceAnalytics = async ({ date } = {}) => {
-  const targetDate = formatDateRange(date) || new Date().toISOString().slice(0, 10);
+  const targetDate = formatDateRange(date) || getTodayDateInTimezone();
 
   const [rows] = await pool.query(
     `

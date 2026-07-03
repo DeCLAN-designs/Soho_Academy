@@ -7,6 +7,7 @@ const transportManagerNavigation: DashboardRoleConfig['navigation'] = [
         label: 'Fleet',
         children: [
             { id: 'vehicles', label: 'Vehicles' },
+            { id: 'vehicle-assignments', label: 'Vehicle Assignments' },
             { id: 'fuel-management', label: 'Fuel Management' },
             { id: 'maintenance', label: 'Maintenance' },
             { id: 'vehicle-documents', label: 'Vehicle Documents' },
@@ -103,6 +104,11 @@ export const transportManagerDashboardConfig: DashboardRoleConfig = {
             heading: 'Vehicles',
             description: 'Manage vehicle records, assignments, and availability.',
             cards: ['Active vehicles', 'Vehicle assignment status', 'Inspection readiness'],
+        },
+        'vehicle-assignments': {
+            heading: 'Vehicle Assignments',
+            description: 'Assign vehicles to routes for morning and evening trips. A vehicle can serve the same or different routes in each period.',
+            cards: ['Today\'s assignments', 'Unassigned routes', 'Assignment conflicts'],
         },
         'fuel-management': {
             heading: 'Fuel Management',

@@ -1,4 +1,5 @@
 require("dotenv").config();
+process.env.TZ = process.env.APP_TIMEZONE || "Africa/Nairobi";
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -31,6 +32,7 @@ const tmFleetRoutes = require("./routes/fleet.routes.js");
 const tmStaffRoutes = require("./routes/staff.routes.js");
 const tmTripRoutes = require("./routes/trip.routes.js");
 const studentTransportRoutes = require("./routes/studentTransport.routes.js");
+const vehicleRouteAssignmentRoutes = require("./routes/vehicleRouteAssignment.routes.js");
 
 const app = express();
 // API endpoints should not rely on ETag-based caching. Disabling ETag avoids
@@ -104,6 +106,7 @@ app.use("/api/transport-manager", tmStaffRoutes);
 app.use("/api/transport-manager", tmTripRoutes);
 app.use("/api/transport-manager", studentTransportRoutes);
 app.use("/api/transport-manager", parentTransportRoutes);
+app.use("/api/transport-manager/vehicle-assignments", vehicleRouteAssignmentRoutes);
 
 // Health check
 app.get("/health", (_, res) => {

@@ -1,8 +1,8 @@
 import type { ComponentType } from 'react'
 import type { RoleSection } from '../../../dashboard.types'
-import { Vehicles, FuelManagement, Maintenance, VehicleDocuments } from './Tabs'
+import { Vehicles, VehicleAssignments, FuelManagement, Maintenance, VehicleDocuments } from './Tabs'
 
-export type FleetSubTabType = 'vehicles' | 'fuel-management' | 'maintenance' | 'vehicle-documents'
+export type FleetSubTabType = 'vehicles' | 'vehicle-assignments' | 'fuel-management' | 'maintenance' | 'vehicle-documents'
 
 type FleetSubTab = {
     id: FleetSubTabType
@@ -12,6 +12,7 @@ type FleetSubTab = {
 
 export const FLEET_SUB_TABS: FleetSubTab[] = [
     { id: 'vehicles', label: 'Vehicles', component: Vehicles },
+    { id: 'vehicle-assignments', label: 'Vehicle Assignments', component: VehicleAssignments },
     { id: 'fuel-management', label: 'Fuel Management', component: FuelManagement },
     { id: 'maintenance', label: 'Maintenance', component: Maintenance },
     { id: 'vehicle-documents', label: 'Vehicle Documents', component: VehicleDocuments },

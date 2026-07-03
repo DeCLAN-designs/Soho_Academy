@@ -1,70 +1,86 @@
 const cron = require("node-cron");
 const pool = require("../config/db.js");
 const { createTrip } = require("../services/trips.service.js");
+const { getAssignmentsForDate, getAssignmentForRouteAndPeriod } = require("../services/vehicleRouteAssignment.service.js");
 
 /**
- * Generate automated daily trips for active routes.
+ * Generate automated daily trips based on vehicle-route assignments.
  * Run at 3:00 AM every Monday to Friday.
  */
 const generateDailyTrips = async () => {
   console.log(`[Cron] [${new Date().toISOString()}] Running daily trips generation...`);
   
   try {
-    const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const { getTodayDateInTimezone } = require("../utils/date.js");
+    const todayStr = getTodayDateInTimezone(); // YYYY-MM-DD in Africa/Nairobi
     
-    // 1. Get all active routes
-    const [routes] = await pool.query(
-      "SELECT id FROM routes WHERE status = 'Active' AND deleted_at IS NULL"
-    );
+    // 1. Get all active vehicle-route assignments for today
+    const assignments = await getAssignmentsForDate({ date: todayStr });
     
-    if (routes.length === 0) {
-      console.log("[Cron] No active routes found. Skipping generation.");
+    if (assignments.length === 0) {
+      console.log("[Cron] No active vehicle-route assignments found for today. Skipping generation.");
       return;
     }
     
-    console.log(`[Cron] Found ${routes.length} active route(s). Generating trips for ${todayStr}...`);
+    console.log(`[Cron] Found ${assignments.length} active assignment(s). Generating trips for ${todayStr}...`);
     
     let createdCount = 0;
 
-    for (const route of routes) {
-      // Check if Morning Trip exists
-      const [morningExists] = await pool.query(
-        `SELECT id FROM trip_monitoring 
-         WHERE route_id = ? AND DATE(departure_time) = ? AND TIME(departure_time) < '12:00:00'`,
-        [route.id, todayStr]
-      );
+    // Group assignments by route and time period to avoid duplicates
+    const assignmentMap = new Map();
+    
+    for (const assignment of assignments) {
+      const key = `${assignment.routeId}-${assignment.timePeriod === 'Both' ? 'Morning' : assignment.timePeriod}`;
       
-      if (morningExists.length === 0) {
-        await createTrip({
-          payload: {
-            routeId: route.id,
-            departureTime: `${todayStr} 06:30:00`,
-            expectedReturnTime: `${todayStr} 08:30:00`,
-            notes: "Automated Morning Trip",
-            status: "Not Started"
-          }
-        });
-        createdCount++;
+      if (!assignmentMap.has(key)) {
+        assignmentMap.set(key, assignment);
       }
+    }
 
-      // Check if Evening Trip exists
-      const [eveningExists] = await pool.query(
-        `SELECT id FROM trip_monitoring 
-         WHERE route_id = ? AND DATE(departure_time) = ? AND TIME(departure_time) >= '12:00:00'`,
-        [route.id, todayStr]
-      );
-
-      if (eveningExists.length === 0) {
-        await createTrip({
-          payload: {
-            routeId: route.id,
-            departureTime: `${todayStr} 15:30:00`,
-            expectedReturnTime: `${todayStr} 17:30:00`,
-            notes: "Automated Evening Trip",
-            status: "Not Started"
-          }
-        });
-        createdCount++;
+    for (const assignment of assignmentMap.values()) {
+      const timePeriods = assignment.timePeriod === 'Both' ? ['Morning', 'Evening'] : [assignment.timePeriod];
+      
+      for (const period of timePeriods) {
+        const departureTime = period === 'Morning' ? '06:30:00' : '15:30:00';
+        const returnTime = period === 'Morning' ? '08:30:00' : '17:30:00';
+        const tripTime = `${todayStr} ${departureTime}`;
+        
+        // Check if trip already exists for this route, date, and time period
+        const timeCondition = period === 'Morning' 
+          ? "TIME(departure_time) < '12:00:00'" 
+          : "TIME(departure_time) >= '12:00:00'";
+        
+        const [existingTrip] = await pool.query(
+          `SELECT id FROM trip_monitoring 
+           WHERE route_id = ? AND DATE(departure_time) = ? AND ${timeCondition}`,
+          [assignment.routeId, todayStr]
+        );
+        
+        if (existingTrip.length === 0) {
+          await createTrip({
+            payload: {
+              routeId: assignment.routeId,
+              departureTime: tripTime,
+              expectedReturnTime: `${todayStr} ${returnTime}`,
+              notes: `Automated ${period} Trip`,
+              status: "Not Started"
+            }
+          });
+          createdCount++;
+        } else {
+          // Update existing trip with current assignment details
+          await pool.query(
+            `UPDATE trip_monitoring 
+             SET vehicle_plate = ?, driver_name = ?, assistant_name = ?
+             WHERE id = ?`,
+            [
+              assignment.vehiclePlate,
+              assignment.driverName || '',
+              assignment.assistantName || null,
+              existingTrip[0].id
+            ]
+          );
+        }
       }
     }
     

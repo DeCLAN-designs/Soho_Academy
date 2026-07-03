@@ -4,11 +4,16 @@ const {
   updateAttendanceRecord,
 } = require("./studentAttendance.service.js");
 
+const UTC_TIMEZONE = "+00:00";
+const DB_TIMEZONE = process.env.DB_TIMEZONE || "+03:00";
+const localDepartureTime = `CONVERT_TZ(tm.departure_time, '${UTC_TIMEZONE}', '${DB_TIMEZONE}')`;
+
 const normalizePlate = (value) =>
   String(value || "")
     .replace(/\s+/g, "")
     .toUpperCase();
 
+const { getTodayDateInTimezone } = require("../utils/date.js");
 const getStaffIdentity = async (userId) => {
   const [rows] = await pool.query(
     `
@@ -70,12 +75,12 @@ const listStaffTripsForDate = async ({ userId, date, tripType }) => {
   const targetDate =
     date && !Number.isNaN(new Date(date).getTime())
       ? new Date(date).toISOString().slice(0, 10)
-      : new Date().toISOString().slice(0, 10);
+      : getTodayDateInTimezone();
 
   const access = getStaffTripAccessClause(staff);
   const params = [targetDate, ...access.params];
   const tripTypeFilter = tripType
-    ? "AND CASE WHEN TIME(tm.departure_time) < '12:00:00' THEN 'Morning' ELSE 'Evening' END = ?"
+    ? `AND CASE WHEN TIME(${localDepartureTime}) < '12:00:00' THEN 'Morning' ELSE 'Evening' END = ?`
     : "";
 
   if (tripType) {
@@ -97,10 +102,10 @@ const listStaffTripsForDate = async ({ userId, date, tripType }) => {
         tm.status,
         tm.stops_completed,
         tm.total_stops,
-        CASE WHEN TIME(tm.departure_time) < '12:00:00' THEN 'Morning' ELSE 'Evening' END AS trip_type
+        CASE WHEN TIME(${localDepartureTime}) < '12:00:00' THEN 'Morning' ELSE 'Evening' END AS trip_type
       FROM trip_monitoring tm
       INNER JOIN routes r ON r.id = tm.route_id
-      WHERE DATE(tm.departure_time) = ?
+      WHERE DATE(${localDepartureTime}) = ?
         AND ${access.clause}
       ${tripTypeFilter}
       ORDER BY tm.departure_time ASC
