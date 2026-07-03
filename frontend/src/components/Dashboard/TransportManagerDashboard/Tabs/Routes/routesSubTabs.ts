@@ -1,8 +1,8 @@
 import type { ComponentType } from 'react'
 import type { RoleSection } from '../../../dashboard.types'
-import { RoutePlanning, StopsManagement, RouteMonitoring, RouteOptimization } from './Tabs'
+import { RoutePlanning, StopsManagement, RouteMonitoring, RouteOptimization, TransportCalendar } from './Tabs'
 
-export type RoutesSubTabType = 'route-planning' | 'stops' | 'route-monitoring' | 'optimization'
+export type RoutesSubTabType = 'route-planning' | 'stops' | 'route-monitoring' | 'optimization' | 'transport-calendar'
 
 type RoutesSubTab = {
     id: RoutesSubTabType
@@ -15,6 +15,7 @@ export const ROUTES_SUB_TABS: RoutesSubTab[] = [
     { id: 'stops', label: 'Stops', component: StopsManagement },
     { id: 'route-monitoring', label: 'Route Monitoring', component: RouteMonitoring },
     { id: 'optimization', label: 'Optimization', component: RouteOptimization },
+    { id: 'transport-calendar', label: 'Transport Calendar', component: TransportCalendar },
 ]
 
 export const isRoutesSubTab = (sectionId: string): sectionId is RoutesSubTabType => {

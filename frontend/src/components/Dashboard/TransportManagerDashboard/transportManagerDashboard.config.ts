@@ -150,6 +150,11 @@ export const transportManagerDashboardConfig: DashboardRoleConfig = {
             description: 'Review route efficiency and improvement opportunities.',
             cards: ['Distance reduction ideas', 'Load balancing', 'Time savings estimate'],
         },
+        'transport-calendar': {
+            heading: 'Transport Calendar',
+            description: 'Configure academic calendar transport availability, holidays, and special transport days.',
+            cards: ['Academic calendar status', 'Transport availability', 'Upcoming closures'],
+        },
         students: {
             heading: 'Students',
             description: 'Manage student transport assignments, attendance, and requests.',

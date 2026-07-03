@@ -302,6 +302,25 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
         setErrorMessage('')
 
         try {
+            // Check transport availability before loading transport profiles
+            const todayStr = new Date().toISOString().slice(0,10)
+            const availRes = await fetch(`/api/transport-manager/transport/availability/${todayStr}`)
+            if (availRes.ok) {
+                const availJson = await availRes.json()
+                if (!availJson.data || !availJson.data.transportEnabled) {
+                    // Still load children and requests, but clear transport profiles
+                    const [childrenResponse, requestsResponse] = await Promise.all([
+                        parentApi.getChildren(),
+                        parentApi.getTransportRequests(),
+                    ])
+
+                    setChildren(childrenResponse.data?.children || [])
+                    setTransportProfiles([])
+                    setRequests(requestsResponse.data?.requests || [])
+                    return
+                }
+            }
+
             const [childrenResponse, transportResponse, requestsResponse] = await Promise.all([
                 parentApi.getChildren(),
                 parentApi.getChildrenTransport(),

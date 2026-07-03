@@ -33,6 +33,8 @@ const tmStaffRoutes = require("./routes/staff.routes.js");
 const tmTripRoutes = require("./routes/trip.routes.js");
 const studentTransportRoutes = require("./routes/studentTransport.routes.js");
 const vehicleRouteAssignmentRoutes = require("./routes/vehicleRouteAssignment.routes.js");
+const transportCalendarRoutes = require("./routes/transportCalendar.routes.js");
+const academicCalendarRoutes = require('./routes/academicCalendar.routes.js');
 
 const app = express();
 // API endpoints should not rely on ETag-based caching. Disabling ETag avoids
@@ -107,6 +109,8 @@ app.use("/api/transport-manager", tmTripRoutes);
 app.use("/api/transport-manager", studentTransportRoutes);
 app.use("/api/transport-manager", parentTransportRoutes);
 app.use("/api/transport-manager/vehicle-assignments", vehicleRouteAssignmentRoutes);
+app.use("/api/transport-manager", transportCalendarRoutes);
+app.use('/api/transport-manager', academicCalendarRoutes);
 
 // Health check
 app.get("/health", (_, res) => {

@@ -20,6 +20,10 @@ const handleTripsError = (res, error, defaultMessage) => {
     return res.status(400).json({ success: false, message: error.message });
   }
 
+  if (error && error.code === 'TRANSPORT_NOT_ENABLED') {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+
   if (error && error.code === "ROUTE_NOT_FOUND") {
     return res.status(404).json({ success: false, message: error.message });
   }

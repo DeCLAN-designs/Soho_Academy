@@ -1,4 +1,4 @@
-import StaffAttendancePanel from '../../../shared/StaffAttendancePanel'
+import { StaffAttendancePanel } from '../../../shared/StaffAttendancePanel'
 import './Attendance.css'
 
 const DriverAttendanceMenuItem = () => {

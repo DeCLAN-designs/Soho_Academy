@@ -54,6 +54,7 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
             children: [
                 { id: 'route-planning', label: 'Route Planning' },
                 { id: 'stops', label: 'Stops' },
+                { id: 'transport-calendar', label: 'Transport Calendar' },
                 { id: 'route-monitoring', label: 'Route Monitoring' },
                 { id: 'optimization', label: 'Optimization' },
             ],

@@ -2,6 +2,7 @@ const cron = require("node-cron");
 const pool = require("../config/db.js");
 const { createTrip } = require("../services/trips.service.js");
 const { getAssignmentsForDate, getAssignmentForRouteAndPeriod } = require("../services/vehicleRouteAssignment.service.js");
+const transportCalendarService = require("../services/transportCalendar.service.js");
 
 /**
  * Generate automated daily trips based on vehicle-route assignments.
@@ -14,6 +15,13 @@ const generateDailyTrips = async () => {
     const { getTodayDateInTimezone } = require("../utils/date.js");
     const todayStr = getTodayDateInTimezone(); // YYYY-MM-DD in Africa/Nairobi
     
+    // 0. Check transport availability for today
+    const { transportEnabled, source } = await transportCalendarService.isTransportDay(todayStr);
+    if (!transportEnabled) {
+      console.log(`[Cron] Transport disabled for ${todayStr} (source=${source}). Skipping generation.`);
+      return;
+    }
+
     // 1. Get all active vehicle-route assignments for today
     const assignments = await getAssignmentsForDate({ date: todayStr });
     

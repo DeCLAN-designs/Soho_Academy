@@ -25,8 +25,21 @@ const mapTripRow = (row) => ({
 /**
  * List all trips for a specific date.
  */
+const transportCalendarService = require('./transportCalendar.service');
+
 const listTripsForDate = async (date) => {
   const targetDate = date || new Date().toISOString().slice(0, 10);
+
+  // Check transport availability for the date
+  try {
+    const { transportEnabled } = await transportCalendarService.isTransportDay(targetDate);
+    if (!transportEnabled) {
+      return [];
+    }
+  } catch (err) {
+    // If calendar check fails, default to no trips to be safe
+    return [];
+  }
 
   const [rows] = await pool.query(
     `
@@ -115,6 +128,15 @@ const createTrip = async ({ payload }) => {
   await connection.beginTransaction();
 
   try {
+    // Check transport availability for the trip date
+    const { isTransportDay } = require('./transportCalendar.service');
+    const tripDateStr = departureDate.toISOString().slice(0, 10);
+    const transportCheck = await isTransportDay(tripDateStr);
+    if (!transportCheck.transportEnabled) {
+      const error = new Error('Transport not enabled for the selected date.');
+      error.code = 'TRANSPORT_NOT_ENABLED';
+      throw error;
+    }
     // 1. Fetch and validate Route details
     const [routes] = await connection.query(
       "SELECT * FROM routes WHERE id = ? AND deleted_at IS NULL LIMIT 1",

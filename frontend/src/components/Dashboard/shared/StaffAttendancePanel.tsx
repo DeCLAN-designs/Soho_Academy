@@ -33,7 +33,7 @@ const formatDeparture = (value: string) => {
     })
 }
 
-const StaffAttendancePanel = ({ roleLabel }: StaffAttendancePanelProps) => {
+export const StaffAttendancePanel = ({ roleLabel }: StaffAttendancePanelProps) => {
     const [trips, setTrips] = useState<StaffTripRecord[]>([])
     const [selectedTripId, setSelectedTripId] = useState<number | null>(null)
     const [attendance, setAttendance] = useState<StaffAttendanceRecord[]>([])
@@ -59,6 +59,20 @@ const StaffAttendancePanel = ({ roleLabel }: StaffAttendancePanelProps) => {
         setErrorMessage('')
 
         try {
+            // Check transport availability before loading trips
+            const todayStr = new Date().toISOString().slice(0,10)
+            const availRes = await fetch(`/api/transport-manager/transport/availability/${todayStr}`)
+            if (availRes.ok) {
+                const availJson = await availRes.json()
+                if (!availJson.data || !availJson.data.transportEnabled) {
+                    setTrips([])
+                    setSelectedTripId(null)
+                    setAttendance([])
+                    setSummary(null)
+                    return
+                }
+            }
+
             const response = await staffApi.getTodayOverview()
             const nextTrips = response.data?.trips || []
             setTrips(nextTrips)
