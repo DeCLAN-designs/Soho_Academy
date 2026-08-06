@@ -173,9 +173,9 @@ const createTrip = async ({ payload }) => {
       `,
       [
         route.id,
-        route.vehicle_plate,
-        route.assigned_driver,
-        route.assigned_assistant || null,
+        payload.vehiclePlate || route.vehicle_plate,
+        payload.driverName || route.assigned_driver,
+        payload.assistantName || route.assigned_assistant || null,
         departureDate,
         expectedReturnDate,
         payload.status || "Not Started",

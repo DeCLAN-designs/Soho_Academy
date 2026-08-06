@@ -156,6 +156,7 @@ const Assignments = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
+  const [isDuplicateAssignmentError, setIsDuplicateAssignmentError] = useState(false);
   const [form, setForm] = useState({
     studentId: '',
     routeId: '',
@@ -289,10 +290,24 @@ const Assignments = () => {
         effectiveTo: '',
       });
       await loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
       setMessageType('error');
-      setMessage('Failed to create the assignment.');
+      let errorMessage = 'Failed to create the assignment.';
+      let duplicateError = false;
+
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = String(error.response.data.message);
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      if (errorMessage.includes('already has an assignment for this route and trip type')) {
+        duplicateError = true;
+      }
+
+      setIsDuplicateAssignmentError(duplicateError);
+      setMessage(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -382,6 +397,11 @@ const Assignments = () => {
             {routes.length === 0 && !loading && (
               <span className="assignments-form-hint">No routes found. Please create routes first.</span>
             )}
+            {isDuplicateAssignmentError && (
+              <span className="assignments-form-hint assignments-form-hint--rule">
+                This student cannot be assigned the same route and trip type twice.
+              </span>
+            )}
           </div>
 
           {/* Stop Dropdown - filters by numeric routeId */}
@@ -425,6 +445,11 @@ const Assignments = () => {
                 <option value="Evening">Evening Only</option>
               </select>
             </label>
+            {isDuplicateAssignmentError && (
+              <span className="assignments-form-hint assignments-form-hint--rule">
+                Select a different trip type or update the existing assignment.
+              </span>
+            )}
           </div>
 
           {/* Status Dropdown */}

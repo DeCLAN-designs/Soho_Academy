@@ -36,6 +36,27 @@ const ensureStudentAssignmentRecord = async ({ studentId, routeId, stopId }) => 
   }
 };
 
+const ensureUniqueStudentAssignment = async ({ studentId, routeId, tripType, excludeId = null }) => {
+  const params = [studentId, routeId, tripType];
+  let sql = `
+    SELECT id FROM student_route_assignment
+    WHERE student_id = ? AND route_id = ? AND trip_type = ?
+  `;
+
+  if (excludeId !== null) {
+    sql += " AND id <> ?";
+    params.push(excludeId);
+  }
+
+  sql += " LIMIT 1";
+  const [rows] = await pool.query(sql, params);
+  if (rows.length > 0) {
+    const error = new Error("Student already has an assignment for this route and trip type.");
+    error.code = "DUPLICATE_ASSIGNMENT";
+    throw error;
+  }
+};
+
 const listStudentAssignments = async () => {
   const [rows] = await pool.query(`
     SELECT
@@ -106,8 +127,8 @@ const createStudentAssignment = async ({ payload }) => {
   }
 
   await ensureStudentAssignmentRecord({ studentId, routeId, stopId });
-
   const tripType = String(payload.tripType ?? payload.trip_type ?? "Both").trim();
+  await ensureUniqueStudentAssignment({ studentId, routeId, tripType });
   const status = String(payload.status ?? "Active").trim();
   const effectiveFrom = normalizeDate(payload.effectiveFrom ?? payload.effective_from) || new Date().toISOString().slice(0, 10);
   const effectiveTo = normalizeDate(payload.effectiveTo ?? payload.effective_to) || null;
@@ -136,6 +157,19 @@ const updateStudentAssignment = async ({ id, payload }) => {
     error.code = "ASSIGNMENT_NOT_FOUND";
     throw error;
   }
+
+  const newStudentId = payload.studentId !== undefined || payload.student_id !== undefined
+    ? Number(payload.studentId ?? payload.student_id)
+    : current.studentId;
+  const newRouteId = payload.routeId !== undefined || payload.route_id !== undefined
+    ? Number(payload.routeId ?? payload.route_id)
+    : current.routeId;
+  const newTripType = payload.tripType !== undefined || payload.trip_type !== undefined
+    ? String(payload.tripType ?? payload.trip_type).trim()
+    : current.tripType;
+
+  await ensureStudentAssignmentRecord({ studentId: newStudentId, routeId: newRouteId, stopId: payload.stopId ?? payload.stop_id ?? current.stopId });
+  await ensureUniqueStudentAssignment({ studentId: newStudentId, routeId: newRouteId, tripType: newTripType, excludeId: Number(id) });
 
   const updates = [];
   const values = [];

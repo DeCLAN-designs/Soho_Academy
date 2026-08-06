@@ -90,6 +90,11 @@
   background: white;
 }
 
+.assignments-form-hint--rule {
+  color: #b45309;
+  font-weight: 600;
+}
+
 .assignments-form-select:focus,
 .assignments-form-input:focus {
   outline: none;

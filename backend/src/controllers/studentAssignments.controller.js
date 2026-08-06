@@ -15,6 +15,7 @@ const handleAssignmentError = (res, error, defaultMessage) => {
   if (error && error.code === "STOP_ROUTE_MISMATCH") return res.status(400).json({ success: false, message: "Selected stop does not belong to the selected route." });
   if (error && error.code === "ASSIGNMENT_NOT_FOUND") return res.status(404).json({ success: false, message: "Assignment not found." });
   if (error && error.code === "NO_ASSIGNMENT_FIELDS") return res.status(400).json({ success: false, message: "No assignment fields were provided for update." });
+  if (error && error.code === "DUPLICATE_ASSIGNMENT") return res.status(400).json({ success: false, message: "Student already has an assignment for this route and trip type." });
 
   console.error(defaultMessage, error);
   return res.status(500).json({ success: false, message: defaultMessage });

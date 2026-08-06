@@ -130,6 +130,7 @@ Transport Manager has the broadest dashboard surface. Major areas include:
   - Parent notifications.
 - Audit logs.
 - Settings.
+- Automated daily trip generation based on active vehicle-route assignments and transport calendar rules.
 
 ### School Admin
 
@@ -588,6 +589,12 @@ Important backend folders:
   - Token and logging utilities.
 - `migration/`
   - SQL schema.
+
+### Automated trip generation
+
+- `backend/src/jobs/dailyTrips.job.js` runs on weekdays at `03:00 AM` Nairobi time.
+- Trip creation is gated by the transport calendar and only runs when transport is enabled for the day.
+- It generates morning/evening trips from active `vehicle_route_assignments` and seeds attendance snapshots for created trips.
 
 Backend route mounting from `src/app.js`:
 
