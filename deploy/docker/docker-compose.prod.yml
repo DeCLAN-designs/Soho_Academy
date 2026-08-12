@@ -32,6 +32,7 @@ services:
       DB_NAME: ${DB_NAME:-soho_transport}
       DB_TIMEZONE: +03:00
       APP_TIMEZONE: Africa/Nairobi
+      REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
@@ -40,6 +41,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
 
   web:
     build:

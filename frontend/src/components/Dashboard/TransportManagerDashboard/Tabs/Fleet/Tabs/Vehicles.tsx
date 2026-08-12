@@ -12,7 +12,6 @@ type ModalType =
   | 'register'
   | 'view'
   | 'edit'
-  | 'assign'
   | 'history'
   | 'deactivate'
   | 'delete'
@@ -47,9 +46,6 @@ interface Vehicle {
   color: string;
   fuelType: FuelType;
   status: VehicleStatus;
-  assignedDriver: string;
-  assignedAssistant: string;
-  assignedRoute: string;
   lastService: string;
   mileage: number;
 }
@@ -76,7 +72,7 @@ interface HistoryEntry {
 }
 
 type VehicleDetailsPayload = Partial<Omit<Vehicle, 'id' | 'plateNumber'>>;
-type PersistableVehicleDetails = Omit<Vehicle, 'id' | 'plateNumber'>;
+type PersistableVehicleDetails = Omit<Vehicle, 'id' | 'plateNumber' | 'assignedDriver' | 'assignedAssistant' | 'assignedRoute'>;
 
 // ─── API Service ──────────────────────────────────────────────────────────────
 
@@ -90,7 +86,7 @@ const axiosInstance = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-axiosInstance.interceptors.request.use((config) => {
+axiosInstance.interceptors.request.use((config: any) => {
   const token = localStorage.getItem('soho_auth_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
@@ -107,9 +103,6 @@ const createVehicleDetailsPayload = (vehicle: Vehicle): PersistableVehicleDetail
   color: vehicle.color,
   fuelType: vehicle.fuelType,
   status: vehicle.status,
-  assignedDriver: vehicle.assignedDriver,
-  assignedAssistant: vehicle.assignedAssistant,
-  assignedRoute: vehicle.assignedRoute,
   lastService: vehicle.lastService,
   mileage: vehicle.mileage,
 });
@@ -117,27 +110,27 @@ const createVehicleDetailsPayload = (vehicle: Vehicle): PersistableVehicleDetail
 const apiService = {
   // Number Plates
   getNumberPlates: async (): Promise<NumberPlate[]> => {
-    const response = await axios.get(`${API_BASE_URL}/number-plates`);
+    const response = await axiosInstance.get('/number-plates');
     return response.data;
   },
 
   getActiveNumberPlates: async (): Promise<NumberPlate[]> => {
-    const response = await axios.get(`${API_BASE_URL}/number-plates/active`);
+    const response = await axiosInstance.get('/number-plates/active');
     return response.data;
   },
 
   createNumberPlate: async (plateNumber: string): Promise<NumberPlate> => {
-    const response = await axios.post(`${API_BASE_URL}/number-plates`, { plate_number: plateNumber });
+    const response = await axiosInstance.post('/number-plates', { plate_number: plateNumber });
     return response.data;
   },
 
   updateNumberPlateStatus: async (id: number, status: 'active' | 'inactive'): Promise<NumberPlate> => {
-    const response = await axios.patch(`${API_BASE_URL}/number-plates/${id}`, { status });
+    const response = await axiosInstance.patch(`/number-plates/${id}`, { status });
     return response.data;
   },
 
   deleteNumberPlate: async (id: number): Promise<void> => {
-    await axios.delete(`${API_BASE_URL}/number-plates/${id}`);
+    await axiosInstance.delete(`/number-plates/${id}`);
   },
 
   // Users (for drivers and assistants)
@@ -257,8 +250,6 @@ const SelectField: React.FC<SelectFieldProps> = ({
 const Vehicles: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [numberPlates, setNumberPlates] = useState<NumberPlate[]>([]);
-  const [drivers, setDrivers] = useState<User[]>([]);
-  const [assistants, setAssistants] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -270,8 +261,6 @@ const Vehicles: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [formData, setFormData] = useState<VehicleFormData>(EMPTY_FORM);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
-  const [assignDriver, setAssignDriver] = useState('');
-  const [assignAssistant, setAssignAssistant] = useState('');
   const [activeDashboardCard, setActiveDashboardCard] = useState<string>('list');
 
   // ─── Fetch Data from API ────────────────────────────────────────────────────
@@ -284,48 +273,24 @@ const Vehicles: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch number plates
+      // Fetch number plates from backend
       const plates = await apiService.getNumberPlates();
       setNumberPlates(plates);
 
-      // Fetch drivers and assistants
-      const [driversData, assistantsData] = await Promise.all([
-        apiService.getDrivers(),
-        apiService.getBusAssistants(),
-      ]);
-      setDrivers(driversData);
-      setAssistants(assistantsData);
-
-      const vehiclesData: Vehicle[] = await Promise.all(
-        plates.map(async (plate) => {
-          let details: VehicleDetailsPayload = {};
-
-          try {
-            details = await apiService.getVehicleDetails(plate.plate_number);
-          } catch (err) {
-            if (!axios.isAxiosError(err) || err.response?.status !== 404) {
-              throw err;
-            }
-          }
-
-          return {
-            id: String(plate.id),
-            plateNumber: plate.plate_number,
-            model: details.model || 'Unknown',
-            type: details.type || 'School Bus',
-            year: details.year || new Date().getFullYear(),
-            capacity: details.capacity || 0,
-            color: details.color || '—',
-            fuelType: details.fuelType || 'Diesel',
-            status: details.status || (plate.status === 'active' ? 'Active' : 'Inactive'),
-            assignedDriver: details.assignedDriver || '',
-            assignedAssistant: details.assignedAssistant || '',
-            assignedRoute: details.assignedRoute || '',
-            lastService: details.lastService || '—',
-            mileage: details.mileage || 0,
-          };
-        })
-      );
+      // Map number plates to vehicle format
+      const vehiclesData: Vehicle[] = plates.map(plate => ({
+        id: String(plate.id),
+        plateNumber: plate.plate_number,
+        model: 'Unknown',
+        type: 'School Bus',
+        year: new Date().getFullYear(),
+        capacity: 0,
+        color: '—',
+        fuelType: 'Diesel',
+        status: plate.status === 'active' ? 'Active' : 'Inactive',
+        lastService: '—',
+        mileage: 0,
+      }));
       setVehicles(vehiclesData);
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -360,9 +325,7 @@ const Vehicles: React.FC = () => {
       const matchSearch =
         !q ||
         v.plateNumber.toLowerCase().includes(q) ||
-        v.model.toLowerCase().includes(q) ||
-        v.assignedDriver.toLowerCase().includes(q) ||
-        v.assignedRoute.toLowerCase().includes(q);
+        v.model.toLowerCase().includes(q);
       const matchType = typeFilter === 'All' || v.type === typeFilter;
       const matchStatus = statusFilter === 'All' || v.status === statusFilter;
       return matchSearch && matchType && matchStatus;
@@ -390,9 +353,6 @@ const Vehicles: React.FC = () => {
         fuelType: vehicle.fuelType,
         status: vehicle.status,
       });
-    } else if (type === 'assign' && vehicle) {
-      setAssignDriver(vehicle.assignedDriver);
-      setAssignAssistant(vehicle.assignedAssistant);
     }
   };
 
@@ -446,9 +406,6 @@ const Vehicles: React.FC = () => {
         color: formData.color.trim() || '—',
         fuelType: formData.fuelType as FuelType,
         status: requestedStatus,
-        assignedDriver: '',
-        assignedAssistant: '',
-        assignedRoute: '',
         lastService: '—',
         mileage: 0,
       };
@@ -512,32 +469,6 @@ const Vehicles: React.FC = () => {
     } catch (err) {
       console.error('Error updating vehicle:', err);
       setFormErrors({ plateNumber: 'Failed to update vehicle.' });
-    }
-  };
-
-  const handleAssignSubmit = async () => {
-    if (!selectedVehicle) return;
-    const updatedVehicle: Vehicle = {
-      ...selectedVehicle,
-      assignedDriver: assignDriver,
-      assignedAssistant: assignAssistant,
-    };
-
-    try {
-      await apiService.updateVehicleDetails(
-        selectedVehicle.plateNumber,
-        createVehicleDetailsPayload(updatedVehicle)
-      );
-
-      setVehicles(prev =>
-        prev.map(v =>
-          v.id === selectedVehicle.id ? updatedVehicle : v
-        )
-      );
-      closeModal();
-    } catch (err) {
-      console.error('Error assigning staff:', err);
-      setError('Failed to save assignment. Please try again.');
     }
   };
 
@@ -678,14 +609,7 @@ const Vehicles: React.FC = () => {
               </dl>
             </section>
 
-            <section className="vp-detail-section">
-              <h3 className="vp-detail-section-title">Current Assignments</h3>
-              <dl className="vp-detail-grid">
-                <DetailItem label="Driver" value={v.assignedDriver || '—'} />
-                <DetailItem label="Bus Assistant" value={v.assignedAssistant || '—'} />
-                <DetailItem label="Route" value={v.assignedRoute || '—'} span />
-              </dl>
-            </section>
+
 
             <section className="vp-detail-section">
               <h3 className="vp-detail-section-title">Maintenance</h3>
@@ -697,90 +621,8 @@ const Vehicles: React.FC = () => {
 
           <div className="vp-modal-footer">
             <button className="vp-btn vp-btn--ghost" onClick={closeModal}>Close</button>
-            <button className="vp-btn vp-btn--secondary" onClick={() => openModal('assign', v)}>
-              Assign Staff
-            </button>
             <button className="vp-btn vp-btn--primary" onClick={() => openModal('edit', v)}>
               Edit Vehicle
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // ─── Modal: Assign Driver/Assistant ──────────────────────────────────────
-
-  const renderAssignModal = () => {
-    if (!selectedVehicle) return null;
-    const v = selectedVehicle;
-    return (
-      <div className="vp-overlay" role="dialog" aria-modal="true" onClick={closeModal}>
-        <div className="vp-modal vp-modal--sm" onClick={e => e.stopPropagation()}>
-          <div className="vp-modal-header">
-            <div>
-              <h2 className="vp-modal-title">Assign Staff</h2>
-              <p className="vp-modal-subtitle">{v.plateNumber} &middot; {v.model}</p>
-            </div>
-            <button className="vp-modal-close" onClick={closeModal} aria-label="Close">
-              <CloseIcon />
-            </button>
-          </div>
-
-          <div className="vp-modal-body">
-            {(v.assignedDriver || v.assignedAssistant) && (
-              <div className="vp-assign-current">
-                <p className="vp-assign-current-label">Currently Assigned</p>
-                {v.assignedDriver && (
-                  <p className="vp-assign-current-item">
-                    <span>Driver</span> {v.assignedDriver}
-                  </p>
-                )}
-                {v.assignedAssistant && (
-                  <p className="vp-assign-current-item">
-                    <span>Assistant</span> {v.assignedAssistant}
-                  </p>
-                )}
-              </div>
-            )}
-
-            <div className="vp-form-field">
-              <label className="vp-form-label">Driver</label>
-              <select
-                className="vp-form-select"
-                value={assignDriver}
-                onChange={e => setAssignDriver(e.target.value)}
-              >
-                <option value="">— Unassigned —</option>
-                {drivers.map(d => (
-                  <option key={d.id} value={`${d.firstName} ${d.lastName}`}>
-                    {d.firstName} {d.lastName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="vp-form-field" style={{ marginTop: 16 }}>
-              <label className="vp-form-label">Bus Assistant</label>
-              <select
-                className="vp-form-select"
-                value={assignAssistant}
-                onChange={e => setAssignAssistant(e.target.value)}
-              >
-                <option value="">— Unassigned —</option>
-                {assistants.map(a => (
-                  <option key={a.id} value={`${a.firstName} ${a.lastName}`}>
-                    {a.firstName} {a.lastName}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="vp-modal-footer">
-            <button className="vp-btn vp-btn--ghost" onClick={closeModal}>Cancel</button>
-            <button className="vp-btn vp-btn--primary" onClick={handleAssignSubmit}>
-              Save Assignment
             </button>
           </div>
         </div>
@@ -929,7 +771,7 @@ const Vehicles: React.FC = () => {
                 <input
                   type="text"
                   className="vp-search-input"
-                  placeholder="Search by plate, model, driver or route..."
+                  placeholder="Search by plate or model..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                 />
@@ -978,9 +820,6 @@ const Vehicles: React.FC = () => {
                       <th>Vehicle</th>
                       <th>Type</th>
                       <th>Cap.</th>
-                      <th>Driver</th>
-                      <th>Assistant</th>
-                      <th>Route</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
@@ -997,15 +836,6 @@ const Vehicles: React.FC = () => {
                         </td>
                         <td>{vehicle.type}</td>
                         <td>{vehicle.capacity}</td>
-                        <td>
-                          {vehicle.assignedDriver || <span className="vp-unassigned">Unassigned</span>}
-                        </td>
-                        <td>
-                          {vehicle.assignedAssistant || <span className="vp-unassigned">Unassigned</span>}
-                        </td>
-                        <td>
-                          {vehicle.assignedRoute || <span className="vp-unassigned">—</span>}
-                        </td>
                         <td>
                           <StatusBadge status={vehicle.status} />
                         </td>
@@ -1027,9 +857,6 @@ const Vehicles: React.FC = () => {
                                 </button>
                                 <button onClick={() => openModal('edit', vehicle)}>
                                   Edit Vehicle
-                                </button>
-                                <button onClick={() => openModal('assign', vehicle)}>
-                                  Assign Driver / Assistant
                                 </button>
                                 <button onClick={() => openModal('history', vehicle)}>
                                   View History
@@ -1153,7 +980,6 @@ const Vehicles: React.FC = () => {
               {modalType === 'register' && renderVehicleFormModal('register')}
               {modalType === 'edit' && renderVehicleFormModal('edit')}
               {modalType === 'view' && renderViewModal()}
-              {modalType === 'assign' && renderAssignModal()}
               {modalType === 'history' && renderHistoryModal()}
               {modalType === 'deactivate' && renderConfirmModal('deactivate')}
               {modalType === 'delete' && renderConfirmModal('delete')}

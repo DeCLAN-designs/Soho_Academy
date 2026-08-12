@@ -6,7 +6,7 @@ const transportManagerNavigation: DashboardRoleConfig['navigation'] = [
         id: 'fleet',
         label: 'Fleet',
         children: [
-            { id: 'vehicles', label: 'Vehicles' },
+            { id: 'vehicles', label: 'Vehicle Details' },
             { id: 'vehicle-assignments', label: 'Vehicle Assignments' },
             { id: 'fuel-management', label: 'Fuel Management' },
             { id: 'maintenance', label: 'Maintenance' },
@@ -21,6 +21,7 @@ const transportManagerNavigation: DashboardRoleConfig['navigation'] = [
             { id: 'stops', label: 'Stops' },
             { id: 'route-monitoring', label: 'Route Monitoring' },
             { id: 'optimization', label: 'Optimization' },
+            { id: 'trip-simulation', label: 'Trip Simulation' },
         ],
     },
     {
@@ -101,7 +102,7 @@ export const transportManagerDashboardConfig: DashboardRoleConfig = {
             cards: ['Vehicle availability', 'Fuel usage summary', 'Maintenance and document alerts'],
         },
         vehicles: {
-            heading: 'Vehicles',
+            heading: 'Vehicle Details',
             description: 'Manage vehicle records, assignments, and availability.',
             cards: ['Active vehicles', 'Vehicle assignment status', 'Inspection readiness'],
         },
@@ -144,6 +145,11 @@ export const transportManagerDashboardConfig: DashboardRoleConfig = {
             heading: 'Route Monitoring',
             description: 'Track live route progress and operational exceptions.',
             cards: ['Routes in progress', 'Delayed arrivals', 'Missed stop alerts'],
+        },
+        'trip-simulation': {
+            heading: 'Trip Simulation',
+            description: 'Create test trips and exercise status transitions against the backend lifecycle.',
+            cards: ['Create a demo trip', 'Progress through statuses', 'Inspect transition logs'],
         },
         optimization: {
             heading: 'Optimization',

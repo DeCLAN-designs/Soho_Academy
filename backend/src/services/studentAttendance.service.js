@@ -1,5 +1,9 @@
 const pool = require("../config/db.js");
 const { getTodayDateInTimezone } = require("../utils/date.js");
+const { getAssignmentForRouteAndPeriod } = require('./vehicleRouteAssignment.service');
+const { EventPublisher } = require('../utils/eventPublisher');
+const eventPublisher = new EventPublisher();
+const { attendanceUpdates } = require('../utils/metrics');
 
 const UTC_TIMEZONE = "+00:00";
 const DB_TIMEZONE = process.env.DB_TIMEZONE || "+03:00";
@@ -102,6 +106,7 @@ const listAttendanceForTrip = async (tripId) => {
 };
 
 const updateAttendanceRecord = async ({ id, payload }) => {
+  try { attendanceUpdates.inc(); } catch (e) {}
   const updates = [];
   const values = [];
 
@@ -145,16 +150,129 @@ const updateAttendanceRecord = async ({ id, payload }) => {
 
   values.push(id);
 
-  await pool.query(
-    `UPDATE student_attendance SET ${updates.join(", ")} WHERE id = ?`,
-    values
-  );
+  // Optimistic locking: attempt update with updatedAt match
+  const maxAttempts = 3;
+  let attempt = 0;
+  let lastError = null;
 
-  const tripIdResult = await pool.query("SELECT trip_id FROM student_attendance WHERE id = ?", [id]);
-  const tripId = tripIdResult[0][0]?.trip_id;
-  const records = await listAttendanceForTrip(tripId);
+  while (attempt < maxAttempts) {
+    attempt++;
 
-  return records.find((record) => record.id === Number(id)) || records[0] || null;
+    // Get current row for audit and concurrency control
+    const [rows] = await pool.query("SELECT * FROM student_attendance WHERE id = ? LIMIT 1", [id]);
+    if (rows.length === 0) {
+      const error = new Error("Attendance record not found.");
+      error.code = "ATTENDANCE_NOT_FOUND";
+      throw error;
+    }
+
+    const currentRow = rows[0];
+    const currentUpdatedAt = currentRow.updatedAt;
+
+    // Permission check: only assigned driver or assistant for the trip may update attendance
+    if (payload.confirmed_by_user_id) {
+      try {
+        const [tripRow] = await pool.query("SELECT route_id, departure_time FROM trip_monitoring WHERE id = ? LIMIT 1", [currentRow.trip_id]);
+        if ((tripRow || []).length === 1) {
+          const trip = tripRow[0];
+          const tripDate = new Date(trip.departure_time).toISOString().slice(0,10);
+          const hours = new Date(trip.departure_time).getHours();
+          const timePeriod = hours < 12 ? 'Morning' : 'Evening';
+          const assignment = await getAssignmentForRouteAndPeriod({ routeId: trip.route_id, timePeriod, date: tripDate });
+          if (assignment) {
+            const actorId = Number(payload.confirmed_by_user_id);
+            if (actorId !== Number(assignment.driverUserId) && actorId !== Number(assignment.assistantUserId)) {
+              const err = new Error('User is not authorized to update this attendance record.');
+              err.code = 'FORBIDDEN';
+              throw err;
+            }
+          }
+        }
+      } catch (err) {
+        if (err.code === 'FORBIDDEN') throw err;
+        // If assignment lookup fails, allow update but log a warning
+        console.warn('Failed to verify attendance update permissions:', err);
+      }
+    }
+
+    // Build conditional update using current updatedAt to detect concurrent modifications
+    const conditionalSql = `UPDATE student_attendance SET ${updates.join(", ")} WHERE id = ? AND updatedAt = ?`;
+    const conditionalValues = values.slice(0, values.length - 1).concat([id, currentUpdatedAt]);
+
+    const [result] = await pool.query(conditionalSql, conditionalValues);
+    // result.affectedRows may be 0 if updatedAt changed concurrently
+    if (result.affectedRows === 1) {
+      try {
+        // Fetch new state
+        const [newRows] = await pool.query("SELECT * FROM student_attendance WHERE id = ? LIMIT 1", [id]);
+        const newRow = newRows[0];
+
+        // Write audit log for attendance change
+        try {
+          await pool.query(
+            `INSERT INTO audit_logs (actorUserId, domain, entityType, entityId, action, previousStateJson, newStateJson) VALUES (?, 'attendance', 'student_attendance', ?, ?, ?, ?)`,
+            [payload.confirmed_by_user_id || null, id, 'attendance_update', JSON.stringify(currentRow), JSON.stringify(newRow)]
+          );
+        } catch (err) {
+          console.warn('Failed to write attendance audit log', err);
+        }
+
+        // Publish attendance_marked event for real-time updates (event store + Redis pub/sub)
+        try {
+          await eventPublisher.publish('attendance_marked', {
+            tripId: newRow.trip_id,
+            studentId: newRow.student_id,
+            boardingStatus: newRow.boarding_status,
+            dropoffStatus: newRow.dropoff_status,
+            confirmedBy: payload.confirmed_by_user_id || null,
+            tripType: newRow.trip_type,
+            attendanceDate: newRow.attendance_date,
+          });
+        } catch (err) {
+          console.warn('Failed to publish attendance_marked event to event store', err);
+        }
+
+        try {
+          const realtime = require('../utils/realtime');
+          await realtime.publish('attendance_marked', {
+            tripId: newRow.trip_id,
+            studentId: newRow.student_id,
+            boardingStatus: newRow.boarding_status,
+            dropoffStatus: newRow.dropoff_status,
+            confirmedBy: payload.confirmed_by_user_id || null,
+            tripType: newRow.trip_type,
+            attendanceDate: newRow.attendance_date,
+          });
+        } catch (err) {
+          console.warn('Failed to publish attendance_marked event to realtime channel', err);
+        }
+        // Recalculate and cache progress for this trip
+        try {
+          const progressService = require('./progress.service');
+          await progressService.updateProgressForTrip(newRow.trip_id);
+        } catch (err) {
+          console.warn('Failed to update cached trip progress', err);
+        }
+
+        const tripIdResult = await pool.query("SELECT trip_id FROM student_attendance WHERE id = ?", [id]);
+        const tripId = tripIdResult[0][0]?.trip_id;
+        const records = await listAttendanceForTrip(tripId);
+
+        return records.find((record) => record.id === Number(id)) || records[0] || null;
+      } catch (err) {
+        lastError = err;
+        break;
+      }
+    }
+
+    // Conflict detected — retry with exponential backoff
+    lastError = new Error('CONFLICT: Attendance record was modified concurrently');
+    lastError.code = 'ATTENDANCE_CONFLICT';
+    const backoffMs = Math.pow(2, attempt) * 100;
+    await new Promise((r) => setTimeout(r, backoffMs));
+  }
+
+  throw lastError;
 };
 
 const bulkUpdateAttendance = async (records) => {

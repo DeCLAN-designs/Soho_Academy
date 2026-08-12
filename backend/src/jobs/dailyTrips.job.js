@@ -9,9 +9,12 @@ const { normalizeDate, getTodayDateInTimezone } = require("../utils/date.js");
  * Generate automated daily trips based on vehicle-route assignments.
  * Run at 3:00 AM every Monday to Friday.
  */
+const { schedulerRuns, schedulerErrors, tripsCreated, tripsSkipped } = require('../utils/metrics');
+
 const generateDailyTrips = async ({ date } = {}) => {
   const todayStr = normalizeDate(date) || getTodayDateInTimezone();
   console.log(`[Cron] [${new Date().toISOString()}] Running daily trips generation for ${todayStr}...`);
+  try { schedulerRuns.inc(); } catch (e) { /* noop */ }
 
   try {
     // 0. Check transport availability for the date
@@ -71,24 +74,27 @@ const generateDailyTrips = async ({ date } = {}) => {
             }
           });
           createdCount++;
+          try { tripsCreated.inc(); } catch (e) {}
         } else {
-          await pool.query(
-            `UPDATE trip_monitoring
-             SET vehicle_plate = ?, driver_name = ?, assistant_name = ?
-             WHERE id = ?`,
-            [
-              assignment.vehiclePlate,
-              assignment.driverName || '',
-              assignment.assistantName || null,
-              existingTrip[0].id
-            ]
-          );
+          // Trip already exists for this route/date/session. Do NOT modify existing trip
+          // to preserve immutability — log and continue.
+          console.log(`[Cron] Trip already exists for route ${assignment.routeId} on ${todayStr} (${period}). Skipping update to preserve immutability.`);
+          try {
+            await pool.query(
+              `INSERT INTO audit_logs (actorUserId, domain, entityType, entityId, action, previousStateJson, newStateJson) VALUES (?, 'transport', 'trip', ?, ?, NULL, ?)` ,
+              [null, existingTrip[0].id, 'trip_generation_skipped', JSON.stringify({ reason: 'existing_trip', routeId: assignment.routeId, date: todayStr, session: period })]
+            );
+            try { tripsSkipped.inc(); } catch (e) {}
+          } catch (err) {
+            console.warn('Failed to write audit log for skipped trip generation', err);
+          }
         }
       }
     }
 
     console.log(`[Cron] Daily trips generation completed successfully for ${todayStr}. Created ${createdCount} trips.`);
   } catch (error) {
+    try { schedulerErrors.inc(); } catch (e) {}
     console.error(`[Cron] Failed to generate daily trips for ${todayStr}:`, error);
   }
 };

@@ -13,6 +13,14 @@ const handleAttendanceError = (res, error, defaultMessage) => {
     return res.status(400).json({ success: false, message: "No attendance fields were provided to update." });
   }
 
+  if (error && error.code === 'FORBIDDEN') {
+    return res.status(403).json({ success: false, message: error.message || 'Forbidden' });
+  }
+
+  if (error && error.code === 'ATTENDANCE_CONFLICT') {
+    return res.status(409).json({ success: false, message: 'Attendance record was modified concurrently. Please retry.' });
+  }
+
   if (error && error.code === "NO_ATTENDANCE_RECORDS") {
     return res.status(400).json({ success: false, message: "At least one attendance record is required." });
   }

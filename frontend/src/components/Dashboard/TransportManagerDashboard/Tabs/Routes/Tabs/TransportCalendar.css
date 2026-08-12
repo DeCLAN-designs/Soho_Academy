@@ -272,6 +272,45 @@
   color: var(--color-text-muted);
 }
 
+.transport-calendar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background-color: var(--color-bg-page);
+  border-radius: var(--radius-md);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-dot.transport-enabled {
+  background-color: var(--color-success);
+}
+
+.legend-dot.no-transport {
+  background-color: var(--color-danger);
+}
+
+.legend-indicator {
+  font-size: 0.875rem;
+  color: var(--color-info);
+}
+
+.legend-indicator.holiday {
+  color: var(--color-warning);
+}
+
 .transport-calendar__month-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -300,6 +339,7 @@
   transition: var(--transition-default);
   cursor: default;
   background-color: var(--color-bg-page);
+  position: relative;
 }
 
 .transport-calendar__month-day:hover {
@@ -324,6 +364,48 @@
 
 .transport-calendar__month-day.weekend:hover {
   opacity: 1;
+}
+
+.transport-calendar__month-day.transport-enabled {
+  background-color: var(--color-success-light);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+.transport-calendar__month-day.transport-enabled:hover {
+  background-color: var(--color-success);
+  color: white;
+}
+
+.transport-calendar__month-day.no-transport {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+}
+
+.transport-calendar__month-day.no-transport:hover {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+.transport-calendar__month-day.priority-event {
+  border: 2px solid var(--color-info);
+}
+
+.transport-calendar__month-day.holiday-event {
+  border: 2px dashed var(--color-warning);
+}
+
+.event-indicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.6rem;
+  color: var(--color-info);
+}
+
+.event-indicator.holiday {
+  color: var(--color-warning);
 }
 
 /* ============================================

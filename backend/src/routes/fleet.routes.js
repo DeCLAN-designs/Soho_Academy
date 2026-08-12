@@ -12,26 +12,28 @@ const {
 } = require("../controllers/fleet.controller.js");
 
 const router = express.Router();
+const pool = require("../config/db.js");
+const { authenticate, authorizeRoles } = require("../middlewares/auth.middleware.js");
+
+// Listing endpoints require authentication; modifications restricted to Transport Manager / School Admin
+router.use(authenticate);
 
 router.get("/number-plates", getNumberPlates);
 router.get("/number-plates/active", getActiveNumberPlates);
-router.post("/number-plates", postNumberPlate);
-router.patch("/number-plates/:id", patchNumberPlateStatus);
-router.delete("/number-plates/:id", removeNumberPlate);
+router.post("/number-plates", authorizeRoles("Transport Manager", "School Admin"), postNumberPlate);
+router.patch("/number-plates/:id", authorizeRoles("Transport Manager", "School Admin"), patchNumberPlateStatus);
+router.delete("/number-plates/:id", authorizeRoles("Transport Manager", "School Admin"), removeNumberPlate);
 
 router.get("/users/role/:role", getUsersByRole);
 
 router.get("/vehicle-details", getAllVehicleDetails);
 router.get("/vehicle-details/:plateNumber", getVehicleDetailsByPlate);
 router.get("/vehicles/:plateNumber", getVehicleDetailsByPlate);
-router.put("/vehicles/:plateNumber", putVehicleDetailsByPlate);
-const pool = require("../config/db.js");
-const { authenticate, authorizeRoles } = require("../middlewares/auth.middleware.js");
+router.put("/vehicles/:plateNumber", authorizeRoles("Transport Manager", "School Admin"), putVehicleDetailsByPlate);
 
   // GET /api/transport-manager/vehicles - Get all vehicles (number plates)
 router.get(
   "/vehicles",
-  authenticate,
   authorizeRoles("Transport Manager", "School Admin"),
   async (req, res) => {
     try {

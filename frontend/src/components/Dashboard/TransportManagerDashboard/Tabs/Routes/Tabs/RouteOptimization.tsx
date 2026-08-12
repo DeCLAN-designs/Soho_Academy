@@ -217,6 +217,9 @@ const RouteOptimization: React.FC<RouteOptimizationProps> = ({ section }) => {
                   <span className={`ro-priority-badge ro-priority--${suggestion.priority}`}>
                     {suggestion.priority} priority
                   </span>
+                  {selectedRoute === suggestion.routeId && (
+                    <span className="ro-selected-badge">Selected</span>
+                  )}
                 </div>
                 <div className="ro-savings-badge">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

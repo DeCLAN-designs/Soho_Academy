@@ -44,6 +44,26 @@ interface TodayTrip {
   stops?: TripStop[];
 }
 
+interface TripProgress {
+  tripId: number;
+  tripCode: string | null;
+  routeId: number | null;
+  vehiclePlate: string | null;
+  driverName: string | null;
+  assistantName: string | null;
+  departureTime: string | null;
+  status: TripStatus | string | null;
+  totals: {
+    total: number;
+    boarded: number;
+    absent: number;
+    dropped_off: number;
+    pending_dropoff: number;
+    pickupPercentage: number;
+    dropoffPercentage: number;
+  };
+}
+
 interface RouteOption {
   route_id: string;
   route_name: string;
@@ -155,6 +175,7 @@ const RouteMonitoring: React.FC<RouteMonitoringProps> = ({ section }) => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<TodayTrip | null>(null);
+  const [tripProgress, setTripProgress] = useState<TripProgress | null>(null);
   const [loadingTripDetails, setLoadingTripDetails] = useState(false);
 
   const isMounted = useRef(true);
@@ -220,19 +241,47 @@ const RouteMonitoring: React.FC<RouteMonitoringProps> = ({ section }) => {
 
   // ─── Modal Handlers ────────────────────────────────────────────────────────
 
+  const statusSteps: Array<{ key: TripStatus; title: string; description: string }> = [
+    { key: 'Not Started', title: 'Not Started', description: 'Trip has not yet commenced.' },
+    { key: 'On Time', title: 'Running On Time', description: 'Trip is currently on schedule.' },
+    { key: 'Delayed', title: 'Delayed', description: 'Trip is running late or delayed.' },
+    { key: 'Completed', title: 'Completed', description: 'Trip has completed successfully.' },
+    { key: 'Overdue', title: 'Overdue', description: 'Return has passed expected time.' },
+  ];
+
+  const getCurrentStepIndex = (status: TripStatus | string | null) => {
+    return statusSteps.findIndex(step => step.key === status);
+  };
+
+  const fetchTripProgress = async (tripId: number) => {
+    try {
+      const res = await axiosInstance.get(`/trips/${tripId}/progress`);
+      return res.data?.data || res.data;
+    } catch (err) {
+      console.error('Failed to fetch trip progress:', err);
+      return null;
+    }
+  };
+
   const openModal = async (trip: TodayTrip) => {
     setModalOpen(true);
     document.body.style.overflow = 'hidden';
     setLoadingTripDetails(true);
+    setTripProgress(null);
     
     try {
       // Fetch detailed trip data including stops
-      const detailedTrip = await apiService.getTripDetails(trip.id);
+      const [detailedTrip, progress] = await Promise.all([
+        apiService.getTripDetails(trip.id),
+        fetchTripProgress(trip.id),
+      ]);
+
       if (isMounted.current) {
         setSelectedTrip(detailedTrip);
+        setTripProgress(progress);
       }
     } catch (err) {
-      console.error('Failed to load trip details:', err);
+      console.error('Failed to load trip details or progress:', err);
       // Fallback to the trip data we already have
       if (isMounted.current) {
         setSelectedTrip(trip);
@@ -248,6 +297,7 @@ const RouteMonitoring: React.FC<RouteMonitoringProps> = ({ section }) => {
   const closeModal = useCallback(() => {
     setModalOpen(false);
     setSelectedTrip(null);
+    setTripProgress(null);
     document.body.style.overflow = '';
   }, []);
 
@@ -331,6 +381,57 @@ const RouteMonitoring: React.FC<RouteMonitoringProps> = ({ section }) => {
                       <DetailItem label="Notes" value={selectedTrip.notes} span />
                     )}
                   </div>
+                </section>
+
+                {/* Trip Progress */}
+                <section className="rm-detail-section">
+                  <h3 className="rm-detail-section-title">Trip Progress</h3>
+                  {tripProgress ? (
+                    <div className="rm-progress-overview">
+                      <div className="rm-progress-metrics">
+                        <div><strong>{tripProgress.totals.boarded}</strong> boarded</div>
+                        <div><strong>{tripProgress.totals.dropped_off}</strong> dropped off</div>
+                        <div><strong>{tripProgress.totals.absent}</strong> absent</div>
+                        <div><strong>{tripProgress.totals.pending_dropoff}</strong> pending</div>
+                      </div>
+                      <div className="rm-progress-bar">
+                        <div className="rm-progress-fill" style={{ width: `${tripProgress.totals.pickupPercentage}%` }} />
+                      </div>
+                      <div className="rm-progress-caption">
+                        {tripProgress.totals.pickupPercentage}% boarded • {tripProgress.totals.dropoffPercentage}% dropped off
+                      </div>
+
+                      <div className="rm-progress-stepper">
+                        {statusSteps.map((step, index) => {
+                          const currentStatus = (tripProgress.status || selectedTrip?.status) as TripStatus | string | null;
+                          const activeIndex = getCurrentStepIndex(currentStatus);
+                          const isComplete = index <= activeIndex;
+                          const isActive = index === activeIndex;
+
+                          return (
+                            <div
+                              key={step.key}
+                              className={`rm-progress-step${isActive ? ' rm-progress-step--active' : ''}${isComplete && !isActive ? ' rm-progress-step--completed' : ''}`}
+                            >
+                              <div
+                                className={`rm-progress-step-marker${isActive ? ' rm-progress-step-marker--active' : ''}${isComplete && !isActive ? ' rm-progress-step-marker--completed' : ''}`}
+                              >
+                                {index + 1}
+                              </div>
+                              <div className="rm-progress-step-body">
+                                <div className="rm-progress-step-title">{step.title}</div>
+                                <div className="rm-progress-step-desc">{step.description}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rm-empty-timeline">
+                      <p>Loading progress details...</p>
+                    </div>
+                  )}
                 </section>
 
                 {/* Stop Timeline */}

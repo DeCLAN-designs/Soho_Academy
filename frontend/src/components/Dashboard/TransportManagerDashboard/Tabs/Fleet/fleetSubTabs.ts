@@ -11,7 +11,7 @@ type FleetSubTab = {
 }
 
 export const FLEET_SUB_TABS: FleetSubTab[] = [
-    { id: 'vehicles', label: 'Vehicles', component: Vehicles },
+    { id: 'vehicles', label: 'Vehicle Details', component: Vehicles },
     { id: 'vehicle-assignments', label: 'Vehicle Assignments', component: VehicleAssignments },
     { id: 'fuel-management', label: 'Fuel Management', component: FuelManagement },
     { id: 'maintenance', label: 'Maintenance', component: Maintenance },

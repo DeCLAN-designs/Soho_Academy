@@ -480,22 +480,6 @@ body {
   margin: auto 0;
 }
 
-.vp-modal--xs {
-  width: 400px;
-}
-
-.vp-modal--sm {
-  width: 500px;
-}
-
-.vp-modal--md {
-  width: 600px;
-}
-
-.vp-modal--lg {
-  width: 800px;
-}
-
 .vp-modal-header {
   display: flex;
   justify-content: space-between;
@@ -636,125 +620,21 @@ body {
   font-weight: 500;
 }
 
-/* Timeline */
-.vp-timeline {
-  position: relative;
-  padding-left: 32px;
+/* Modal Size Adjustments */
+.vp-modal--xs {
+  width: 400px;
 }
 
-.vp-timeline-item {
-  position: relative;
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
+.vp-modal--sm {
+  width: 500px;
 }
 
-.vp-timeline-left {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.vp-modal--md {
+  width: 600px;
 }
 
-.vp-timeline-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: var(--secondary-descriptions);
-  z-index: 1;
-}
-
-.vp-timeline-dot--service {
-  background-color: var(--info);
-}
-
-.vp-timeline-dot--assignment {
-  background-color: var(--success);
-}
-
-.vp-timeline-dot--status-change {
-  background-color: var(--warning);
-}
-
-.vp-timeline-dot--registration {
-  background-color: var(--primary-headings);
-}
-
-.vp-timeline-dot--document {
-  background-color: #8b5cf6;
-}
-
-.vp-timeline-line {
-  position: absolute;
-  top: 12px;
-  width: 2px;
-  height: calc(100% + 24px);
-  background-color: var(--border-light);
-}
-
-.vp-timeline-content {
-  flex: 1;
-  padding-bottom: 8px;
-}
-
-.vp-timeline-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-}
-
-.vp-history-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.vp-history-badge--service {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: var(--info);
-}
-
-.vp-history-badge--assignment {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: var(--success);
-}
-
-.vp-history-badge--status-change {
-  background-color: rgba(245, 158, 11, 0.1);
-  color: var(--warning);
-}
-
-.vp-history-badge--registration {
-  background-color: rgba(103, 1, 34, 0.1);
-  color: var(--primary-headings);
-}
-
-.vp-history-badge--document {
-  background-color: rgba(139, 92, 246, 0.1);
-  color: #8b5cf6;
-}
-
-.vp-timeline-date {
-  color: var(--secondary-descriptions);
-  font-size: 11px;
-}
-
-.vp-timeline-desc {
-  color: var(--tertiary-card-content);
-  font-size: 13px;
-  line-height: 1.5;
-  margin-bottom: 4px;
-}
-
-.vp-timeline-by {
-  color: var(--secondary-descriptions);
-  font-size: 11px;
-  font-style: italic;
+.vp-modal--lg {
+  width: 800px;
 }
 
 /* Placeholder */
@@ -793,36 +673,6 @@ body {
 .vp-empty-sub {
   color: var(--secondary-descriptions);
   font-size: 13px;
-}
-
-/* Assign Current */
-.vp-assign-current {
-  background-color: var(--panel-bg);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-  border: 1px solid var(--border-light);
-}
-
-.vp-assign-current-label {
-  color: var(--secondary-descriptions);
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  margin-bottom: 12px;
-}
-
-.vp-assign-current-item {
-  display: flex;
-  gap: 12px;
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-
-.vp-assign-current-item span {
-  color: var(--secondary-descriptions);
-  font-weight: 500;
-  min-width: 70px;
 }
 
 /* Confirm Text */

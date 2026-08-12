@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import ReactDOM from 'react-dom'
 import type { RoleSection } from '../../../../dashboard.types'
+import { transportManagerApi, type AcademicYearRecord, type AcademicTermRecord, type CalendarEventRecord } from '@lib/api'
 import './TransportCalendar.css'
 
 interface TransportCalendarProps {
@@ -9,15 +10,14 @@ interface TransportCalendarProps {
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-type AcademicYear = { id: number; name: string; start_date: string; end_date: string }
-type Term = { id: number; academic_year_id: number; name: string; start_date: string; end_date: string; transport_enabled: boolean }
-type CalendarEvent = { id?: number; academic_year_id?: number; academic_term_id?: number; name: string; event_type: string; start_date: string; end_date: string; transport_enabled: boolean; description?: string }
+// Helper function for consistent date formatting
+const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
 
-const fallbackEvents = [
-    { id: 1, date: '2026-07-07', title: 'Mid-Term Break', status: 'No Transport' },
-    { id: 2, date: '2026-07-18', title: 'Make-up Saturday', status: 'Transport Enabled' },
-    { id: 3, date: '2026-08-01', title: 'Public Holiday', status: 'No Transport' },
-]
+const formatFullDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+}
 
 const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
     const [selectedDate] = useState(new Date().toISOString().slice(0, 10))
@@ -31,10 +31,8 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
             setLoading(true)
             setError(null)
             try {
-                const res = await fetch(`/api/transport-manager/transport/availability/${selectedDate}`)
-                if (!res.ok) throw new Error('Failed to fetch')
-                const json = await res.json()
-                setAvailability(json.data || null)
+                const response = await transportManagerApi.getTransportAvailability(selectedDate)
+                setAvailability(response.data || null)
             } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : 'Error'
                 setError(msg)
@@ -47,46 +45,47 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
     }, [selectedDate])
 
     // Admin lists and forms
-    const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
-    const [terms, setTerms] = useState<Term[]>([])
-    const [events, setEvents] = useState<CalendarEvent[]>([])
+    const [academicYears, setAcademicYears] = useState<AcademicYearRecord[]>([])
+    const [terms, setTerms] = useState<AcademicTermRecord[]>([])
+    const [events, setEvents] = useState<CalendarEventRecord[]>([])
 
-    // Transform events for display - use API data if available, otherwise fallback
-    const displayEvents = events.length > 0 
-        ? events.map(ev => ({ 
-            id: ev.id || 0, 
-            date: ev.start_date, 
-            title: ev.name, 
-            status: ev.transport_enabled ? 'Transport Enabled' : 'No Transport' 
-          }))
-        : fallbackEvents
-
-    const [newYear, setNewYear] = useState<{ name: string; start_date: string; end_date: string }>({ name: '', start_date: '', end_date: '' })
-    const [newTerm, setNewTerm] = useState<{ academic_year_id: string; name: string; start_date: string; end_date: string; transport_enabled: boolean }>({ academic_year_id: '', name: '', start_date: '', end_date: '', transport_enabled: true })
-    const [newEvent, setNewEvent] = useState<Omit<CalendarEvent, 'academic_year_id' | 'academic_term_id'> & { academic_year_id: string; academic_term_id: string }>({ 
-        academic_year_id: '', 
-        academic_term_id: '', 
+    const [newYear, setNewYear] = useState<{ name: string; startDate: string; endDate: string }>({ name: '', startDate: '', endDate: '' })
+    const [newTerm, setNewTerm] = useState<{ academicYearId: string; name: string; startDate: string; endDate: string; transportEnabled: boolean; status: string }>({ academicYearId: '', name: '', startDate: '', endDate: '', transportEnabled: true, status: 'Active' })
+    const [newEvent, setNewEvent] = useState<{ 
+        academicYearId: string; 
+        academicTermId: string; 
+        name: string; 
+        eventType: string; 
+        startDate: string; 
+        endDate: string; 
+        transportEnabled: boolean; 
+        description: string 
+    }>({ 
+        academicYearId: '', 
+        academicTermId: '', 
         name: '', 
-        event_type: 'holiday', 
-        start_date: '', 
-        end_date: '', 
-        transport_enabled: false, 
+        eventType: 'holiday', 
+        startDate: '', 
+        endDate: '', 
+        transportEnabled: false, 
         description: '' 
     })
     const [modalType, setModalType] = useState<'year' | 'term' | 'event' | null>(null)
+    const [editingTerm, setEditingTerm] = useState<AcademicTermRecord | null>(null)
+    const [editingEvent, setEditingEvent] = useState<CalendarEventRecord | null>(null)
 
     useEffect(() => {
         const fetchLists = async () => {
             try {
-                const [yRes, tRes, eRes] = await Promise.all([
-                    fetch('/api/transport-manager/academic-years'),
-                    fetch('/api/transport-manager/terms'),
-                    fetch('/api/transport-manager/calendar-events'),
+                const [yearsRes, termsRes, eventsRes] = await Promise.all([
+                    transportManagerApi.getAcademicYears(),
+                    transportManagerApi.getAcademicTerms(),
+                    transportManagerApi.getCalendarEvents(),
                 ])
 
-                if (yRes.ok) setAcademicYears((await yRes.json()).data || [])
-                if (tRes.ok) setTerms((await tRes.json()).data || [])
-                if (eRes.ok) setEvents((await eRes.json()).data || [])
+                setAcademicYears(yearsRes.data || [])
+                setTerms(termsRes.data || [])
+                setEvents(eventsRes.data || [])
             } catch (err) {
                 console.error('Failed to fetch calendar lists', err)
             }
@@ -97,11 +96,9 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
 
     const createYear = async () => {
         try {
-            const res = await fetch('/api/transport-manager/academic-years', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newYear) })
-            if (!res.ok) throw new Error('Create failed')
-            const json = await res.json()
-            setAcademicYears((s) => [json.data, ...s])
-            setNewYear({ name: '', start_date: '', end_date: '' })
+            const response = await transportManagerApi.createAcademicYear(newYear)
+            setAcademicYears((s) => [response.data, ...s])
+            setNewYear({ name: '', startDate: '', endDate: '' })
         } catch (err) {
             console.error('Failed to create academic year', err)
         }
@@ -109,41 +106,75 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
 
     const createTerm = async () => {
         try {
-            const res = await fetch('/api/transport-manager/terms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newTerm) })
-            if (!res.ok) throw new Error('Create failed')
-            const json = await res.json()
-            setTerms((s) => [json.data, ...s])
-            setNewTerm({ academic_year_id: '', name: '', start_date: '', end_date: '', transport_enabled: true })
+            const termData = {
+                ...newTerm,
+                academicYearId: newTerm.academicYearId ? parseInt(newTerm.academicYearId) : undefined,
+            }
+            const response = await transportManagerApi.createAcademicTerm(termData)
+            setTerms((s) => [response.data, ...s])
+            setNewTerm({ academicYearId: '', name: '', startDate: '', endDate: '', transportEnabled: true, status: 'Active' })
         } catch (err) {
             console.error('Failed to create term', err)
         }
     }
 
+    const updateTerm = async () => {
+        if (!editingTerm) return
+        try {
+            const termData = {
+                ...newTerm,
+                academicYearId: newTerm.academicYearId ? parseInt(newTerm.academicYearId) : undefined,
+            }
+            const response = await transportManagerApi.updateAcademicTerm(editingTerm.id, termData)
+            setTerms((s) => s.map(t => t.id === editingTerm.id ? response.data : t))
+            setEditingTerm(null)
+            setNewTerm({ academicYearId: '', name: '', startDate: '', endDate: '', transportEnabled: true, status: 'Active' })
+        } catch (err) {
+            console.error('Failed to update term', err)
+        }
+    }
+
+    const deleteTerm = async (id: number) => {
+        try {
+            await transportManagerApi.deleteAcademicTerm(id)
+            setTerms((s) => s.filter(t => t.id !== id))
+        } catch (err) {
+            console.error('Failed to delete term', err)
+        }
+    }
+
+    const openEditTerm = (term: AcademicTermRecord) => {
+        setEditingTerm(term)
+        setNewTerm({
+            academicYearId: term.academic_year_id.toString(),
+            name: term.name,
+            startDate: term.start_date,
+            endDate: term.end_date,
+            transportEnabled: term.transport_enabled,
+            status: term.status || 'Active',
+        })
+        setModalType('term')
+    }
+
     const createEvent = async () => {
         try {
             // Convert string IDs to numbers for the API
-            const eventData: CalendarEvent = {
+            const eventData = {
                 ...newEvent,
-                academic_year_id: newEvent.academic_year_id ? parseInt(newEvent.academic_year_id) : undefined,
-                academic_term_id: newEvent.academic_term_id ? parseInt(newEvent.academic_term_id) : undefined,
+                academicYearId: newEvent.academicYearId ? parseInt(newEvent.academicYearId) : undefined,
+                academicTermId: newEvent.academicTermId ? parseInt(newEvent.academicTermId) : undefined,
             }
             
-            const res = await fetch('/api/transport-manager/calendar-events', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(eventData) 
-            })
-            if (!res.ok) throw new Error('Create failed')
-            const json = await res.json()
-            setEvents((s) => [json.data, ...s])
+            const response = await transportManagerApi.createCalendarEvent(eventData)
+            setEvents((s) => [response.data, ...s])
             setNewEvent({ 
-                academic_year_id: '', 
-                academic_term_id: '', 
+                academicYearId: '', 
+                academicTermId: '', 
                 name: '', 
-                event_type: 'holiday', 
-                start_date: '', 
-                end_date: '', 
-                transport_enabled: false, 
+                eventType: 'holiday', 
+                startDate: '', 
+                endDate: '', 
+                transportEnabled: false, 
                 description: '' 
             })
             setModalType(null)
@@ -152,12 +183,78 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
         }
     }
 
+    const updateEvent = async () => {
+        if (!editingEvent) return
+        try {
+            const eventData = {
+                ...newEvent,
+                academicYearId: newEvent.academicYearId ? parseInt(newEvent.academicYearId) : undefined,
+                academicTermId: newEvent.academicTermId ? parseInt(newEvent.academicTermId) : undefined,
+            }
+            const response = await transportManagerApi.updateCalendarEvent(editingEvent.id, eventData)
+            setEvents((s) => s.map(e => e.id === editingEvent.id ? response.data : e))
+            setEditingEvent(null)
+            setNewEvent({ 
+                academicYearId: '', 
+                academicTermId: '', 
+                name: '', 
+                eventType: 'holiday', 
+                startDate: '', 
+                endDate: '', 
+                transportEnabled: false, 
+                description: '' 
+            })
+            setModalType(null)
+        } catch (err) {
+            console.error('Failed to update event', err)
+        }
+    }
+
+    const deleteEvent = async (id: number) => {
+        try {
+            await transportManagerApi.deleteCalendarEvent(id)
+            setEvents((s) => s.filter(e => e.id !== id))
+        } catch (err) {
+            console.error('Failed to delete event', err)
+        }
+    }
+
+    const openEditEvent = (event: CalendarEventRecord) => {
+        setEditingEvent(event)
+        setNewEvent({
+            academicYearId: event.academic_year_id?.toString() || '',
+            academicTermId: event.academic_term_id?.toString() || '',
+            name: event.name,
+            eventType: event.event_type || 'holiday',
+            startDate: event.start_date,
+            endDate: event.end_date,
+            transportEnabled: event.transport_enabled,
+            description: event.description || ''
+        })
+        setModalType('event')
+    }
+
     const todayStatus = useMemo(() => {
         if (loading) return 'Checking transport availability...'
         if (error) return 'Unable to determine transport status'
         if (!availability) return 'No transport scheduled today'
         return availability.transportEnabled ? 'Scheduled transport today' : 'No transport scheduled today'
     }, [loading, availability, error])
+
+    // Find current term based on today's date
+    const currentTerm = useMemo(() => {
+        const today = new Date()
+        return terms.find(term => {
+            const startDate = new Date(term.start_date)
+            const endDate = new Date(term.end_date)
+            return today >= startDate && today <= endDate
+        })
+    }, [terms])
+
+    // Get current month and year for calendar display
+    const currentMonthDate = useMemo(() => {
+        return new Date()
+    }, [])
 
     return (
         <div className="transport-calendar">
@@ -187,7 +284,7 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
             <div className="transport-calendar__summary-grid">
                 <div className="transport-calendar__card transport-calendar__card--status">
                     <span>Today</span>
-                    <strong>{selectedDate}</strong>
+                    <strong>{formatFullDate(selectedDate)}</strong>
                     <p>{todayStatus}</p>
                     {availability && (
                         <small>Source: {availability.source}</small>
@@ -198,8 +295,8 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
                 </div>
                 <div className="transport-calendar__card">
                     <span>Current Term</span>
-                    <strong>First Term 2026</strong>
-                    <p>Transport enabled through 2026-09-30</p>
+                    <strong>{currentTerm ? currentTerm.name : 'No active term'}</strong>
+                    <p>{currentTerm ? `Transport ${currentTerm.transport_enabled ? 'enabled' : 'disabled'} through ${formatDate(currentTerm.end_date)}` : 'No term currently active'}</p>
                 </div>
                 <div className="transport-calendar__card">
                     <span>Weekly Operating Days</span>
@@ -212,22 +309,82 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
                 <div className="transport-calendar__grid">
                     <div className="transport-calendar__month">
                         <div className="transport-calendar__month-header">
-                            <strong>July 2026</strong>
+                            <strong>{currentMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</strong>
                             <span>Transport availability overview</span>
+                        </div>
+                        <div className="transport-calendar__legend">
+                            <div className="legend-item">
+                                <span className="legend-dot transport-enabled"></span>
+                                <small>Transport Available</small>
+                            </div>
+                            <div className="legend-item">
+                                <span className="legend-dot no-transport"></span>
+                                <small>No Transport</small>
+                            </div>
+                            <div className="legend-item">
+                                <span className="legend-indicator">•</span>
+                                <small>Special Event</small>
+                            </div>
+                            <div className="legend-item">
+                                <span className="legend-indicator holiday">○</span>
+                                <small>Holiday</small>
+                            </div>
                         </div>
                         <div className="transport-calendar__month-days">
                             {WEEKDAYS.map((day) => (
                                 <div key={day} className="transport-calendar__month-day-label">{day}</div>
                             ))}
-                            {[...Array(31)].map((_, index) => {
+                            {[...Array(new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 0).getDate())].map((_, index) => {
                                 const day = index + 1
-                                const isWeekend = [0, 6].includes(new Date(2026, 6, day).getDay())
+                                const currentDate = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), day)
+                                const isWeekend = [0, 6].includes(currentDate.getDay())
+                                
+                                // Check if this date has transport enabled based on terms and events
+                                const dateString = currentDate.toISOString().slice(0, 10)
+                                const activeTerm = terms.find(term => {
+                                    const startDate = new Date(term.start_date)
+                                    const endDate = new Date(term.end_date)
+                                    return currentDate >= startDate && currentDate <= endDate && term.transport_enabled
+                                })
+                                
+                                // Find all events for this day
+                                const eventsForDay = events.filter(event => {
+                                    const eventStart = new Date(event.start_date)
+                                    const eventEnd = new Date(event.end_date)
+                                    return currentDate >= eventStart && currentDate <= eventEnd
+                                })
+                                
+                                // Prioritize events: makeup/exam/sports events override holidays
+                                const priorityEvents = eventsForDay.filter(e => ['makeup', 'exam', 'sports'].includes(e.event_type))
+                                const holidayEvents = eventsForDay.filter(e => ['holiday', 'public-holiday', 'closure'].includes(e.event_type))
+                                
+                                // Determine transport status based on event priority
+                                let transportEnabled = false
+                                let hasPriorityEvent = false
+                                let hasHolidayEvent = false
+                                
+                                if (priorityEvents.length > 0) {
+                                    // Priority events control transport directly
+                                    hasPriorityEvent = true
+                                    transportEnabled = priorityEvents.some(e => e.transport_enabled)
+                                } else if (holidayEvents.length > 0) {
+                                    // Holidays control transport (usually disabled unless explicitly enabled)
+                                    hasHolidayEvent = true
+                                    transportEnabled = holidayEvents.some(e => e.transport_enabled)
+                                } else {
+                                    // No events, base on term
+                                    transportEnabled = activeTerm ? true : false
+                                }
+                                
                                 return (
                                     <div
                                         key={day}
-                                        className={`transport-calendar__month-day ${isWeekend ? 'weekend' : 'weekday'}`}
+                                        className={`transport-calendar__month-day ${isWeekend ? 'weekend' : 'weekday'} ${transportEnabled ? 'transport-enabled' : 'no-transport'} ${hasPriorityEvent ? 'priority-event' : ''} ${hasHolidayEvent ? 'holiday-event' : ''}`}
+                                        title={hasPriorityEvent ? 'Special event with custom transport' : hasHolidayEvent ? 'Holiday period' : 'Regular term day'}
                                     >
                                         <span>{day}</span>
+                                        {hasPriorityEvent && <span className="event-indicator">•</span>}
+                                        {hasHolidayEvent && <span className="event-indicator holiday">○</span>}
                                     </div>
                                 )
                             })}
@@ -244,17 +401,88 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
 
                     <div className="transport-calendar__events">
                         <div className="transport-calendar__events-header">
-                            <h2>Upcoming calendar events</h2>
+                            <h2>Academic Years</h2>
+                            <p>Manage academic year calendar periods.</p>
+                        </div>
+                        <ul>
+                            {academicYears.map((year) => (
+                                <li key={year.id} className="event event--enabled">
+                                    <strong>{year.name}</strong>
+                                    <span>{formatDate(year.start_date)} - {formatDate(year.end_date)}</span>
+                                    <small>Active</small>
+                                </li>
+                            ))}
+                            {academicYears.length === 0 && <li className="event">No academic years created yet</li>}
+                        </ul>
+                    </div>
+
+                    <div className="transport-calendar__events">
+                        <div className="transport-calendar__events-header">
+                            <h2>Academic Terms</h2>
+                            <p>Manage term schedules and transport settings.</p>
+                        </div>
+                        <ul>
+                            {terms.map((term) => (
+                                <li key={term.id} className={`event event--${term.transport_enabled ? 'enabled' : 'no-transport'}`}>
+                                    <strong>{term.name}</strong>
+                                    <span>{formatDate(term.start_date)} - {formatDate(term.end_date)}</span>
+                                    <small>{term.transport_enabled ? 'Transport Enabled' : 'No Transport'}</small>
+                                    <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                                        <button 
+                                            type="button" 
+                                            className="sm-button sm-button--ghost" 
+                                            style={{ fontSize: '12px', padding: '4px 8px' }}
+                                            onClick={() => openEditTerm(term)}
+                                        >
+                                            Edit
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            className="sm-button sm-button--ghost" 
+                                            style={{ fontSize: '12px', padding: '4px 8px', color: '#ef4444' }}
+                                            onClick={() => deleteTerm(term.id)}
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </li>
+                            ))}
+                            {terms.length === 0 && <li className="event">No terms created yet</li>}
+                        </ul>
+                    </div>
+
+                    <div className="transport-calendar__events">
+                        <div className="transport-calendar__events-header">
+                            <h2>Calendar Events</h2>
                             <p>Holidays, closures, and special transport days.</p>
                         </div>
                         <ul>
-                            {displayEvents.map((event) => (
-                                <li key={event.id} className={`event event--${event.status === 'No Transport' ? 'no-transport' : 'enabled'}`}>
-                                    <strong>{event.date}</strong>
-                                    <span>{event.title}</span>
-                                    <small>{event.status}</small>
+                            {events.map((event) => (
+                                <li key={event.id} className={`event event--${event.transport_enabled ? 'enabled' : 'no-transport'}`}>
+                                    <strong>{formatDate(event.start_date)}</strong>
+                                    <span>{event.name}</span>
+                                    <small>{event.transport_enabled ? 'Transport Enabled' : 'No Transport'}</small>
+                                    <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                                        <button 
+                                            type="button" 
+                                            className="sm-button sm-button--ghost" 
+                                            style={{ fontSize: '12px', padding: '4px 8px' }}
+                                            onClick={() => openEditEvent(event)}
+                                        >
+                                            Edit
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            className="sm-button sm-button--ghost" 
+                                            style={{ fontSize: '12px', padding: '4px 8px', color: '#ef4444' }}
+                                            onClick={() => deleteEvent(event.id)}
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
                                 </li>
                             ))}
+                            {events.length === 0 && <li className="event">No calendar events created yet</li>}
                         </ul>
                     </div>
                 </div>
@@ -281,11 +509,11 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
                                 </div>
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">Start Date <span className="sm-required">*</span></label>
-                                    <input type="date" className="sm-form-input" value={newYear.start_date} onChange={e => setNewYear(prev => ({ ...prev, start_date: e.target.value }))} />
+                                    <input type="date" className="sm-form-input" value={newYear.startDate} onChange={e => setNewYear(prev => ({ ...prev, startDate: e.target.value }))} />
                                 </div>
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">End Date <span className="sm-required">*</span></label>
-                                    <input type="date" className="sm-form-input" value={newYear.end_date} onChange={e => setNewYear(prev => ({ ...prev, end_date: e.target.value }))} />
+                                    <input type="date" className="sm-form-input" value={newYear.endDate} onChange={e => setNewYear(prev => ({ ...prev, endDate: e.target.value }))} />
                                 </div>
                             </div>
                         </div>
@@ -298,22 +526,22 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
             }
 
             {modalType === 'term' && ReactDOM.createPortal(
-                <div className="sm-overlay" role="dialog" aria-modal="true" onClick={() => setModalType(null)}>
+                <div className="sm-overlay" role="dialog" aria-modal="true" onClick={() => { setModalType(null); setEditingTerm(null) }}>
                     <div className="sm-modal sm-modal--sm" onClick={e => e.stopPropagation()}>
                         <div className="sm-modal-header">
                             <div>
-                                <h2 className="sm-modal-title">Add Term</h2>
-                                <p className="sm-modal-sub">Create an academic term</p>
+                                <h2 className="sm-modal-title">{editingTerm ? 'Edit Term' : 'Add Term'}</h2>
+                                <p className="sm-modal-sub">{editingTerm ? 'Update academic term details' : 'Create an academic term'}</p>
                             </div>
                             <div className="sm-modal-header-actions">
-                                <button className="sm-modal-close" onClick={() => setModalType(null)}>Close</button>
+                                <button className="sm-modal-close" onClick={() => { setModalType(null); setEditingTerm(null) }}>Close</button>
                             </div>
                         </div>
                         <div className="sm-modal-body">
                             <div className="sm-form-grid">
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">Academic Year</label>
-                                    <select className="sm-form-select" value={newTerm.academic_year_id} onChange={e => setNewTerm(prev => ({ ...prev, academic_year_id: e.target.value }))}>
+                                    <select className="sm-form-select" value={newTerm.academicYearId} onChange={e => setNewTerm(prev => ({ ...prev, academicYearId: e.target.value }))}>
                                         <option value="">Select year</option>
                                         {academicYears.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
                                     </select>
@@ -324,53 +552,63 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
                                 </div>
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">Start Date <span className="sm-required">*</span></label>
-                                    <input type="date" className="sm-form-input" value={newTerm.start_date} onChange={e => setNewTerm(prev => ({ ...prev, start_date: e.target.value }))} />
+                                    <input type="date" className="sm-form-input" value={newTerm.startDate} onChange={e => setNewTerm(prev => ({ ...prev, startDate: e.target.value }))} />
                                 </div>
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">End Date <span className="sm-required">*</span></label>
-                                    <input type="date" className="sm-form-input" value={newTerm.end_date} onChange={e => setNewTerm(prev => ({ ...prev, end_date: e.target.value }))} />
+                                    <input type="date" className="sm-form-input" value={newTerm.endDate} onChange={e => setNewTerm(prev => ({ ...prev, endDate: e.target.value }))} />
                                 </div>
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">Transport Enabled</label>
-                                    <select className="sm-form-select" value={newTerm.transport_enabled ? '1' : '0'} onChange={e => setNewTerm(prev => ({ ...prev, transport_enabled: e.target.value === '1' }))}>
+                                    <select className="sm-form-select" value={newTerm.transportEnabled ? '1' : '0'} onChange={e => setNewTerm(prev => ({ ...prev, transportEnabled: e.target.value === '1' }))}>
                                         <option value="1">Yes</option>
                                         <option value="0">No</option>
+                                    </select>
+                                </div>
+                                <div className="sm-form-field">
+                                    <label className="sm-form-label">Status</label>
+                                    <select className="sm-form-select" value={newTerm.status} onChange={e => setNewTerm(prev => ({ ...prev, status: e.target.value }))}>
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                        <option value="Completed">Completed</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
                         <div className="sm-modal-footer">
-                            <button className="sm-button sm-button--ghost" onClick={() => setModalType(null)}>Cancel</button>
-                            <button className="sm-button sm-button--primary" onClick={createTerm}>Create Term</button>
+                            <button className="sm-button sm-button--ghost" onClick={() => { setModalType(null); setEditingTerm(null) }}>Cancel</button>
+                            <button className="sm-button sm-button--primary" onClick={editingTerm ? updateTerm : createTerm}>
+                                {editingTerm ? 'Update Term' : 'Create Term'}
+                            </button>
                         </div>
                     </div>
                 </div>, document.body)
             }
 
             {modalType === 'event' && ReactDOM.createPortal(
-                <div className="sm-overlay" role="dialog" aria-modal="true" onClick={() => setModalType(null)}>
+                <div className="sm-overlay" role="dialog" aria-modal="true" onClick={() => { setModalType(null); setEditingEvent(null) }}>
                     <div className="sm-modal sm-modal--lg" onClick={e => e.stopPropagation()}>
                         <div className="sm-modal-header">
                             <div>
-                                <h2 className="sm-modal-title">Add Calendar Event</h2>
-                                <p className="sm-modal-sub">Holidays, closures, make-up days, exams, etc.</p>
+                                <h2 className="sm-modal-title">{editingEvent ? 'Edit Calendar Event' : 'Add Calendar Event'}</h2>
+                                <p className="sm-modal-sub">{editingEvent ? 'Update calendar event details' : 'Holidays, closures, make-up days, exams, etc.'}</p>
                             </div>
                             <div className="sm-modal-header-actions">
-                                <button className="sm-modal-close" onClick={() => setModalType(null)}>Close</button>
+                                <button className="sm-modal-close" onClick={() => { setModalType(null); setEditingEvent(null) }}>Close</button>
                             </div>
                         </div>
                         <div className="sm-modal-body">
                             <div className="sm-form-grid">
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">Academic Year</label>
-                                    <select className="sm-form-select" value={newEvent.academic_year_id} onChange={e => setNewEvent(prev => ({ ...prev, academic_year_id: e.target.value }))}>
+                                    <select className="sm-form-select" value={newEvent.academicYearId} onChange={e => setNewEvent(prev => ({ ...prev, academicYearId: e.target.value }))}>
                                         <option value="">Select year</option>
                                         {academicYears.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
                                     </select>
                                 </div>
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">Term</label>
-                                    <select className="sm-form-select" value={newEvent.academic_term_id} onChange={e => setNewEvent(prev => ({ ...prev, academic_term_id: e.target.value }))}>
+                                    <select className="sm-form-select" value={newEvent.academicTermId} onChange={e => setNewEvent(prev => ({ ...prev, academicTermId: e.target.value }))}>
                                         <option value="">Select term</option>
                                         {terms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                     </select>
@@ -381,30 +619,32 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
                                 </div>
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">Type</label>
-                                    <select className="sm-form-select" value={newEvent.event_type} onChange={e => setNewEvent(prev => ({ ...prev, event_type: e.target.value }))}>
+                                    <select className="sm-form-select" value={newEvent.eventType} onChange={e => setNewEvent(prev => ({ ...prev, eventType: e.target.value }))}>
                                         <option value="holiday">Holiday</option>
                                         <option value="public-holiday">Public Holiday</option>
                                         <option value="closure">Closure</option>
-                                        <option value="makeup">Make-up</option>
-                                        <option value="exam">Exam</option>
-                                        <option value="sports">Sports</option>
+                                        <option value="makeup">Make-up (Overrides Holidays)</option>
+                                        <option value="exam">Exam (Overrides Holidays)</option>
+                                        <option value="sports">Sports (Overrides Holidays)</option>
                                         <option value="custom">Custom</option>
                                     </select>
+                                    <small style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Make-up, Exam, and Sports events override holiday transport settings</small>
                                 </div>
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">Start Date <span className="sm-required">*</span></label>
-                                    <input type="date" className="sm-form-input" value={newEvent.start_date} onChange={e => setNewEvent(prev => ({ ...prev, start_date: e.target.value }))} />
+                                    <input type="date" className="sm-form-input" value={newEvent.startDate} onChange={e => setNewEvent(prev => ({ ...prev, startDate: e.target.value }))} />
                                 </div>
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">End Date <span className="sm-required">*</span></label>
-                                    <input type="date" className="sm-form-input" value={newEvent.end_date} onChange={e => setNewEvent(prev => ({ ...prev, end_date: e.target.value }))} />
+                                    <input type="date" className="sm-form-input" value={newEvent.endDate} onChange={e => setNewEvent(prev => ({ ...prev, endDate: e.target.value }))} />
                                 </div>
                                 <div className="sm-form-field">
                                     <label className="sm-form-label">Transport Enabled</label>
-                                    <select className="sm-form-select" value={newEvent.transport_enabled ? '1' : '0'} onChange={e => setNewEvent(prev => ({ ...prev, transport_enabled: e.target.value === '1' }))}>
+                                    <select className="sm-form-select" value={newEvent.transportEnabled ? '1' : '0'} onChange={e => setNewEvent(prev => ({ ...prev, transportEnabled: e.target.value === '1' }))}>
                                         <option value="1">Yes</option>
                                         <option value="0">No</option>
                                     </select>
+                                    <small style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>For Make-up/Exam/Sports events, this overrides holiday settings</small>
                                 </div>
                                 <div className="sm-form-field sm-form-field--full">
                                     <label className="sm-form-label">Description</label>
@@ -413,8 +653,10 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
                             </div>
                         </div>
                         <div className="sm-modal-footer">
-                            <button className="sm-button sm-button--ghost" onClick={() => setModalType(null)}>Cancel</button>
-                            <button className="sm-button sm-button--primary" onClick={createEvent}>Create Event</button>
+                            <button className="sm-button sm-button--ghost" onClick={() => { setModalType(null); setEditingEvent(null) }}>Cancel</button>
+                            <button className="sm-button sm-button--primary" onClick={editingEvent ? updateEvent : createEvent}>
+                                {editingEvent ? 'Update Event' : 'Create Event'}
+                            </button>
                         </div>
                     </div>
                 </div>, document.body)

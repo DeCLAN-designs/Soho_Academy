@@ -9,5 +9,6 @@ COPY backend/ ./
 
 ENV NODE_ENV=production
 EXPOSE 5000
+RUN chmod +x ./deploy/docker/entrypoint.sh
 
-CMD ["node", "server.js"]
+ENTRYPOINT ["/bin/sh", "./deploy/docker/entrypoint.sh"]

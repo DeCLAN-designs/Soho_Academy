@@ -23,6 +23,8 @@ interface Route {
   description: string;
   vehiclePlate: string;
   vehicleModel: string;
+  vehicleType?: string;
+  vehicleCapacity?: number;
   assignedDriver: string;
   assignedAssistant: string;
   totalStops: number;
@@ -51,18 +53,28 @@ interface RoutePlanningProps {
   section: RoleSection;
 }
 
-interface NumberPlate {
+interface VehicleDetail {
   id: number;
   plate_number: string;
   model?: string;
-  status: 'active' | 'inactive';
+  type?: 'School Bus' | 'Mini Van' | 'Coaster';
+  year?: number;
+  capacity?: number;
+  color?: string;
+  fuelType?: 'Diesel' | 'Petrol' | 'Electric';
+  status: 'Active' | 'Maintenance' | 'Inactive';
+  assignedDriver?: string;
+  assignedAssistant?: string;
+  assignedRoute?: string;
+  lastService?: string;
+  mileage?: number;
 }
 
 interface StaffMember {
   id: number;
   firstName: string;
   lastName: string;
-  role: string;
+  role: 'Driver' | 'Bus Assistant' | 'Transport Manager';
 }
 
 type ApiError = {
@@ -121,56 +133,33 @@ const apiService = {
   deleteRoute: async (id: number): Promise<void> => {
     await axiosInstance.delete(`/routes/${id}`);
   },
-  getNumberPlates: async (): Promise<NumberPlate[]> => {
-    const res = await axiosInstance.get('/number-plates');
-    return Array.isArray(res.data) ? res.data : [];
+  getVehicleDetails: async (): Promise<VehicleDetail[]> => {
+    const res = await axiosInstance.get('/vehicle-details');
+    const data = Array.isArray(res.data) ? res.data : [];
+    return data.map((v: any) => ({
+      id: v.id || v.plateNumber,
+      plate_number: v.plate_number || v.plateNumber,
+      model: v.model || '',
+      type: v.type || '',
+      year: v.year || 0,
+      capacity: v.capacity || 0,
+      color: v.color || '',
+      fuelType: v.fuelType || '',
+      status: v.status || 'Active',
+      assignedDriver: v.assignedDriver || '',
+      assignedAssistant: v.assignedAssistant || '',
+      assignedRoute: v.assignedRoute || '',
+      lastService: v.lastService || '',
+      mileage: v.mileage || 0
+    }));
   },
   getStaff: async (): Promise<StaffMember[]> => {
-    const res = await axiosInstance.get('/users');
-    return res.data?.data?.users || res.data || [];
+    const res = await axiosInstance.get('/transport-manager/staff');
+    return res.data?.staff || res.data?.data?.staff || [];
   },
 };
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
 
-const MOCK_ROUTES: Route[] = [
-  { id: 1, routeId: 'RT-001', routeName: 'Route 1 — Westlands', description: 'Morning and afternoon pickup covering Westlands, Parklands and Highridge areas.', vehiclePlate: 'KBZ 123A', vehicleModel: 'Toyota Coaster', assignedDriver: 'James Mwangi', assignedAssistant: 'Grace Otieno', totalStops: 8, status: 'Active', createdAt: '2024-09-01', updatedAt: '2025-03-10' },
-  { id: 2, routeId: 'RT-002', routeName: 'Route 2 — Kileleshwa', description: 'Kileleshwa, Kilimani and Upper Hill route.', vehiclePlate: 'KDA 789C', vehicleModel: 'Isuzu FRR', assignedDriver: 'Samuel Odhiambo', assignedAssistant: 'Mary Wanjiku', totalStops: 10, status: 'Active', createdAt: '2024-09-01', updatedAt: '2025-03-15' },
-  { id: 3, routeId: 'RT-003', routeName: 'Route 3 — Karen', description: 'Karen, Langata and Hardy route.', vehiclePlate: 'KCB 456B', vehicleModel: 'Toyota HiAce', assignedDriver: 'Peter Kamau', assignedAssistant: '', totalStops: 6, status: 'Active', createdAt: '2024-09-01', updatedAt: '2025-02-20' },
-  { id: 4, routeId: 'RT-004', routeName: 'Route 4 — Langata', description: 'South Langata, Otiende and Mugumoini estates.', vehiclePlate: 'KCF 567E', vehicleModel: 'Toyota Coaster', assignedDriver: 'David Njoroge', assignedAssistant: 'Agnes Muthoni', totalStops: 9, status: 'Active', createdAt: '2024-09-01', updatedAt: '2025-04-05' },
-  { id: 5, routeId: 'RT-005', routeName: 'Route 5 — Ruaka', description: 'Ruaka, Banana and Kiwanja areas north of Nairobi.', vehiclePlate: 'KCD 321G', vehicleModel: 'Rosa Bus', assignedDriver: 'John Otieno', assignedAssistant: 'Esther Achieng', totalStops: 7, status: 'Active', createdAt: '2024-09-01', updatedAt: '2025-04-10' },
-  { id: 6, routeId: 'RT-006', routeName: 'Route 6 — Ngong Road', description: 'Ngong Road corridor — Prestige, Lavington and Valley Arcade.', vehiclePlate: '', vehicleModel: '', assignedDriver: '', assignedAssistant: '', totalStops: 0, status: 'Draft', createdAt: '2025-04-15', updatedAt: '2025-04-15' },
-  { id: 7, routeId: 'RT-007', routeName: 'Route 7 — Kasarani', description: 'Kasarani, Mwiki and Roysambu corridor.', vehiclePlate: 'KBN 890F', vehicleModel: 'Isuzu FRR', assignedDriver: 'Robert Waweru', assignedAssistant: 'Catherine Njeri', totalStops: 11, status: 'Inactive', createdAt: '2024-06-01', updatedAt: '2025-01-20' },
-];
-
-const MOCK_PLATES: NumberPlate[] = [
-  { id: 1, plate_number: 'KBZ 123A', model: 'Toyota Coaster', status: 'active' },
-  { id: 2, plate_number: 'KCB 456B', model: 'Toyota HiAce', status: 'active' },
-  { id: 3, plate_number: 'KDA 789C', model: 'Isuzu FRR', status: 'active' },
-  { id: 4, plate_number: 'KBH 234D', model: 'Toyota HiAce', status: 'active' },
-  { id: 5, plate_number: 'KCF 567E', model: 'Toyota Coaster', status: 'active' },
-  { id: 6, plate_number: 'KBN 890F', model: 'Isuzu FRR', status: 'inactive' },
-  { id: 7, plate_number: 'KCD 321G', model: 'Rosa Bus', status: 'active' },
-];
-
-const MOCK_DRIVERS: StaffMember[] = [
-  { id: 1, firstName: 'James', lastName: 'Mwangi', role: 'driver' },
-  { id: 2, firstName: 'Peter', lastName: 'Kamau', role: 'driver' },
-  { id: 3, firstName: 'Samuel', lastName: 'Odhiambo', role: 'driver' },
-  { id: 4, firstName: 'David', lastName: 'Njoroge', role: 'driver' },
-  { id: 5, firstName: 'John', lastName: 'Otieno', role: 'driver' },
-  { id: 6, firstName: 'Robert', lastName: 'Waweru', role: 'driver' },
-  { id: 7, firstName: 'Michael', lastName: 'Kiprotich', role: 'driver' },
-];
-
-const MOCK_ASSISTANTS: StaffMember[] = [
-  { id: 10, firstName: 'Grace', lastName: 'Otieno', role: 'bus_assistant' },
-  { id: 11, firstName: 'Mary', lastName: 'Wanjiku', role: 'bus_assistant' },
-  { id: 12, firstName: 'Agnes', lastName: 'Muthoni', role: 'bus_assistant' },
-  { id: 13, firstName: 'Esther', lastName: 'Achieng', role: 'bus_assistant' },
-  { id: 14, firstName: 'Catherine', lastName: 'Njeri', role: 'bus_assistant' },
-  { id: 15, firstName: 'Diana', lastName: 'Chebet', role: 'bus_assistant' },
-];
 
 const EMPTY_FORM: RouteFormData = {
   routeName: '',
@@ -195,11 +184,11 @@ const fullName = (m: StaffMember) => `${m.firstName} ${m.lastName}`;
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
-  const [routes, setRoutes] = useState<Route[]>(MOCK_ROUTES);
-  const [plates, setPlates] = useState<NumberPlate[]>(MOCK_PLATES);
-  const [drivers, setDrivers] = useState<StaffMember[]>(MOCK_DRIVERS);
-  const [assistants, setAssistants] = useState<StaffMember[]>(MOCK_ASSISTANTS);
-  const [loading, setLoading] = useState(false);
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleDetail[]>([]);
+  const [drivers, setDrivers] = useState<StaffMember[]>([]);
+  const [assistants, setAssistants] = useState<StaffMember[]>([]);
+  const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -226,24 +215,26 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
     setLoading(true);
     setApiError(null);
     try {
-      const [routesData, platesData, staffData] = await Promise.all([
+      const [routesData, vehiclesData, staffData] = await Promise.all([
         apiService.getRoutes(),
-        apiService.getNumberPlates(),
+        apiService.getVehicleDetails(),
         apiService.getStaff(),
       ]);
       if (!isMounted.current) return;
-      if (routesData.length) setRoutes(routesData);
-      if (platesData.length) setPlates(platesData);
-      const driverList = staffData.filter(s => s.role === 'driver');
-      const assistantList = staffData.filter(s => s.role === 'bus_assistant');
-      if (driverList.length) setDrivers(driverList);
-      if (assistantList.length) setAssistants(assistantList);
+      setRoutes(routesData.length > 0 ? routesData : []);
+      setVehicles(vehiclesData.length > 0 ? vehiclesData : []);
+      const driverList = staffData.filter(s => s.role === 'Driver');
+      const assistantList = staffData.filter(s => s.role === 'Bus Assistant');
+      setDrivers(driverList.length > 0 ? driverList : []);
+      setAssistants(assistantList.length > 0 ? assistantList : []);
     } catch (err) {
       if (!isMounted.current) return;
       if (isApiError(err) && err.response?.status === 401) {
         setApiError('Session expired. Please log in again.');
+      } else {
+        setApiError('Failed to load data. Please try again.');
+        console.error('API Error:', err);
       }
-      // Fall through to mock data on error
     } finally {
       if (isMounted.current) setLoading(false);
     }
@@ -352,7 +343,9 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
         routeName: form.routeName.trim(),
         description: form.description.trim(),
         vehiclePlate: form.vehiclePlate,
-        vehicleModel: plates.find(p => p.plate_number === form.vehiclePlate)?.model || '',
+        vehicleModel: vehicles.find(v => v.plate_number === form.vehiclePlate)?.model || '',
+        vehicleType: vehicles.find(v => v.plate_number === form.vehiclePlate)?.type || '',
+        vehicleCapacity: vehicles.find(v => v.plate_number === form.vehiclePlate)?.capacity || 0,
         assignedDriver: form.assignedDriver,
         assignedAssistant: form.assignedAssistant,
         status: form.status as RouteStatus,
@@ -363,12 +356,12 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
         setRoutes(p => [created, ...p]);
       } catch {
         const newRoute: Route = {
-  ...(payload as Route),
-  id: Date.now(),
-  routeId: `RT-${String(routes.length + 1).padStart(3, '0')}`,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-};
+          ...(payload as Route),
+          id: Date.now(),
+          routeId: `RT-${String(routes.length + 1).padStart(3, '0')}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
         setRoutes(p => [newRoute, ...p]);
       }
       closeModal();
@@ -385,7 +378,8 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
         routeName: form.routeName.trim(),
         description: form.description.trim(),
         vehiclePlate: form.vehiclePlate,
-        vehicleModel: plates.find(p => p.plate_number === form.vehiclePlate)?.model || selectedRoute.vehicleModel,
+        vehicleModel: vehicles.find(v => v.plate_number === form.vehiclePlate)?.model || selectedRoute.vehicleModel,
+        vehicleType: vehicles.find(v => v.plate_number === form.vehiclePlate)?.type || selectedRoute.vehicleType,
         assignedDriver: form.assignedDriver,
         assignedAssistant: form.assignedAssistant,
         status: form.status as RouteStatus,
@@ -393,14 +387,9 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
       try {
         const updated = await apiService.updateRoute(selectedRoute.id, payload);
         setRoutes(p => p.map(r => r.id === selectedRoute.id ? updated : r));
-      } catch {
-        setRoutes(p =>
-          p.map(r =>
-            r.id === selectedRoute.id
-              ? { ...r, ...payload, updatedAt: new Date().toISOString() }
-              : r
-          )
-        );
+      } catch (err) {
+        console.error('Failed to update route:', err);
+        throw err;
       }
       closeModal();
     } finally {
@@ -416,9 +405,7 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
         assignedDriver: assignForm.assignedDriver,
         assignedAssistant: assignForm.assignedAssistant,
       };
-      try {
-        await apiService.updateRoute(selectedRoute.id, payload);
-      } catch { /* fall through */ }
+      await apiService.updateRoute(selectedRoute.id, payload);
       setRoutes(p =>
         p.map(r =>
           r.id === selectedRoute.id
@@ -427,6 +414,8 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
         )
       );
       closeModal();
+    } catch (err) {
+      console.error('Failed to assign staff:', err);
     } finally {
       setSubmitting(false);
     }
@@ -436,9 +425,7 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
     if (!selectedRoute) return;
     setSubmitting(true);
     try {
-      try {
-        await apiService.updateRouteStatus(selectedRoute.id, 'Inactive');
-      } catch { /* fall through */ }
+      await apiService.updateRouteStatus(selectedRoute.id, 'Inactive');
       setRoutes(p =>
         p.map(r =>
           r.id === selectedRoute.id
@@ -447,6 +434,8 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
         )
       );
       closeModal();
+    } catch (err) {
+      console.error('Failed to deactivate route:', err);
     } finally {
       setSubmitting(false);
     }
@@ -456,11 +445,11 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
     if (!selectedRoute) return;
     setSubmitting(true);
     try {
-      try {
-        await apiService.deleteRoute(selectedRoute.id);
-      } catch { /* fall through */ }
+      await apiService.deleteRoute(selectedRoute.id);
       setRoutes(p => p.filter(r => r.id !== selectedRoute.id));
       closeModal();
+    } catch (err) {
+      console.error('Failed to delete route:', err);
     } finally {
       setSubmitting(false);
     }
@@ -511,13 +500,13 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
                 label="Assigned Vehicle"
                 value={form.vehiclePlate}
                 onChange={patchForm('vehiclePlate')}
-                options={plates
-                  .filter(p => p.status === 'active')
-                  .map(p => p.plate_number + (p.model ? ` — ${p.model}` : ''))}
-                valueMap={plates
-                  .filter(p => p.status === 'active')
-                  .reduce<Record<string, string>>((acc, p) => {
-                    acc[p.plate_number + (p.model ? ` — ${p.model}` : '')] = p.plate_number;
+                options={vehicles
+                  .filter(v => v.status === 'Active')
+                  .map(v => `${v.plate_number} — ${v.model || 'Unknown'} (${v.type || 'Unknown'}) — ${v.capacity || '?'} seats`)}
+                valueMap={vehicles
+                  .filter(v => v.status === 'Active')
+                  .reduce<Record<string, string>>((acc, v) => {
+                    acc[`${v.plate_number} — ${v.model || 'Unknown'} (${v.type || 'Unknown'}) — ${v.capacity || '?'} seats`] = v.plate_number;
                     return acc;
                   }, {})}
               />
@@ -586,6 +575,8 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
               <div className="rp-detail-grid">
                 <DetailItem label="Plate Number" value={r.vehiclePlate || '—'} />
                 <DetailItem label="Model" value={r.vehicleModel || '—'} />
+                <DetailItem label="Type" value={r.vehicleType || '—'} />
+                <DetailItem label="Capacity" value={r.vehicleCapacity ? `${r.vehicleCapacity} seats` : '—'} />
               </div>
             </section>
 
@@ -824,9 +815,11 @@ const RoutePlanning: React.FC<RoutePlanningProps> = ({ section }) => {
                     {route.vehiclePlate ? (
                       <div className="rp-vehicle-cell">
                         <span className="rp-plate">{route.vehiclePlate}</span>
-                        {route.vehicleModel && (
-                          <span className="rp-sub">{route.vehicleModel}</span>
-                        )}
+                        <div className="rp-vehicle-details">
+                          {route.vehicleModel && <span className="rp-sub">{route.vehicleModel}</span>}
+                          {route.vehicleType && <span className="rp-sub">{route.vehicleType}</span>}
+                          {route.vehicleCapacity && <span className="rp-sub">{route.vehicleCapacity} seats</span>}
+                        </div>
                       </div>
                     ) : (
                       <span className="rp-unassigned">—</span>
@@ -933,7 +926,7 @@ const StatusBadge: React.FC<{ status: RouteStatus }> = ({ status }) => (
 const EmptyState: React.FC = () => (
   <div className="rp-empty">
     <p className="rp-empty-title">No routes found</p>
-    <p className="rp-empty-sub">Try adjusting your search or filter.</p>
+    <p className="rp-empty-sub">Create your first route to get started with route planning.</p>
   </div>
 );
 

@@ -373,6 +373,12 @@
   gap: 2px;
 }
 
+.rp-vehicle-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
 .rp-plate {
   font-weight: 700;
   font-size: 13px;

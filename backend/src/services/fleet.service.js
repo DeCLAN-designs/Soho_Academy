@@ -259,6 +259,7 @@ const listVehicleDetails = async () => {
   const [rows] = await pool.query(
     `
       SELECT
+        id,
         plate_number AS plateNumber,
         model,
         type,

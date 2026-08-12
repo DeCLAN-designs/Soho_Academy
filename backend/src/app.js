@@ -35,6 +35,8 @@ const studentTransportRoutes = require("./routes/studentTransport.routes.js");
 const vehicleRouteAssignmentRoutes = require("./routes/vehicleRouteAssignment.routes.js");
 const transportCalendarRoutes = require("./routes/transportCalendar.routes.js");
 const academicCalendarRoutes = require('./routes/academicCalendar.routes.js');
+const realtimeRoutes = require('./routes/realtime.routes.js');
+const schedulerRoutes = require('./routes/scheduler.routes.js');
 
 const app = express();
 // API endpoints should not rely on ETag-based caching. Disabling ETag avoids
@@ -111,10 +113,23 @@ app.use("/api/transport-manager", parentTransportRoutes);
 app.use("/api/transport-manager/vehicle-assignments", vehicleRouteAssignmentRoutes);
 app.use("/api/transport-manager", transportCalendarRoutes);
 app.use('/api/transport-manager', academicCalendarRoutes);
+app.use('/api/realtime', realtimeRoutes);
+app.use('/api/scheduler', schedulerRoutes);
 
 // Health check
 app.get("/health", (_, res) => {
   res.status(200).json({ status: "OK" });
 });
+
+// Metrics endpoint for Prometheus
+try {
+  const { registry } = require('./utils/metrics');
+  app.get('/metrics', async (_req, res) => {
+    res.set('Content-Type', registry.contentType);
+    res.end(await registry.metrics());
+  });
+} catch (e) {
+  console.warn('Prometheus metrics not available', e && e.message);
+}
 
 module.exports = app;

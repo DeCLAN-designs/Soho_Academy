@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: soho_dev
+      MYSQL_USER: soho
+      MYSQL_PASSWORD: soho
+    ports:
+      - '3307:3306'
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: ./deploy/docker/backend.Dockerfile
+    environment:
+      DB_HOST: db
+      DB_USER: soho
+      DB_PASSWORD: soho
+      DB_NAME: soho_dev
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: devsecret
+      APP_TIMEZONE: 'Africa/Nairobi'
+    ports:
+      - '5000:5000'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ../../backend:/usr/src/app
+
+volumes:
+  db_data:
+  redis_data:

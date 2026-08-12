@@ -9,7 +9,7 @@ const {
   patchAttendanceRecord,
   postBulkAttendanceUpdate,
 } = require("../controllers/studentAttendance.controller.js");
-const { authenticate } = require("../middlewares/auth.middleware.js");
+const { authenticate, authorizeRoles } = require("../middlewares/auth.middleware.js");
 
 const router = express.Router();
 
@@ -18,8 +18,8 @@ router.use(authenticate);
 router.get("/attendance/trips", getTripsForDate);
 router.get("/trips", getAllTrips);
 router.get("/attendance/trip/:tripId", getAttendanceByTrip);
-router.patch("/attendance/:id", patchAttendanceRecord);
-router.post("/attendance/bulk", postBulkAttendanceUpdate);
+router.patch("/attendance/:id", authorizeRoles('Driver', 'Bus Assistant', 'Transport Manager', 'Admin'), patchAttendanceRecord);
+router.post("/attendance/bulk", authorizeRoles('Driver', 'Bus Assistant', 'Transport Manager', 'Admin'), postBulkAttendanceUpdate);
 router.get("/attendance/summary", getAttendanceSummaryReport);
 router.get("/attendance/student/:studentId", getStudentAttendanceReportHandler);
 router.get("/attendance/analytics", getAttendanceAnalyticsHandler);

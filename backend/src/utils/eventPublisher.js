@@ -3,7 +3,8 @@
  * Publishes domain events to event store and triggers notifications
  */
 
-const { v4: uuidv4 } = require("uuid");
+const { randomUUID } = require('crypto');
+const uuidv4 = randomUUID;
 const pool = require("../config/db.js");
 
 class EventPublisher {

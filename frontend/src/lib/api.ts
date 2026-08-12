@@ -1306,6 +1306,89 @@ export type UpdateTripAttendancePayload = {
   boardingStatus: "boarded" | "dropped_off";
 };
 
+export type AcademicYearRecord = {
+  id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+};
+
+export type AcademicTermRecord = {
+  id: number;
+  academic_year_id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  transport_enabled: boolean;
+};
+
+export type CalendarEventRecord = {
+  id: number;
+  academic_year_id?: number;
+  academic_term_id?: number;
+  name: string;
+  event_type: string;
+  start_date: string;
+  end_date: string;
+  transport_enabled: boolean;
+  description?: string;
+};
+
+export type TransportAvailabilityRecord = {
+  transportEnabled: boolean;
+  source?: string;
+};
+
+export type CreateAcademicYearPayload = {
+  name: string;
+  startDate: string;
+  endDate: string;
+};
+
+export type UpdateAcademicYearPayload = {
+  name?: string;
+  startDate?: string;
+  endDate?: string;
+};
+
+export type CreateAcademicTermPayload = {
+  academicYearId: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+  transportEnabled: boolean;
+};
+
+export type UpdateAcademicTermPayload = {
+  academicYearId?: number;
+  name?: string;
+  startDate?: string;
+  endDate?: string;
+  transportEnabled?: boolean;
+};
+
+export type CreateCalendarEventPayload = {
+  academicYearId?: number;
+  academicTermId?: number;
+  name: string;
+  eventType: string;
+  startDate: string;
+  endDate: string;
+  transportEnabled: boolean;
+  description?: string;
+};
+
+export type UpdateCalendarEventPayload = {
+  academicYearId?: number;
+  academicTermId?: number;
+  name?: string;
+  eventType?: string;
+  startDate?: string;
+  endDate?: string;
+  transportEnabled?: boolean;
+  description?: string;
+};
+
 export const transportManagerApi = {
   getRoutes: () => get<{ routes: TransportManagerRouteRecord[] }>("/transport-manager/routes"),
   getVehicles: () =>
@@ -1368,6 +1451,38 @@ export const transportManagerApi = {
       `/transport-manager/parent-requests/${requestId}/review`,
       payload
     ),
+
+  // Transport Calendar API
+  getTransportAvailability: (date: string) =>
+    get<TransportAvailabilityRecord>(`/transport-manager/transport/availability/${date}`),
+  getAcademicYears: () =>
+    get<AcademicYearRecord[]>("/transport-manager/academic-years"),
+  getAcademicTerms: (academicYearId?: number) =>
+    get<AcademicTermRecord[]>(
+      academicYearId 
+        ? `/transport-manager/academic-terms?academicYearId=${academicYearId}` 
+        : "/transport-manager/academic-terms"
+    ),
+  getCalendarEvents: () =>
+    get<CalendarEventRecord[]>("/transport-manager/calendar-events"),
+  createAcademicYear: (payload: CreateAcademicYearPayload) =>
+    post<CreateAcademicYearPayload, AcademicYearRecord>("/transport-manager/academic-years", payload),
+  updateAcademicYear: (id: number, payload: UpdateAcademicYearPayload) =>
+    patch<UpdateAcademicYearPayload, AcademicYearRecord>(`/transport-manager/academic-years/${id}`, payload),
+  deleteAcademicYear: (id: number) =>
+    del<Record<string, never>>(`/transport-manager/academic-years/${id}`),
+  createAcademicTerm: (payload: CreateAcademicTermPayload) =>
+    post<CreateAcademicTermPayload, AcademicTermRecord>("/transport-manager/academic-terms", payload),
+  updateAcademicTerm: (id: number, payload: UpdateAcademicTermPayload) =>
+    patch<UpdateAcademicTermPayload, AcademicTermRecord>(`/transport-manager/academic-terms/${id}`, payload),
+  deleteAcademicTerm: (id: number) =>
+    del<Record<string, never>>(`/transport-manager/academic-terms/${id}`),
+  createCalendarEvent: (payload: CreateCalendarEventPayload) =>
+    post<CreateCalendarEventPayload, CalendarEventRecord>("/transport-manager/calendar-events", payload),
+  updateCalendarEvent: (id: number, payload: UpdateCalendarEventPayload) =>
+    patch<UpdateCalendarEventPayload, CalendarEventRecord>(`/transport-manager/calendar-events/${id}`, payload),
+  deleteCalendarEvent: (id: number) =>
+    del<Record<string, never>>(`/transport-manager/calendar-events/${id}`),
 
   // Compliance Documents
   getComplianceDocuments: () =>

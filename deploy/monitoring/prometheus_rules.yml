@@ -1,0 +1,38 @@
+groups:
+  - name: soho-backend.rules
+    rules:
+      - alert: SchedulerErrorsHigh
+        expr: increase(scheduler_errors_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Scheduler errors detected in the backend"
+          description: "The daily trips scheduler has emitted errors in the last 5 minutes. Check backend logs and scheduler health endpoint."
+
+      - alert: SchedulerNotRunning
+        expr: increase(scheduler_runs_total[30m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Scheduler appears not to have run recently"
+          description: "No scheduler runs were recorded in the last 30 minutes. Ensure the backend process is running and node-cron scheduled jobs are active."
+
+      - alert: RedisDown
+        expr: absent(redis_up) or (redis_up == 0)
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is not up or not being scraped"
+          description: "Redis exporter reports Redis down. Reconnect or restart Redis instance. Realtime features and caching will be degraded."
+
+      - alert: HighAttendanceUpdateRate
+        expr: increase(attendance_updates_total[1m]) > 200
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of attendance updates"
+          description: "Attendance updates exceed expected rate (200/min). This could indicate a bulk upload or abnormal activity."

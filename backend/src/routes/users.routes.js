@@ -5,7 +5,8 @@ const { authenticate, authorizeRoles } = require("../middlewares/auth.middleware
 
 const router = express.Router();
 
-router.get("/", getUsers);
+// Require authentication for user listing and restrict to Transport Manager / School Admin
+router.get("/", authenticate, authorizeRoles("Transport Manager", "School Admin"), getUsers);
 router.get(
   "/me",
   authenticate,

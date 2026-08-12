@@ -8,6 +8,10 @@ const {
 } = require("../controllers/routes.controller.js");
 
 const router = express.Router();
+const { authenticate, authorizeRoles } = require("../middlewares/auth.middleware.js");
+
+// Protect route management endpoints: Transport Manager & School Admin only
+router.use(authenticate, authorizeRoles('Transport Manager', 'School Admin'));
 
 router.get("/routes", getRoutes);
 router.post("/routes", postRoute);
