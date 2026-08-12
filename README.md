@@ -1035,6 +1035,24 @@ Transport Manager has the broadest dashboard surface. Major areas include:
     - Date-specific transport overrides
     - Event type categorization
     - Calendar event CRUD operations
+  - **Real-time Trip Tracking**
+    - Live trip progression monitoring
+    - WebSocket-based updates
+    - Trip status changes in real-time
+    - Driver location tracking
+  - **Trip Simulation**
+    - Script-based trip progression simulation
+    - Testing trip workflows
+    - Simulate vehicle movement
+    - Attendance recording simulation
+  - **Transport Calendar**
+    - Academic year and term management
+    - Holiday and calendar event management
+    - Transport availability configuration
+    - Priority event overrides (make-up, exam, sports)
+    - Date-specific transport overrides
+    - Event type categorization
+    - Calendar event CRUD operations
 - Staff
   - Drivers (view all, assign to routes, manage availability)
   - Bus assistants (view all, assign to routes, manage availability)
@@ -1099,6 +1117,7 @@ Transport Manager has the broadest dashboard surface. Major areas include:
 - **React Context API** - State management for authentication and global state
 - **Custom Hooks** - Reusable logic for data fetching, forms, and performance monitoring
 - **Performance Optimization** - Code splitting, lazy loading, and LCP optimization
+- **Trip Simulation** - Real-time trip progression simulation for testing
 
 ### Backend
 
@@ -1117,6 +1136,10 @@ Transport Manager has the broadest dashboard surface. Major areas include:
 - **Node-cron** - Scheduled task execution for daily trip generation
 - **Event Publishing** - Domain event system for audit logging and notifications
 - **Async/Await** - Modern async patterns throughout codebase
+- **Jest** - Testing framework for unit and integration tests
+- **Real-time Communication** - WebSocket support for live trip tracking
+- **Trip Simulation** - Script-based trip progression simulation
+- **Metrics Collection** - Prometheus-compatible metrics for monitoring
 
 ### Database
 
@@ -1124,10 +1147,11 @@ Transport Manager has the broadest dashboard surface. Major areas include:
 - **InnoDB engine** - ACID compliance, foreign keys, and row-level locking
 - **Foreign key constraints** - Referential integrity with CASCADE and RESTRICT rules
 - **Indexes** - Optimized indexes for frequently queried columns
-- **Manual schema file** - SQL schema file in `backend/src/migration/schema.sql`
+- **Migration system** - Automated migration application with version tracking
 - **Part-based migrations** - Schema split into parts for incremental updates
 - **Connection pooling** - Efficient database connection management
 - **Timezone support** - Database timezone configuration for accurate date handling
+- **Trip snapshots** - Time-based trip state tracking
 
 ### Development Tools
 
@@ -1140,14 +1164,19 @@ Transport Manager has the broadest dashboard surface. Major areas include:
 - **Docker Compose** - Multi-container orchestration
 - **PM2** - Process manager for production deployments
 - **Nginx** - Reverse proxy and static file serving
+- **Jest** - JavaScript testing framework
+- **Prometheus** - Metrics collection and monitoring
+- **Grafana** - Metrics visualization (if configured)
 
 ### DevOps & Infrastructure
 
 - **Cloudflare R2** - S3-compatible object storage for file uploads
-- **GitHub** - Code repository (if hosted)
+- **GitHub** - Code repository
 - **CI/CD** - Continuous integration/deployment (if configured)
 - **SSL/TLS** - HTTPS encryption for production
 - **Load Balancing** - For high availability (if configured)
+- **Prometheus** - Application metrics monitoring
+- **Docker** - Container orchestration
 ## Overview
 This repository contains two separate applications:
 - `backend/`: Express REST API, MySQL integration, file uploads, and authentication
@@ -2041,7 +2070,9 @@ cd backend
 # Development
 npm run dev              # Start with nodemon (auto-restart on file changes)
 npm start               # Start with node (no auto-restart)
-npm test                # Run tests (currently placeholder)
+npm test                # Run tests
+npm test -- --watch     # Run tests in watch mode
+npm test -- --coverage  # Run tests with coverage
 
 # Database Operations
 # Manual database operations
@@ -2055,8 +2086,15 @@ mysql -u root -p Soho_Academy < src/migration/schema_part7_transport_calendar.sq
 mysql -u root -p Soho_Academy < src/migration/schema_part8_vehicle_route_assignments.sql
 mysql -u root -p Soho_Academy < src/migration/schema_part9_academic_years_terms.sql
 
+# Automated migrations
+node src/migration/apply_migrations.js
+node src/migration/apply_migrations.js --status
+
 # Check database connection
 node -e "const pool = require('./src/config/db.js'); pool.query('SELECT 1').then(() => console.log('✅ DB OK')).catch(console.error).finally(() => pool.end());"
+
+# Trip simulation
+node scripts/simulateTripProgression.js
 
 # View logs
 tail -f logs/combined.log    # View all request logs
@@ -5438,24 +5476,196 @@ pm2 flush
 # In browser console: localStorage.clear()
 ```
 
+## Testing
+
+The project now includes a comprehensive testing infrastructure using Jest for unit and integration tests.
+
+### Test Structure
+
+**Test Files:**
+- `backend/test/attendance.integration.test.js` - Attendance system integration tests
+- `backend/test/middleware.auth.test.js` - Authentication middleware tests
+- `backend/test/rbac.test.js` - Role-based access control tests
+- `backend/test/rbac.positive.test.js` - Positive RBAC test cases
+- `backend/test/rbac.tripStatus.test.js` - Trip status RBAC tests
+- `backend/test/selfHeal.integration.test.js` - Self-healing system tests
+- `backend/test/sequence/tripProgression.test.js` - Trip progression sequence tests
+- `backend/test/trips.integration.test.js` - Trip management integration tests
+- `backend/test/utils/dbCheck.js` - Database check utilities
+- `backend/test/utils/testToken.js` - Token testing utilities
+
+### Running Tests
+
+```bash
+cd backend
+
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run tests with coverage
+npm test -- --coverage
+
+# Run specific test file
+npm test attendance.integration.test.js
+```
+
+### Test Configuration
+
+Jest is configured in `backend/jest.config.cjs` with:
+- Test environment: Node
+- Coverage directory: coverage
+- Test match pattern: **/*.test.js
+- Coverage thresholds for critical modules
+
+## Real-time Features
+
+The application now supports real-time communication for live trip tracking and monitoring.
+
+### WebSocket Support
+
+**Real-time Controller (`src/controllers/realtime.controller.js`):**
+- WebSocket connection management
+- Live trip status updates
+- Driver location broadcasting
+- Attendance updates in real-time
+
+**Real-time Routes (`src/routes/realtime.routes.js`):**
+- WebSocket endpoint configuration
+- Real-time event broadcasting
+- Client connection management
+
+### Real-time Utilities
+
+**Real-time Utils (`src/utils/realtime.js`):**
+- WebSocket connection helpers
+- Event broadcasting utilities
+- Connection state management
+
+## Trip Simulation
+
+A trip simulation system allows testing trip workflows without actual vehicle movement.
+
+### Simulation Script
+
+**Trip Simulator (`backend/scripts/simulateTripProgression.js`):**
+- Simulates vehicle movement along routes
+- Generates realistic trip progression
+- Tests attendance recording
+- Validates trip state transitions
+
+### Frontend Simulation
+
+**Trip Simulation Component (`frontend/src/components/Dashboard/TransportManagerDashboard/Tabs/Routes/Tabs/TripSimulation.tsx`):**
+- UI for controlling trip simulation
+- Visual trip progression display
+- Manual trip state triggers
+- Simulation dashboard
+
+**Trip Simulator Utils (`frontend/src/utils/tripSimulator.ts`):**
+- Simulation logic helpers
+- Trip state management
+- Progress calculation
+
+### Using Trip Simulation
+
+**Backend Simulation:**
+```bash
+cd backend
+node scripts/simulateTripProgression.js
+```
+
+**Frontend Simulation:**
+1. Navigate to Routes → Trip Simulation
+2. Select route and vehicle
+3. Start simulation
+4. Monitor progression
+5. Stop simulation when complete
+
+## Metrics and Monitoring
+
+The application now includes Prometheus-compatible metrics for monitoring system performance.
+
+### Metrics Collection
+
+**Metrics Utils (`src/utils/metrics.js`):**
+- Request count metrics
+- Response time metrics
+- Error rate metrics
+- Custom business metrics
+
+### Prometheus Configuration
+
+**Prometheus Rules (`deploy/monitoring/prometheus_rules.yml`):**
+- Alerting rules for critical metrics
+- Recording rules for aggregations
+- Metric retention policies
+
+### Available Metrics
+
+- HTTP request count by endpoint
+- HTTP request duration percentiles
+- Database query duration
+- Active WebSocket connections
+- Trip creation rate
+- Attendance recording rate
+
+## Migration System
+
+An automated migration system has been added for database schema management.
+
+### Migration Tool
+
+**Migration Runner (`src/migration/apply_migrations.js`):**
+- Applies pending migrations
+- Tracks migration status
+- Supports rollback operations
+- Version control for migrations
+
+### New Migrations
+
+**Trip Snapshots (`src/migration/20260806_trip_snapshots.sql`):**
+- Trip snapshot table creation
+- Time-based trip state tracking
+- Historical trip data storage
+
+### Running Migrations
+
+```bash
+cd backend
+
+# Apply all pending migrations
+node src/migration/apply_migrations.js
+
+# Check migration status
+node src/migration/apply_migrations.js --status
+```
+
 ## Known Gaps and Maintenance Notes
 
 ### Current Limitations
 
 **Testing:**
-- The backend test script is currently a placeholder
-- No automated test suite is configured (Jest, Mocha, etc.)
-- No integration tests for API endpoints
-- No end-to-end tests for critical user flows
-- No performance tests for load testing
-- Manual testing is required for all features
+- Jest test framework is now configured
+- Integration tests are implemented for critical paths
+- Unit tests for middleware and RBAC are added
+- Trip progression sequence tests are available
+- Self-healing system tests are implemented
+- Test coverage needs to be expanded to all modules
+- E2E tests (Playwright) are not yet implemented
+- Performance tests for load testing are not configured
+- Manual testing is still required for some features
 
 **Database Migrations:**
-- The database uses a schema file and service-level table guards rather than a formal migration framework
-- No versioned migration system (like Knex.js or Sequelize migrations)
-- Schema changes require manual SQL execution
-- No automatic rollback mechanism for failed migrations
-- Database seeding is manual
+- Automated migration system is now implemented
+- Migration runner tracks applied migrations
+- Trip snapshots migration added
+- Version control for migrations is in place
+- Need to document rollback procedures
+- Migration status checking is available
+- Database seeding is still manual
 - No database schema diffing tools
 
 **API Consistency:**
