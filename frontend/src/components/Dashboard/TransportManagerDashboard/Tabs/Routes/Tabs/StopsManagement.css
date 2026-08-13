@@ -76,7 +76,7 @@
 }
 
 .sm-btn--danger {
-  background: #b91c1c;
+  background: #c53030;
   color: white;
 }
 
@@ -87,7 +87,7 @@
 /* ─── Error Banner ──────────────────────────────────────────────────────────── */
 .sm-error-banner {
   background: #fee2e2;
-  border-left: 4px solid #b91c1c;
+  border-left: 4px solid #c53030;
   padding: 12px 20px;
   border-radius: 12px;
   margin-bottom: 24px;
@@ -194,7 +194,7 @@
 }
 
 .sm-search::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .sm-search-clear {
@@ -373,7 +373,7 @@
 
 .sm-badge--inactive {
   background: #fee2e2;
-  color: #b91c1c;
+  color: #c53030;
 }
 
 /* ─── Actions Dropdown ──────────────────────────────────────────────────────── */
@@ -443,7 +443,7 @@
 }
 
 .sm-menu-item--danger {
-  color: #b91c1c !important;
+  color: #c53030 !important;
 }
 
 .sm-menu-item--danger:hover {
@@ -632,7 +632,7 @@
 }
 
 .sm-required {
-  color: #b91c1c;
+  color: #c53030;
   margin-left: 4px;
 }
 
@@ -659,11 +659,11 @@
 
 .sm-form-input--error,
 .sm-form-select--error {
-  border-color: #b91c1c;
+  border-color: #c53030;
 }
 
 .sm-form-error {
-  color: #b91c1c;
+  color: #c53030;
   font-size: 11px;
   margin-top: 6px;
   display: block;
@@ -697,7 +697,7 @@
 
 /* ─── Icons ─────────────────────────────────────────────────────────────────── */
 .sm-icon-search {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 

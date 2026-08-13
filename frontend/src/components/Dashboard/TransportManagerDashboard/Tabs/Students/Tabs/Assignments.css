@@ -45,8 +45,8 @@
 
 .assignments-message--error {
   background: #fee2e2;
-  border-left-color: #b91c1c;
-  color: #b91c1c;
+  border-left-color: #c53030;
+  color: #c53030;
 }
 
 /* ─── Form Styles ───────────────────────────────────────────────────────────── */
@@ -251,7 +251,7 @@
 
 .assignments-status-badge--inactive {
   background: #fee2e2;
-  color: #b91c1c;
+  color: #c53030;
 }
 
 .assignments-status-badge--temporary {
@@ -265,7 +265,7 @@
   border-radius: 8px;
   border: 1px solid #fecaca;
   background: #fff1f2;
-  color: #b91c1c;
+  color: #c53030;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;

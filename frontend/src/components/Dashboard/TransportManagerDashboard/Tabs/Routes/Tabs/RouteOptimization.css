@@ -14,7 +14,7 @@
   --color-text-muted: #718096;
   --color-success: #1a7a4a;
   --color-warning: #b45309;
-  --color-danger: #b91c1c;
+  --color-danger: #c53030;
   
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -360,7 +360,7 @@
 }
 
 .ro-action-btn--secondary:hover {
-  background-color: #d1d5db;
+  background-color: var(--color-border);
 }
 
 /* Responsive */

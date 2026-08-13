@@ -246,12 +246,12 @@
 }
 
 .driver-btn-secondary:hover {
-  background-color: #d1d5db;
+  background-color: var(--color-border);
 }
 
 .driver-btn-danger {
   background-color: #fee2e2;
-  color: #b91c1c;
+  color: #c53030;
 }
 
 .driver-btn-danger:hover {

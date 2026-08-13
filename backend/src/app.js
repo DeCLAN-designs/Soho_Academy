@@ -37,6 +37,14 @@ const transportCalendarRoutes = require("./routes/transportCalendar.routes.js");
 const academicCalendarRoutes = require('./routes/academicCalendar.routes.js');
 const realtimeRoutes = require('./routes/realtime.routes.js');
 const schedulerRoutes = require('./routes/scheduler.routes.js');
+const auditRoutes = require('./routes/audit.routes.js');
+const settingsRoutes = require('./routes/settings.routes.js');
+const reportsRoutes = require('./routes/reports.routes.js');
+const safetyAuditsRoutes = require('./routes/safetyAudits.routes.js');
+const violationsRoutes = require('./routes/violations.routes.js');
+const announcementsRoutes = require('./routes/announcements.routes.js');
+const messagesRoutes = require('./routes/messages.routes.js');
+const notificationsRoutes = require('./routes/notifications.routes.js');
 
 const app = express();
 // API endpoints should not rely on ETag-based caching. Disabling ETag avoids
@@ -113,6 +121,14 @@ app.use("/api/transport-manager", parentTransportRoutes);
 app.use("/api/transport-manager/vehicle-assignments", vehicleRouteAssignmentRoutes);
 app.use("/api/transport-manager", transportCalendarRoutes);
 app.use('/api/transport-manager', academicCalendarRoutes);
+app.use('/api/transport-manager', auditRoutes);
+app.use('/api/transport-manager', settingsRoutes);
+app.use('/api/transport-manager/reports', reportsRoutes);
+app.use('/api/transport-manager/safety-audits', safetyAuditsRoutes);
+app.use('/api/transport-manager/violations', violationsRoutes);
+app.use('/api/transport-manager/announcements', announcementsRoutes);
+app.use('/api/messages', messagesRoutes);
+app.use('/api/notifications', notificationsRoutes);
 app.use('/api/realtime', realtimeRoutes);
 app.use('/api/scheduler', schedulerRoutes);
 

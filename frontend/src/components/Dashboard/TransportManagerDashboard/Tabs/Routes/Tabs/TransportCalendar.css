@@ -16,31 +16,31 @@
   --color-secondary-light: #7a8088;
   
   /* Status Colors */
-  --color-success: #10b981;
+  --color-success: var(--color-approved);
   --color-success-light: #d1fae5;
-  --color-danger: #ef4444;
+  --color-danger: var(--color-rejected);
   --color-danger-light: #fee2e2;
-  --color-warning: #f59e0b;
+  --color-warning: var(--color-pending);
   --color-warning-light: #fed7aa;
-  --color-info: #3b82f6;
+  --color-info: var(--color-primary);
   --color-info-light: #dbeafe;
   --color-purple: #8b5cf6;
   --color-purple-light: #ede9fe;
   
   /* Border Colors */
-  --color-border: #e5e7eb;
-  --color-border-dark: #d1d5db;
+  --color-border: var(--color-border);
+  --color-border-dark: var(--color-border);
   
   /* Background Colors */
-  --color-bg-page: #f9fafb;
+  --color-bg-page: var(--color-bg-card);
   --color-bg-card: #ffffff;
-  --color-bg-hover: #f3f4f6;
+  --color-bg-hover: var(--color-bg-hover);
   --color-bg-header: #f8fafc;
   
   /* Text Colors */
   --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-muted: #9ca3af;
+  --color-text-secondary: var(--color-secondary-light);
+  --color-text-muted: var(--color-text-muted);
   
   /* Spacing */
   --spacing-xs: 0.25rem;

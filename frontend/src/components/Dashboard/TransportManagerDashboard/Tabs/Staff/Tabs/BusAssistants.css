@@ -246,12 +246,12 @@
 }
 
 .bus-assistant-btn-secondary:hover {
-  background-color: #d1d5db;
+  background-color: var(--color-border);
 }
 
 .bus-assistant-btn-danger {
   background-color: #fee2e2;
-  color: #b91c1c;
+  color: #c53030;
 }
 
 .bus-assistant-btn-danger:hover {
