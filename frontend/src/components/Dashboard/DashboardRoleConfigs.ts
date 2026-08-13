@@ -4,6 +4,7 @@ import { parentDashboardConfig } from './ParentDashboard/ParentDashboard'
 import { driverDashboardConfig } from './DriverDashboard/DriverDashboard'
 import { busAssistantDashboardConfig } from './BusAssistantDashboard/BusAssistantDashboard'
 import { transportManagerDashboardConfig } from './TransportManagerDashboard/transportManagerDashboard.config'
+import { fuelManagerDashboardConfig } from './FuelManagerDashboard/fuelManagerDashboard.config'
 import { schoolAdminDashboardConfig } from './SchoolAdminDashboard/SchoolAdminDashboard'
 
 // Role to configuration mapping
@@ -12,6 +13,7 @@ export const ROLE_CONFIG_MAP: Record<string, DashboardRoleConfig> = {
     Driver: driverDashboardConfig,
     'Bus Assistant': busAssistantDashboardConfig,
     'Transport Manager': transportManagerDashboardConfig,
+    'Fuel Manager': fuelManagerDashboardConfig,
     'School Admin': schoolAdminDashboardConfig,
 }
 

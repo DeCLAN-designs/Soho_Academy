@@ -15,6 +15,7 @@ const ROLE_BASE_PATH: Record<string, string> = {
   'Driver': 'driver',
   'Bus Assistant': 'bus-assistant',
   'Transport Manager': 'transport-manager',
+  'Fuel Manager': 'fuel-manager',
   'School Admin': 'school-admin',
 }
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import ReactDOM from 'react-dom'
 import type { RoleSection } from '../../../../dashboard.types'
-import { transportManagerApi, type AcademicYearRecord, type AcademicTermRecord, type CalendarEventRecord } from '@lib/api'
+import { transportManagerApi, type AcademicYearRecord, type AcademicTermRecord, type CalendarEventRecord } from '../../../../../../lib/api'
 import './TransportCalendar.css'
 
 interface TransportCalendarProps {
@@ -340,7 +340,6 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
                                 const isWeekend = [0, 6].includes(currentDate.getDay())
                                 
                                 // Check if this date has transport enabled based on terms and events
-                                const dateString = currentDate.toISOString().slice(0, 10)
                                 const activeTerm = terms.find(term => {
                                     const startDate = new Date(term.start_date)
                                     const endDate = new Date(term.end_date)

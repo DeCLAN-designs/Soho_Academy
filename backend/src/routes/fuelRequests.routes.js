@@ -26,19 +26,19 @@ router.use(authenticate);
 
 router.get(
   "/",
-  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "School Admin"),
+  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "Fuel Manager", "School Admin"),
   getRequests
 );
 
 router.get(
   "/status/:status",
-  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "School Admin"),
+  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "Fuel Manager", "School Admin"),
   getRequestsByStatus
 );
 
 router.post(
   "/",
-  authorizeRoles("Driver", "Bus Assistant"),
+  authorizeRoles("Driver", "Bus Assistant", "Fuel Manager"),
   createFuelMaintenanceRequestValidator,
   validate,
   createRequest
@@ -46,7 +46,7 @@ router.post(
 
 router.patch(
   "/:id/status",
-  authorizeRoles("Transport Manager", "School Admin"),
+  authorizeRoles("Transport Manager", "Fuel Manager", "School Admin"),
   fuelMaintenanceRequestIdValidator,
   updateFuelMaintenanceStatusValidator,
   validate,

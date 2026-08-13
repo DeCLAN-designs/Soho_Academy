@@ -180,7 +180,7 @@ const mapFuelMaintenanceRow = (row) => ({
 });
 
 const isManagerRole = (role) =>
-  ["Transport Manager", "School Admin"].includes(String(role || ""));
+  ["Transport Manager", "Fuel Manager", "School Admin"].includes(String(role || ""));
 
 const assertValidRequestPayload = (normalized) => {
   if (!REQUEST_TYPES.includes(normalized.requestType)) {
@@ -769,8 +769,8 @@ const confirmFuelMaintenanceRequest = async ({
 
   const manager = managerRows[0];
 
-  if (manager.role !== "Transport Manager") {
-    const error = new Error("Only Transport Managers can confirm requests.");
+  if (manager.role !== "Transport Manager" && manager.role !== "Fuel Manager") {
+    const error = new Error("Only Transport Managers and Fuel Managers can confirm requests.");
     error.code = "UNAUTHORIZED_CONFIRMATION";
     throw error;
   }

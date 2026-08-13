@@ -15,6 +15,7 @@ const ALLOWED_ROLES = Object.freeze([
   "Driver",
   "Bus Assistant",
   "Transport Manager",
+  "Fuel Manager",
   "School Admin",
 ]);
 const ROLES_REQUIRING_NUMBER_PLATE = new Set(["Driver", "Bus Assistant"]);
@@ -266,6 +267,12 @@ const registerUser = async (payload) => {
     const numberPlateRequiredError = new Error("Number plate is required.");
     numberPlateRequiredError.code = "NUMBER_PLATE_REQUIRED";
     throw numberPlateRequiredError;
+  }
+
+  if (!ALLOWED_ROLES.includes(normalized.role)) {
+    const invalidRoleError = new Error("Invalid role selected.");
+    invalidRoleError.code = "INVALID_ROLE";
+    throw invalidRoleError;
   }
 
   if (needsNumberPlate) {

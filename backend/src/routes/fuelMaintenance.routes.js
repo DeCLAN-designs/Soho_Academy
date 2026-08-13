@@ -25,17 +25,17 @@ const router = express.Router();
 
 router.use(authenticate);
 // Driver/Bus Assistant endpoints
-router.use(authenticate, authorizeRoles("Driver", "Bus Assistant", "Transport Manager"));
+router.use(authenticate, authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "Fuel Manager"));
 
 router.get(
   "/requests",
-  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "School Admin"),
+  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "Fuel Manager", "School Admin"),
   getRequests
 );
 
 router.get(
   "/requests/:id",
-  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "School Admin"),
+  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "Fuel Manager", "School Admin"),
   fuelMaintenanceRequestIdValidator,
   validate,
   getRequest
@@ -43,7 +43,7 @@ router.get(
 
 router.post(
   "/requests",
-  authorizeRoles("Driver", "Bus Assistant"),
+  authorizeRoles("Driver", "Bus Assistant", "Fuel Manager"),
   createFuelMaintenanceRequestValidator,
   validate,
   createRequest
@@ -51,7 +51,7 @@ router.post(
 
 router.put(
   "/requests/:id",
-  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "School Admin"),
+  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "Fuel Manager", "School Admin"),
   fuelMaintenanceRequestIdValidator,
   updateFuelMaintenanceRequestValidator,
   validate,
@@ -60,7 +60,7 @@ router.put(
 
 router.patch(
   "/requests/:id/status",
-  authorizeRoles("Transport Manager", "School Admin"),
+  authorizeRoles("Transport Manager", "Fuel Manager", "School Admin"),
   fuelMaintenanceRequestIdValidator,
   updateFuelMaintenanceStatusValidator,
   validate,
@@ -69,18 +69,18 @@ router.patch(
 
 router.delete(
   "/requests/:id",
-  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "School Admin"),
+  authorizeRoles("Driver", "Bus Assistant", "Transport Manager", "Fuel Manager", "School Admin"),
   fuelMaintenanceRequestIdValidator,
   validate,
   deleteRequest
 );
 
 // Transport Manager endpoints
-router.get("/all", authorizeRoles("Transport Manager"), getAllRequests);
+router.get("/all", authorizeRoles("Transport Manager", "Fuel Manager"), getAllRequests);
 
 router.post(
   "/:requestId/confirm",
-  authorizeRoles("Transport Manager"),
+  authorizeRoles("Transport Manager", "Fuel Manager"),
   confirmRequest
 );
 

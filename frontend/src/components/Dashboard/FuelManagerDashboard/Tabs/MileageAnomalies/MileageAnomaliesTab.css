@@ -1,0 +1,7 @@
+/* MileageAnomaliesTab.css - Imports shared styles from FuelManagement.css */
+
+@import '../FuelManagement/FuelManagementTab.css';
+
+.fuel-anomalies-container {
+  width: 100%;
+}

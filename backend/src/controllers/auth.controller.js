@@ -108,6 +108,13 @@ const register = async (req, res) => {
       });
     }
 
+    if (error && error.code === "INVALID_ROLE") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role selected.",
+      });
+    }
+
     console.error("Register error:", error);
 
     return res.status(500).json({

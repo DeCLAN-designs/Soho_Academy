@@ -1,0 +1,7 @@
+/* FuelApprovalsTab.css - Imports shared styles from FuelManagement.css */
+
+@import '../FuelManagement/FuelManagementTab.css';
+
+.fuel-approvals-container {
+  width: 100%;
+}

@@ -1,0 +1,3 @@
+/* DashboardTab.css - Imports shared styles from FuelManagement.css */
+
+@import '../FuelManagement/FuelManagementTab.css';

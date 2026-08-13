@@ -1,0 +1,7 @@
+/* FuelLogsTab.css - Imports shared styles from FuelManagement.css */
+
+@import '../FuelManagement/FuelManagementTab.css';
+
+.fuel-logs-container {
+  width: 100%;
+}

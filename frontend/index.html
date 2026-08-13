@@ -2,15 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <!-- SEO -->
     <title>Soho Academy</title>
     <meta name="description" content="Soho Academy school transport management system." />
     <meta name="theme-color" content="#670122" />
 
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Soho Transport" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Soho Transport" />
+
     <!-- Favicon: move the PNG to /public/ and reference it from root -->
     <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="/pwa-icon.svg" />
+    <link rel="apple-touch-icon" href="/pwa-icon.svg" />
 
     <!-- Preconnect to your backend to reduce connection latency -->
     <link rel="preconnect" href="https://your-backend-domain.com" />

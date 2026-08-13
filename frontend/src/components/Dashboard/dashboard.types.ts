@@ -16,4 +16,6 @@ export type DashboardRoleConfig = {
     quickActions: string[]
     navigation: NavigationItem[]
     sections: Record<string, RoleSection>
+    role?: string
+    roleSlug?: string
 }

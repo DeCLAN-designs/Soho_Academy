@@ -1,0 +1,40 @@
+/* FuelRequestsTab.css - Imports shared styles from FuelManagement.css */
+
+@import '../FuelManagement/FuelManagementTab.css';
+
+.fuel-requests-container {
+  width: 100%;
+}
+
+.fuel-action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.fuel-danger-button-small,
+.fuel-success-button-small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fuel-danger-button-small {
+  background-color: var(--color-rejected);
+  color: white;
+}
+
+.fuel-danger-button-small:hover {
+  background-color: #c53030;
+}
+
+.fuel-success-button-small {
+  background-color: var(--color-approved);
+  color: white;
+}
+
+.fuel-success-button-small:hover {
+  background-color: #2f855a;
+}

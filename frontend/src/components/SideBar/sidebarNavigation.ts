@@ -126,6 +126,14 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'withdrawals', label: 'Withdrawals' },
         { id: 'masterData', label: 'Master Data' },
     ],
+    'Fuel Manager': [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'fuel-requests', label: 'Fuel Requests' },
+        { id: 'fuel-approvals', label: 'Fuel Approvals' },
+        { id: 'fuel-logs', label: 'Fuel Logs' },
+        { id: 'analytics', label: 'Analytics' },
+        { id: 'mileage-anomalies', label: 'Mileage Anomalies' },
+    ],
 }
 
 export const getSidebarNavigationItems = (role: string): NavigationItem[] => {

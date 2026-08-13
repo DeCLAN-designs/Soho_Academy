@@ -151,7 +151,7 @@ const Register = () => {
                 <header className={styles.header}>
                     <p className={styles.kicker}>Transport Account</p>
                     <h1>Create Register Profile</h1>
-                    <p>Fill in driver, parent, transport, or school admin details.</p>
+                    <p>Fill in driver, parent, transport, fuel manager, or school admin details.</p>
                 </header>
 
                 <form className={styles.form} onSubmit={handleSubmit}>
@@ -223,6 +223,7 @@ const Register = () => {
                             <option value="Driver">Driver</option>
                             <option value="Bus Assistant">Bus Assistant</option>
                             <option value="Transport Manager">Transport Manager</option>
+                            <option value="Fuel Manager">Fuel Manager</option>
                             <option value="School Admin">School Admin</option>
                         </select>
                     </label>

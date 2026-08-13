@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(255) NOT NULL,
     lastName VARCHAR(255) NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE users (
     profilePhotoUrl VARCHAR(500) NULL,
     profilePhotoKey VARCHAR(255) NULL,
     password VARCHAR(255) NOT NULL,
-    role ENUM('Parent', 'Driver', 'Bus Assistant', 'Transport Manager', 'School Admin') NOT NULL,
+    role ENUM('Parent', 'Driver', 'Bus Assistant', 'Transport Manager', 'Fuel Manager', 'School Admin') NOT NULL,
     CONSTRAINT chk_phoneNumber_numeric CHECK (phoneNumber REGEXP '^[0-9]+$'),
     CONSTRAINT uq_parent_identifier UNIQUE (parentIdType, parentIdNumber),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

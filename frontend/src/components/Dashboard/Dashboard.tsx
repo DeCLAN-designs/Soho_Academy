@@ -10,6 +10,7 @@ const ParentDashboard = lazy(() => import('./ParentDashboard/ParentDashboard'))
 const DriverDashboard = lazy(() => import('./DriverDashboard/DriverDashboard'))
 const BusAssistantDashboard = lazy(() => import('./BusAssistantDashboard/BusAssistantDashboard'))
 const TransportManagerDashboard = lazy(() => import('./TransportManagerDashboard/TransportManagerDashboard'))
+const FuelManagerDashboard = lazy(() => import('./FuelManagerDashboard/FuelManagerDashboard'))
 const SchoolAdminDashboard = lazy(() => import('./SchoolAdminDashboard/SchoolAdminDashboard'))
 
 // Import configs eagerly (they're lightweight objects)
@@ -17,6 +18,7 @@ import { parentDashboardConfig } from './ParentDashboard/ParentDashboard'
 import { driverDashboardConfig } from './DriverDashboard/DriverDashboard'
 import { busAssistantDashboardConfig } from './BusAssistantDashboard/BusAssistantDashboard'
 import { transportManagerDashboardConfig } from './TransportManagerDashboard/transportManagerDashboard.config'
+import { fuelManagerDashboardConfig } from './FuelManagerDashboard/fuelManagerDashboard.config'
 import { schoolAdminDashboardConfig } from './SchoolAdminDashboard/SchoolAdminDashboard'
 
 type DashboardProps = {
@@ -68,6 +70,10 @@ const ROLE_DASHBOARD_MAP: Record<string, RoleDashboardEntry> = {
     'Transport Manager': {
         config: transportManagerDashboardConfig,
         Component: TransportManagerDashboard,
+    },
+    'Fuel Manager': {
+        config: fuelManagerDashboardConfig,
+        Component: FuelManagerDashboard,
     },
     'School Admin': {
         config: schoolAdminDashboardConfig,
