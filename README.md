@@ -14,6 +14,114 @@ The repository contains a React + TypeScript frontend, an Express backend, and a
 
 This section documents all recent development work completed on the project.
 
+### Progressive Web App (PWA) Implementation
+
+The application has been configured as a Progressive Web App (PWA) to enable installation on iOS and Android devices without requiring app store distribution.
+
+**Changes Implemented:**
+
+1. **PWA Plugin Installation**
+   - Added `vite-plugin-pwa` for PWA support
+   - Added `workbox-window` for service worker management
+   - Configured auto-update service worker registration
+
+2. **Vite Configuration**
+   - Added VitePWA plugin to `vite.config.ts`
+   - Configured web app manifest with app metadata
+   - Set up caching strategies for static assets and API responses
+   - Configured offline fallback for SPA navigation
+
+3. **PWA Assets**
+   - Created SVG icon for app installation
+   - Added PWA meta tags to index.html
+   - Configured apple-touch-icon for iOS
+   - Set theme color and application name
+
+4. **Caching Strategy**
+   - Static assets (CSS, JS, images) cached with CacheFirst
+   - API responses cached with NetworkFirst for reliability
+   - Images cached for 30 days
+   - API responses cached for 24 hours
+
+5. **Build Integration**
+   - Service worker automatically generated during build
+   - Web app manifest auto-generated
+   - Service worker registration script included
+   - PWA features enabled in production builds only
+
+**Files Modified:**
+- `frontend/package.json` - Added PWA dependencies
+- `frontend/vite.config.ts` - Added VitePWA plugin configuration
+- `frontend/index.html` - Added PWA meta tags
+- `frontend/public/pwa-icon.svg` - Created app icon
+
+**PWA Installation:**
+- iOS: Safari → Share → Add to Home Screen
+- Android: Chrome → Menu → Add to Home Screen
+- Desktop: Chrome/Edge → Install icon in address bar
+
+### Fuel Manager Role Implementation
+
+A new role "Fuel Manager" has been added to the system to handle fuel and maintenance operations separately from the Transport Manager role.
+
+**Changes Implemented:**
+
+1. **Database Schema**
+   - Added "Fuel Manager" to users table role enum
+   - Created migration file: `schema_part10_fuel_manager_role.sql`
+   - Updated role-based access control system
+
+2. **Backend Validation**
+   - Added "Fuel Manager" to ALLOWED_ROLES in auth.validators.js
+   - Updated registration endpoint to accept Fuel Manager role
+   - Added role-based authorization for fuel-related endpoints
+
+3. **Frontend Dashboard**
+   - Created FuelManagerDashboard component with 6 top-level navigation items
+   - Created separate tab components for each fuel management area
+   - Added Fuel Manager to sidebar navigation
+   - Added Fuel Manager to ROLE_BASE_PATH in Layout.tsx
+   - Added Fuel Manager config to DashboardRoleConfigs.ts
+
+4. **Dashboard Navigation Structure**
+   - Dashboard - Overview with stats and trends
+   - Fuel Requests - All fuel and maintenance requests
+   - Fuel Approvals - Pending approvals view
+   - Fuel Logs - Fuel fill logs
+   - Analytics - Cost analysis and trends
+   - Mileage Anomalies - Unusual consumption patterns
+
+5. **Shared Context**
+   - Created FuelManagementContext for data fetching and state management
+   - Centralized API calls for fuel-related operations
+   - Shared state across all Fuel Manager tabs
+
+**Files Created:**
+- `backend/src/migration/schema_part10_fuel_manager_role.sql`
+- `frontend/src/components/Dashboard/FuelManagerDashboard/FuelManagerDashboard.tsx`
+- `frontend/src/components/Dashboard/FuelManagerDashboard/fuelManagerDashboard.config.ts`
+- `frontend/src/components/Dashboard/FuelManagerDashboard/Tabs/Dashboard/DashboardTab.tsx`
+- `frontend/src/components/Dashboard/FuelManagerDashboard/Tabs/FuelRequests/FuelRequestsTab.tsx`
+- `frontend/src/components/Dashboard/FuelManagerDashboard/Tabs/FuelApprovals/FuelApprovalsTab.tsx`
+- `frontend/src/components/Dashboard/FuelManagerDashboard/Tabs/FuelLogs/FuelLogsTab.tsx`
+- `frontend/src/components/Dashboard/FuelManagerDashboard/Tabs/Analytics/AnalyticsTab.tsx`
+- `frontend/src/components/Dashboard/FuelManagerDashboard/Tabs/MileageAnomalies/MileageAnomaliesTab.tsx`
+- `frontend/src/components/Dashboard/FuelManagerDashboard/Tabs/FuelManagement/FuelManagementContext.tsx`
+
+**Files Modified:**
+- `backend/src/validators/auth.validators.js` - Added Fuel Manager to ALLOWED_ROLES
+- `frontend/src/components/SideBar/sidebarNavigation.ts` - Added Fuel Manager navigation
+- `frontend/src/components/Layout/Layout.tsx` - Added Fuel Manager base path
+- `frontend/src/components/Dashboard/DashboardRoleConfigs.ts` - Added Fuel Manager config
+
+**Fuel Manager Permissions:**
+- View all fuel and maintenance requests
+- Approve or reject fuel requests
+- Log fuel fills and consumption
+- View fuel cost analytics
+- Identify mileage anomalies
+- Access vehicle fuel history
+
 ### Transport Calendar Enhancements
 
 The transport calendar has been significantly enhanced to use real backend data instead of frontend dummy data. This ensures all calendar data is persistent and manageable through the database.
@@ -847,6 +955,361 @@ await pool.query(query, [plate]);
 - **Solution:** Check plate number format is valid
 - **Solution:** Verify number_plates table allows inserts
 
+## Trip Workflow
+
+The trip workflow is the core operational process for daily school transport operations. This section details the complete trip lifecycle from generation to completion.
+
+### Trip Generation
+
+**Automated Daily Trip Generation:**
+
+The system automatically generates daily trips based on vehicle-route assignments and transport calendar rules.
+
+**Cron Job Schedule:**
+- Runs at 3:00 AM Nairobi time every day
+- Configured in `backend/src/jobs/dailyTrips.job.js`
+- Uses node-cron for scheduled execution
+
+**Trip Generation Process:**
+
+1. **Query Active Assignments**
+   - Fetches all active vehicle-route assignments from `vehicle_route_assignments` table
+   - Filters by `effective_from` and `effective_to` date ranges
+   - Filters by `status = 'Active'`
+   - Considers time_period (Morning, Evening, Both)
+
+2. **Check Transport Calendar**
+   - Queries `calendar_events` table for the current date
+   - Checks if transport is available for the date
+   - Considers priority events (make-up days, exam days, sports days)
+   - Respects date-specific transport overrides
+
+3. **Generate Trips**
+   - Creates trip records in `trip_monitoring` table
+   - One trip per active assignment per time period
+   - Includes vehicle, route, driver, and assistant information
+   - Sets initial trip status to 'Scheduled'
+
+4. **Seed Attendance Records**
+   - Creates attendance records for each student assigned to the route
+   - Initializes attendance status as 'Not Boarded'
+   - Links attendance to trip and student records
+
+**Trip Generation Dependencies:**
+- `vehicle_route_assignments` table must exist
+- `calendar_events` table must exist
+- `student_route_assignment` table must exist
+- Academic year and term must be active
+
+**Manual Trip Generation:**
+For testing or manual intervention, trips can be generated via:
+```bash
+cd backend
+node src/jobs/dailyTrips.job.js
+```
+
+### Trip Execution Workflow
+
+**Morning Trip:**
+
+1. **Driver Starts Trip**
+   - Driver logs in and navigates to assigned trips
+   - Selects the morning trip from dashboard
+   - Clicks "Start Trip" to begin journey
+   - Trip status changes from 'Scheduled' to 'In Progress'
+
+2. **Vehicle Pickup**
+   - Driver proceeds to first stop
+   - Students begin boarding
+   - Bus assistant marks attendance as students board
+   - Driver confirms departure from stop
+
+3. **Stop-by-Stop Progression**
+   - System tracks arrival at each stop
+   - Attendance updated in real-time
+   - Mileage logged automatically or manually
+   - Any incidents reported immediately
+
+4. **School Arrival**
+   - Driver arrives at school
+   - Final attendance count confirmed
+   - Trip status changes to 'Completed'
+   - System records arrival time and total mileage
+
+**Evening Trip:**
+
+1. **School Departure**
+   - Driver starts evening trip from school
+   - Students board at school
+   - Attendance marked as students board
+   - Trip status changes to 'In Progress'
+
+2. **Stop-by-Stop Drop-off**
+   - Driver proceeds to each stop in reverse order
+   - Students alight at their designated stops
+   - Bus assistant marks attendance as students alight
+   - Driver confirms departure from stop
+
+3. **Final Drop-off**
+   - Driver completes final stop
+   - All students dropped off
+   - Trip status changes to 'Completed'
+   - Vehicle returns to depot or next assignment
+
+### Trip Monitoring
+
+**Real-Time Tracking:**
+
+The system provides real-time trip monitoring capabilities:
+
+1. **Trip Status Dashboard**
+   - Shows all active trips with current status
+   - Displays trip progress bar with completed stops
+   - Shows current location of vehicle
+   - Displays real-time attendance counts
+
+2. **WebSocket Updates**
+   - Trip status changes pushed via WebSocket
+   - Attendance updates pushed in real-time
+   - Location updates (if GPS enabled)
+   - Incident notifications pushed immediately
+
+3. **Transport Manager View**
+   - Monitor all trips across the fleet
+   - View delayed or stuck trips
+   - Receive incident notifications
+   - View trip completion reports
+
+**Trip Simulation:**
+
+For testing purposes, the system includes trip simulation:
+
+```bash
+cd backend
+node scripts/simulateTripProgression.js
+```
+
+Simulation features:
+- Simulates vehicle movement between stops
+- Simulates student boarding/alighting
+- Simulates attendance updates
+- Simulates trip status changes
+- Allows testing of trip workflows without real vehicles
+
+### Attendance Workflow
+
+**Boarding Process:**
+
+1. **Student Arrival at Stop**
+   - Student arrives at designated stop
+   - Driver/Bus Assistant verifies student identity
+   - Student's ID card or QR code scanned (optional)
+
+2. **Marking Attendance**
+   - Bus Assistant marks student as "Boarded"
+   - System records timestamp
+   - Attendance status changes from 'Not Boarded' to 'Boarded'
+   - Real-time update pushed to parents (if configured)
+
+3. **No-Show Handling**
+   - If student doesn't arrive, mark as "Absent"
+   - Add reason for absence (optional)
+   - System alerts parent of absence (if configured)
+
+**Alighting Process:**
+
+1. **Morning (School Arrival)**
+   - Students alight at school
+   - Attendance automatically marked as "Alighted"
+   - System records arrival time
+   - Parents notified of safe arrival (if configured)
+
+2. **Evening (Stop Drop-off)**
+   - Students alight at designated stops
+   - Bus Assistant marks as "Alighted"
+   - System records drop-off time
+   - Parents notified of safe drop-off (if configured)
+
+**Attendance Exceptions:**
+
+1. **Early Dismissal**
+   - Student leaves trip before destination
+   - Mark attendance with reason
+   - Parent notified of early dismissal
+
+2. **Route Change**
+   - Student assigned to different route
+   - Attendance follows new route
+   - Old route attendance marked as "Transferred"
+
+3. **Missing Student**
+   - Student not found at stop
+   - Mark as "No-Show"
+   - System alerts parent and school admin
+
+### Trip Completion and Reporting
+
+**Post-Trip Activities:**
+
+1. **Trip Completion**
+   - Driver marks trip as completed
+   - Final attendance count confirmed
+   - Total mileage recorded
+   - Any incidents reported
+
+2. **Fuel Logging**
+   - Driver logs fuel consumption for trip
+   - Miles per gallon calculated
+   - Fuel cost recorded
+   - Data sent to Fuel Manager for review
+
+3. **Maintenance Check**
+   - Driver performs post-trip vehicle check
+   - Reports any maintenance issues
+   - Maintenance request created if needed
+   - Vehicle status updated
+
+**Trip Reports:**
+
+1. **Daily Trip Report**
+   - Generated automatically after trip completion
+   - Includes attendance summary
+   - Includes mileage and fuel data
+   - Includes any incidents or delays
+
+2. **Route Performance Report**
+   - Generated weekly/monthly
+   - Analyzes route efficiency
+   - Identifies delay patterns
+   - Suggests route optimizations
+
+3. **Driver Performance Report**
+   - Generated monthly
+   - Tracks on-time performance
+   - Tracks safety incidents
+   - Tracks fuel efficiency
+   - Used for performance reviews
+
+### Incident Handling During Trips
+
+**Incident Types:**
+
+1. **Accidents**
+   - Vehicle collision or damage
+   - Injury to students or staff
+   - Immediate notification required
+   - Photos uploaded to incident report
+
+2. **Breakdowns**
+   - Vehicle mechanical failure
+   - Requires alternate vehicle dispatch
+   - Students transferred to backup vehicle
+   - Maintenance request created
+
+3. **Medical Emergencies**
+   - Student or staff medical issue
+   - Immediate medical attention required
+   - Emergency contacts notified
+   - Incident report filed
+
+4. **Behavioral Issues**
+   - Student misconduct
+   - Parent complaint
+   - Documented in incident report
+   - Follow-up with school admin
+
+**Incident Workflow:**
+
+1. **Incident Occurs**
+   - Driver or Bus Assistant reports incident
+   - Incident type selected
+   - Initial details recorded
+
+2. **Evidence Collection**
+   - Photos uploaded (if applicable)
+   - Witness statements collected
+   - GPS location recorded
+   - Timestamp recorded
+
+3. **Notification**
+   - Transport Manager notified immediately
+   - School Admin notified (if serious)
+   - Parents notified (if students involved)
+   - Emergency services contacted (if needed)
+
+4. **Resolution**
+   - Incident resolved or escalated
+   - Follow-up actions documented
+   - Incident report completed
+   - Incident status changed to 'Resolved'
+
+### Trip Deviations
+
+**Delay Handling:**
+
+1. **Traffic Delay**
+   - Driver reports delay with reason
+   - System updates estimated arrival time
+   - Parents notified of delay
+   - Trip continues with updated schedule
+
+2. **Weather Delay**
+   - Weather-related delay reported
+   - School may decide to cancel trips
+   - Parents notified of cancellation
+   - Trip status changed to 'Cancelled'
+
+3. **Route Deviation**
+   - Driver forced to take alternate route
+   - New route documented
+   - GPS location tracked
+   - Trip continues with deviation logged
+
+**Missed Stops:**
+
+1. **Stop Skipped**
+   - Driver unable to stop at designated location
+   - Reason documented (road blocked, etc.)
+   - Students at stop notified
+   - Alternative arrangements made
+
+2. **Late Arrival at Stop**
+   - Driver arrives late at stop
+   - Students may have left
+   - Marked as no-show
+   - Parent notified
+
+### Parent Notifications
+
+**Real-Time Notifications:**
+
+1. **Boarding Notification**
+   - Sent when student boards vehicle
+   - Includes stop name and time
+   - Reassures parent of safety
+
+2. **Alighting Notification**
+   - Sent when student alights
+   - Includes location and time
+   - Confirms safe arrival
+
+3. **Delay Notification**
+   - Sent if trip is delayed
+   - Includes new estimated arrival
+   - Keeps parent informed
+
+4. **Incident Notification**
+   - Sent immediately if incident occurs
+   - Includes incident type and status
+   - Provides contact information
+
+**Notification Channels:**
+
+- SMS (if configured)
+- Email (if configured)
+- In-app notification
+- Push notification (if PWA installed)
+
 ## Future Enhancements
 
 ### Potential Improvements
@@ -979,12 +1442,13 @@ Current core implementation includes:
 - Submit transport change requests.
 - View transport request status.
 - Receive notifications about transport changes.
+- **Note:** Fuel requests are handled by drivers and managed by Fuel Manager role.
 
 ### Driver
 
 - Driver dashboard.
 - Attendance screen with boarding/alighting tracking.
-- Fuel and maintenance request workflow.
+- Fuel and maintenance request workflow (submitted to Fuel Manager for approval).
 - Incident and accident reporting with photo uploads.
 - Complaints and reports submission.
 - Compliance document uploads (insurance, license, PSV, etc.).
@@ -999,6 +1463,7 @@ Current core implementation includes:
 - Attendance screen with student tracking.
 - Accident/report workflow.
 - Complaint/incident workflow.
+- Maintenance request workflow (submitted to Fuel Manager for approval).
 - Profile screen.
 - Shared operational request permissions with Driver where applicable.
 - View assigned route and vehicle information.
@@ -1011,14 +1476,13 @@ Transport Manager has the broadest dashboard surface. Major areas include:
 - Fleet
   - Vehicle inventory and vehicle details
   - Number plate management (create, update, delete, status change)
-  - Fuel management (requests, approvals, tracking)
+  - **Note:** Fuel management is primarily handled by Fuel Manager role
   - Maintenance views (scheduled, emergency, history)
   - Vehicle document views (compliance documents)
   - Vehicle status tracking (Active, Maintenance, Inactive)
   - Mileage tracking and reporting
 - Requests
-  - Fuel requests (review, approve, reject)
-  - Maintenance requests (review, approve, reject)
+  - **Note:** Fuel and maintenance requests are primarily handled by Fuel Manager role
   - Route requests (change requests from drivers)
   - Student requests (change requests from parents)
   - Request workflow management
@@ -1070,7 +1534,7 @@ Transport Manager has the broadest dashboard surface. Major areas include:
   - Emergency management (protocols, contacts, procedures)
 - Reports
   - Operational reports (trips, attendance, route performance)
-  - Financial reports (fuel costs, maintenance costs, revenue)
+  - Financial reports (fuel costs and maintenance costs - detailed data from Fuel Manager)
   - Compliance reports (document status, inspection status)
   - Staff reports (performance, attendance, incidents)
 - Communication
@@ -1103,6 +1567,57 @@ Transport Manager has the broadest dashboard surface. Major areas include:
 - Academic year and term management.
 - School calendar management.
 
+### Fuel Manager
+
+Fuel Manager is a specialized role focused on fuel and maintenance operations. The dashboard includes:
+
+- Dashboard
+  - Overview with fuel and maintenance statistics
+  - Recent fuel requests and approvals
+  - Cost trends and consumption patterns
+  - Mileage tracking summary
+- Fuel Requests
+  - View all fuel and maintenance requests
+  - Filter by status (Pending, Approved, Rejected, Completed)
+  - View request details (vehicle, driver, amount, reason)
+  - Review and manage requests
+- Fuel Approvals
+  - View pending fuel and maintenance requests
+  - Approve or reject requests with notes
+  - Track approval history
+  - Bulk approval options
+- Fuel Logs
+  - Log fuel fills and consumption
+  - Record mileage at fill time
+  - Track fuel costs by vehicle
+  - View fuel history by vehicle
+- Analytics
+  - Cost analysis by vehicle and time period
+  - Fuel consumption trends
+  - Mileage per gallon calculations
+  - Cost per mile analysis
+  - Comparative vehicle performance
+- Mileage Anomalies
+  - Identify unusual consumption patterns
+  - Flag vehicles with poor fuel efficiency
+  - Alert on sudden mileage changes
+  - Investigate potential fuel theft or leaks
+
+**Fuel Manager Permissions:**
+- View all fuel and maintenance requests
+- Approve or reject fuel requests
+- Log fuel fills and consumption
+- View fuel cost analytics
+- Identify mileage anomalies
+- Access vehicle fuel history
+- Generate fuel reports
+
+**Integration with Other Roles:**
+- Drivers submit fuel requests via their dashboard
+- Bus Assistants can submit maintenance requests
+- Transport Manager has fuel management view (delegated to Fuel Manager)
+- School Admin can view fuel reports for financial oversight
+
 ## Tech Stack
 
 ### Frontend
@@ -1118,6 +1633,7 @@ Transport Manager has the broadest dashboard surface. Major areas include:
 - **Custom Hooks** - Reusable logic for data fetching, forms, and performance monitoring
 - **Performance Optimization** - Code splitting, lazy loading, and LCP optimization
 - **Trip Simulation** - Real-time trip progression simulation for testing
+- **PWA Support** - Progressive Web App with service worker and offline support
 
 ### Backend
 
@@ -1167,6 +1683,391 @@ Transport Manager has the broadest dashboard surface. Major areas include:
 - **Jest** - JavaScript testing framework
 - **Prometheus** - Metrics collection and monitoring
 - **Grafana** - Metrics visualization (if configured)
+
+### Progressive Web App (PWA)
+
+The application is configured as a Progressive Web App (PWA) to enable installation on iOS and Android devices.
+
+**PWA Features:**
+- **Service Worker** - Caches static assets and API responses for offline access
+- **Web App Manifest** - Provides app metadata for installation
+- **Auto-Update** - Service worker automatically updates when new versions are available
+- **Offline Support** - Cached content works without internet connection
+- **App-Like Experience** - Full-screen mode on mobile devices
+- **Cross-Platform** - Works on iOS, Android, and desktop browsers
+
+**PWA Configuration Files:**
+- `frontend/vite.config.ts` - PWA plugin configuration with Workbox
+- `frontend/public/pwa-icon.svg` - App icon for installation
+- `frontend/public/manifest.webmanifest` - Auto-generated web app manifest
+- `frontend/dist/sw.js` - Service worker (generated during build)
+- `frontend/dist/registerSW.js` - Service worker registration script
+
+**PWA Build Output:**
+When running `npm run build`, the PWA generates:
+- `dist/sw.js` - Service worker with caching strategies
+- `dist/workbox-*.js` - Workbox runtime files
+- `dist/manifest.webmanifest` - Web app manifest
+- `dist/registerSW.js` - Service worker registration
+
+**Installation Instructions:**
+
+**iOS (Safari):**
+1. Open the app in Safari on your iOS device
+2. Tap the Share button (square with arrow)
+3. Scroll down and tap "Add to Home Screen"
+4. Tap "Add" to install the app
+5. The app will appear on your home screen like a native app
+
+**Android (Chrome):**
+1. Open the app in Chrome on your Android device
+2. Tap the menu (three dots)
+3. Tap "Add to Home Screen" or "Install App"
+4. Follow the prompts to install
+5. The app will be added to your home screen
+
+**Desktop (Chrome/Edge):**
+1. Open the app in Chrome or Edge
+2. Look for the install icon in the address bar
+3. Click the icon and follow prompts to install
+4. The app will be available from your desktop or start menu
+
+**PWA Caching Strategy:**
+- **Static Assets** - CSS, JS, images cached with CacheFirst strategy
+- **API Responses** - Cached with NetworkFirst strategy for reliability
+- **Cache Duration** - Images cached for 30 days, API responses for 24 hours
+- **Pre-caching** - Critical assets pre-cached during installation
+
+**Development vs Production:**
+- **Development** - PWA features disabled for faster hot reload
+- **Production** - PWA features enabled after `npm run build`
+- **Testing** - Use `npm run preview` to test PWA locally
+
+**PWA Workflow:**
+1. Make changes to the application
+2. Run `npm run build` to generate production build
+3. Service worker is automatically generated with new cache
+4. Deploy the `dist/` folder to your hosting
+5. Users will receive automatic updates when they reload
+6. Service worker updates in background, applies on next visit
+
+**Troubleshooting PWA:**
+- **App not installing** - Ensure serving over HTTPS (required for PWA)
+- **Service worker not updating** - Clear site data and reload
+- **Offline not working** - Check service worker is registered in browser DevTools
+- **Manifest not loading** - Verify manifest.json is accessible at root
+
+### Step-by-Step PWA Installation Guide
+
+#### iOS (iPhone/iPad) Installation
+
+**Prerequisites:**
+- iOS 11.3 or later
+- Safari browser
+- The app must be served over HTTPS (required by Apple)
+
+**Steps:**
+
+1. **Open the App in Safari**
+   - Open Safari on your iOS device
+   - Navigate to your app URL (e.g., `https://your-domain.com`)
+
+2. **Tap the Share Button**
+   - Look for the share icon (square with arrow pointing up) at the bottom of the screen
+   - Tap it to open the share menu
+
+3. **Scroll Down**
+   - Scroll down in the share menu until you see "Add to Home Screen"
+   - It's usually towards the bottom of the list
+
+4. **Tap "Add to Home Screen"**
+   - Tap the "Add to Home Screen" option
+   - You'll see the app name and icon
+
+5. **Customize (Optional)**
+   - You can edit the app name if desired
+   - The icon will be automatically set from the PWA manifest
+
+6. **Tap "Add"**
+   - Tap the "Add" button in the top right corner
+   - The app will be added to your home screen
+
+7. **Launch the App**
+   - The app icon will appear on your home screen
+   - Tap it to launch the app
+   - It will open in full-screen mode like a native app
+
+**Troubleshooting iOS:**
+- If "Add to Home Screen" doesn't appear, make sure the site is served over HTTPS
+- Clear Safari cache and reload the page
+- Ensure the PWA manifest is correctly configured
+- Check that the app has a valid icon
+
+#### Android Installation
+
+**Prerequisites:**
+- Android 5.0 (Lollipop) or later
+- Chrome browser (recommended)
+- The app must be served over HTTPS
+
+**Steps:**
+
+1. **Open the App in Chrome**
+   - Open Chrome on your Android device
+   - Navigate to your app URL (e.g., `https://your-domain.com`)
+
+2. **Tap the Menu**
+   - Tap the three-dot menu icon in the top right corner
+   - This opens the Chrome menu
+
+3. **Look for "Add to Home Screen" or "Install App"**
+   - Scroll down in the menu
+   - Look for either:
+     - "Add to Home Screen" (older Chrome versions)
+     - "Install App" or "Install" (newer Chrome versions)
+
+4. **Tap the Install Option**
+   - Tap "Add to Home Screen" or "Install"
+   - You'll see a confirmation dialog
+
+5. **Review App Details**
+   - Review the app name and icon
+   - You can edit the name if desired
+
+6. **Tap "Add" or "Install"**
+   - Tap the confirmation button
+   - The app will be added to your home screen
+
+7. **Launch the App**
+   - The app icon will appear on your home screen
+   - Tap it to launch the app
+   - It will open in full-screen mode
+
+**Alternative Method (Chrome Prompt):**
+- If the PWA is properly configured, Chrome may show an automatic install prompt
+- Look for a banner at the bottom of the screen saying "Add [App Name] to Home Screen"
+- Tap "Add" to install
+
+**Troubleshooting Android:**
+- If the install option doesn't appear, try clearing Chrome cache
+- Ensure the site is served over HTTPS
+- Check that the service worker is registered (Chrome DevTools → Application → Service Workers)
+- Make sure the PWA manifest is accessible
+
+#### Desktop (Chrome/Edge) Installation
+
+**Prerequisites:**
+- Chrome 70+ or Edge 79+
+- The app must be served over HTTPS (or localhost for development)
+
+**Chrome Installation:**
+
+1. **Open the App in Chrome**
+   - Open Chrome on your desktop
+   - Navigate to your app URL
+
+2. **Look for Install Icon**
+   - Look at the right side of the address bar (omnibox)
+   - You should see a install icon (square with a plus sign or computer monitor)
+   - Alternatively, look for a plus (+) icon in the address bar
+
+3. **Click the Install Icon**
+   - Click the install icon
+   - A confirmation dialog will appear
+
+4. **Review App Details**
+   - Review the app name, URL, and icon
+   - Choose whether to open as a window or tab
+
+5. **Click "Install"**
+   - Click the "Install" button
+   - The app will be installed
+
+6. **Launch the App**
+   - The app will open in its own window
+   - You can also launch it from:
+     - Desktop shortcut (if you chose to create one)
+     - Chrome Apps list (chrome://apps)
+     - Start menu (Windows) or Applications folder (Mac)
+
+**Edge Installation:**
+
+1. **Open the App in Edge**
+   - Open Edge on your desktop
+   - Navigate to your app URL
+
+2. **Look for Install Icon**
+   - Look at the right side of the address bar
+   - You should see an install icon (apps icon or plus sign)
+
+3. **Click the Install Icon**
+   - Click the install icon
+   - A confirmation dialog will appear
+
+4. **Click "Install"**
+   - Click "Install" to confirm
+   - The app will be installed
+
+5. **Launch the App**
+   - The app will open in its own window
+   - Access from Edge Apps list or desktop shortcut
+
+**Troubleshooting Desktop:**
+- If the install icon doesn't appear, check Chrome DevTools → Application → Manifest
+- Ensure the PWA manifest is valid (no JSON errors)
+- Verify the service worker is registered and active
+- Make sure the site is served over HTTPS (localhost works for development)
+
+#### Testing PWA Installation Locally
+
+**For Development:**
+
+1. **Build the App**
+   ```bash
+   cd frontend
+   npm run build
+   ```
+
+2. **Preview the Build**
+   ```bash
+   npm run preview
+   ```
+   - This serves the production build at `http://localhost:4173`
+
+3. **Install from Localhost**
+   - Chrome/Edge: You can install from `http://localhost:4173` (no HTTPS required)
+   - iOS/Android: Requires HTTPS, so you'll need to use a tunneling service like ngrok
+
+**Using ngrok for Mobile Testing:**
+
+1. **Install ngrok**
+   ```bash
+   # Download from https://ngrok.com/download
+   # Or use: brew install ngrok (macOS)
+   ```
+
+2. **Start ngrok**
+   ```bash
+   ngrok http 4173
+   ```
+
+3. **Use the HTTPS URL**
+   - ngrok will provide an HTTPS URL (e.g., `https://abc123.ngrok.io`)
+   - Use this URL on your mobile device
+   - Install the PWA using the iOS/Android steps above
+
+#### Verifying PWA Installation
+
+**Check if PWA is Installed:**
+
+1. **iOS:**
+   - Look for the app icon on your home screen
+   - Tap to open - it should open in full-screen (no Safari address bar)
+
+2. **Android:**
+   - Look for the app icon on your home screen
+   - Tap to open - it should open in full-screen
+   - Check Chrome → Settings → Site Settings → Installed Apps
+
+3. **Desktop:**
+   - Check chrome://apps or edge://apps
+   - Look for desktop shortcut
+   - App should open in its own window
+
+**Test Offline Functionality:**
+
+1. **Open the PWA**
+2. **Disconnect Internet**
+3. **Navigate through the app**
+4. - Cached pages should load
+5. - Uncached pages should show offline fallback
+
+**Check Service Worker:**
+
+1. **Open DevTools** (F12)
+2. **Go to Application tab**
+3. **Select Service Workers**
+4. - You should see the service worker status
+5. - Check if it's active and running
+
+#### Uninstalling the PWA
+
+**iOS:**
+1. Long-press the app icon on home screen
+2. Tap "Remove App" or "Delete App"
+3. Confirm deletion
+
+**Android:**
+1. Long-press the app icon on home screen
+2. Drag to "Uninstall" or tap "Uninstall"
+3. Or go to Settings → Apps → [App Name] → Uninstall
+
+**Desktop (Chrome):**
+1. Go to chrome://apps
+2. Right-click the app
+3. Select "Remove from Chrome"
+4. Or right-click desktop shortcut → Delete
+
+**Desktop (Edge):**
+1. Go to edge://apps
+2. Right-click the app
+3. Select "Remove"
+4. Or delete desktop shortcut
+
+#### Common Issues and Solutions
+
+**Issue: "Add to Home Screen" option doesn't appear**
+- **Solution:** Ensure the site is served over HTTPS
+- **Solution:** Check that the PWA manifest is valid and accessible
+- **Solution:** Verify the service worker is registered
+- **Solution:** Clear browser cache and reload
+
+**Issue: App opens in browser instead of full-screen**
+- **Solution:** Check that display mode in manifest is set to "standalone"
+- **Solution:** Verify the manifest is correctly linked in index.html
+
+**Issue: Service worker not updating**
+- **Solution:** Clear site data in browser settings
+- **Solution:** Unregister service worker in DevTools
+- **Solution:** Reload the page
+
+**Issue: App icon not showing**
+- **Solution:** Verify icon files exist in public folder
+- **Solution:** Check icon paths in manifest
+- **Solution:** Ensure icon sizes are correct (192x192, 512x512)
+
+**Issue: Offline not working**
+- **Solution:** Check service worker caching strategy
+- **Solution:** Verify files are being cached
+- **Solution:** Check browser console for errors
+
+#### PWA Best Practices
+
+**For Production Deployment:**
+
+1. **Use HTTPS**
+   - Required for PWA installation on mobile
+   - Use SSL certificate from Let's Encrypt or your provider
+
+2. **Optimize Assets**
+   - Compress images
+   - Minify CSS and JS
+   - Use modern image formats (WebP)
+
+3. **Test on Real Devices**
+   - Test on iOS and Android devices
+   - Test different screen sizes
+   - Test offline functionality
+
+4. **Monitor Performance**
+   - Check service worker update frequency
+   - Monitor cache size
+   - Track user engagement
+
+5. **Keep Service Worker Updated**
+   - Update service worker when releasing new versions
+   - Use versioning in cache names
+   - Test update process
 
 ### DevOps & Infrastructure
 
@@ -2813,7 +3714,7 @@ The application uses JWT (JSON Web Tokens) for stateless authentication with ref
    - Last name
    - Phone number
    - Password
-   - Role (Parent, Driver, Bus Assistant)
+   - Role (Parent, Driver, Bus Assistant, Fuel Manager)
    - Number plate (for Driver/Bus Assistant)
    - Parent ID type and number (for Parent)
 
@@ -2859,6 +3760,7 @@ The application uses role-based authorization to restrict access to specific end
 3. **Bus Assistant** - Can manage attendance, report incidents
 4. **Transport Manager** - Full access to transport operations
 5. **School Admin** - Can manage students, review all reports
+6. **Fuel Manager** - Manages fuel and maintenance operations
 
 **Authorization Middleware:**
 
@@ -2880,19 +3782,24 @@ const authorizeRoles = (...allowedRoles) => {
 
 **Role Permissions Matrix:**
 
-| Feature | Parent | Driver | Bus Assistant | Transport Manager | School Admin |
-|--------|--------|--------|---------------|-------------------|---------------|
-| View Children | ✅ | ❌ | ❌ | ❌ | ✅ |
-| Transport Calendar | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Route Planning | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Vehicle Management | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Staff Management | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Student Management | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Submit Incident | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Submit Complaint | ❌ | ✅ | ✅ | ✅ | ✅ |
-| View All Incidents | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Fuel Requests | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Compliance Docs | ❌ | ✅ | ❌ | ✅ | ✅ |
+| Feature | Parent | Driver | Bus Assistant | Transport Manager | School Admin | Fuel Manager |
+|--------|--------|--------|---------------|-------------------|---------------|---------------|
+| View Children | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Transport Calendar | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
+| Route Planning | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Vehicle Management | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Staff Management | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Student Management | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Submit Incident | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Submit Complaint | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| View All Incidents | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
+| Fuel Requests | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Fuel Approvals | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Fuel Logs | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Fuel Analytics | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Mileage Anomalies | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Maintenance Requests | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ |
+| Compliance Docs | ❌ | ✅ | ❌ | ✅ | ✅ | ❌ |
 
 **Protected Routes:**
 
