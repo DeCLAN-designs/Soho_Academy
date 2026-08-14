@@ -38,22 +38,6 @@ const StudentsTab = ({ section, activeSection }: StudentsTabProps) => {
 
     return (
         <div className="tabContent">
-            {/* Quick stats placeholder - renders immediately for LCP */}
-            <div className="students-tab__stats-placeholder">
-                <div className="students-tab__stat-card">
-                    <span className="students-tab__stat-value">Loading...</span>
-                    <span className="students-tab__stat-label">Students</span>
-                </div>
-                <div className="students-tab__stat-card">
-                    <span className="students-tab__stat-value">Loading...</span>
-                    <span className="students-tab__stat-label">Present Today</span>
-                </div>
-                <div className="students-tab__stat-card">
-                    <span className="students-tab__stat-value">Loading...</span>
-                    <span className="students-tab__stat-label">Assignments</span>
-                </div>
-            </div>
-
             {/* Main content - lazy loaded after first paint */}
             <div className="subTabContent">
                 {!isFirstPaint ? (

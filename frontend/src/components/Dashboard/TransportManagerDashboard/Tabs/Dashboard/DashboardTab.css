@@ -14,10 +14,214 @@
 }
 
 .tabContent p {
-    margin: 0 0 1rem;
+    margin: 0 0 1.5rem;
     color: #5d636b;
     line-height: 1.4;
     font-size: 1rem;
+}
+
+.dashboard-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: #718096;
+    font-size: 1.1rem;
+}
+
+/* Metrics Grid */
+.dashboard-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f8fa 100%);
+    border: 1px solid #c7ccd2;
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.metric-card.clickable {
+    cursor: pointer;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #8a1a3d;
+}
+
+.metric-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.metric-card__header h3 {
+    margin: 0;
+    color: #3f4650;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.metric-card__icon {
+    font-size: 1.5rem;
+}
+
+.metric-card__stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.metric-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e8e8ea;
+}
+
+.metric-stat:last-child {
+    border-bottom: none;
+}
+
+.metric-stat__value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #3f4650;
+}
+
+.metric-stat__value--success {
+    color: #10b981;
+}
+
+.metric-stat__value--warning {
+    color: #f59e0b;
+}
+
+.metric-stat__value--danger {
+    color: #ef4444;
+}
+
+.metric-stat__value--info {
+    color: #3b82f6;
+}
+
+.metric-stat__label {
+    font-size: 0.85rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+/* Quick Actions */
+.dashboard-quick-actions {
+    margin-bottom: 2rem;
+}
+
+.dashboard-quick-actions h3 {
+    margin: 0 0 1rem;
+    color: #3f4650;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #ffffff;
+    border: 1px solid #c7ccd2;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #3f4650;
+}
+
+.quick-action-btn:hover {
+    background: #f8f8fa;
+    border-color: #8a1a3d;
+    transform: translateY(-1px);
+}
+
+.quick-action-btn__icon {
+    font-size: 1.25rem;
+}
+
+.quick-action-btn__label {
+    flex: 1;
+    text-align: left;
+}
+
+/* Recent Activity */
+.dashboard-recent-activity h3 {
+    margin: 0 0 1rem;
+    color: #3f4650;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: #ffffff;
+    border: 1px solid #e8e8ea;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.activity-item.clickable {
+    cursor: pointer;
+}
+
+.activity-item:hover {
+    background: #f8f8fa;
+    border-color: #c7ccd2;
+}
+
+.activity-item__icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.activity-item__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.activity-item__title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #3f4650;
+}
+
+.activity-item__time {
+    font-size: 0.8rem;
+    color: #718096;
 }
 
 @media (max-width: 768px) {
@@ -32,5 +236,26 @@
 
     .tabContent p {
         font-size: 0.95rem;
+    }
+
+    .dashboard-metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .metric-card {
+        padding: 1rem;
+    }
+
+    .metric-stat__value {
+        font-size: 1.1rem;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-item {
+        padding: 0.5rem 0.75rem;
     }
 }

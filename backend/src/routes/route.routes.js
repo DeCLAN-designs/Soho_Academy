@@ -13,14 +13,14 @@ router.get("/routes", async (req, res) => {
       `SELECT r.*, 
         (SELECT COUNT(*) FROM route_stops WHERE routeId = r.id) as stopCount
        FROM routes r 
-       ORDER BY r.createdAt DESC`
+       ORDER BY r.id DESC`
     );
 
     // Get stops for each route
     const routesWithStops = await Promise.all(
       routes.map(async (route) => {
         const [stops] = await pool.query(
-          `SELECT id, stopType, stopOrder, location, timeAllocation 
+          `SELECT id, stopType, stopOrder, locationName as location, scheduledTime as timeAllocation 
            FROM route_stops 
            WHERE routeId = ? 
            ORDER BY stopOrder`,
@@ -58,7 +58,7 @@ router.post("/routes", async (req, res) => {
     if (stops && stops.length > 0) {
       for (const stop of stops) {
         await connection.query(
-          `INSERT INTO route_stops (routeId, stopType, stopOrder, location, timeAllocation)
+          `INSERT INTO route_stops (routeId, stopType, stopOrder, locationName, scheduledTime)
            VALUES (?, ?, ?, ?, ?)`,
           [routeId, stop.stopType, stop.stopOrder, stop.location, stop.timeAllocation || null]
         );

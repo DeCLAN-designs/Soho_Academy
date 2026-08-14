@@ -480,6 +480,10 @@ export type DriverIncidentReportRecord = {
   createdAt: string;
   updatedAt: string;
   uploads: IncidentUploadRecord[];
+  // Additional fields that might be in the response
+  incidentType?: string;
+  location?: string;
+  date?: string;
 };
 
 export type ComplaintTiming = "Morning" | "Evening";
@@ -1159,6 +1163,7 @@ export const fuelMaintenanceApi = {
 
 export const driverIncidentApi = {
   getReports: () => get<{ reports: DriverIncidentReportRecord[] }>("/incidents/reports"),
+  getAllReports: () => get<{ reports: DriverIncidentReportRecord[] }>("/incidents/all/reports"),
   createReport: (payload: FormData) =>
     postFormData<{ report: DriverIncidentReportRecord }>("/incidents/reports", payload),
 };
@@ -1208,8 +1213,8 @@ export type TransportStudentRecord = {
 export type RouteStopPayload = {
   stopType: "pickup" | "dropoff";
   stopOrder: number;
-  location: string;
-  timeAllocation?: string | null;
+  location: string; // This maps to locationName in database
+  timeAllocation?: string | null; // This maps to scheduledTime in database
 };
 
 export type CreateRoutePayload = {
@@ -1229,7 +1234,10 @@ export type TransportManagerRouteRecord = {
   startTime: string | null;
   endTime: string | null;
   status: "active" | "inactive" | "completed";
-  createdAt: string;
+  createdAt?: string; // Made optional since it might not exist in all schemas
+  updatedAt?: string;
+  createdByUserId?: number;
+  stops?: RouteStopPayload[];
 };
 
 export type AssignVehicleStaffPayload = {
