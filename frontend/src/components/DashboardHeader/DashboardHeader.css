@@ -9,7 +9,7 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: var(--spacing-xl, 2rem);
-    margin-bottom: var(--spacing-xl, 2rem);
+    /* margin-bottom: var(--spacing-xl, 2rem); */
     padding: var(--spacing-lg, 1.5rem);
     background: linear-gradient(135deg, var(--color-bg-card, #f6f6f8) 0%, white 100%);
     border: 2px solid var(--color-border, #c7ccd2);
