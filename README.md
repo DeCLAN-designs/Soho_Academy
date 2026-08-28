@@ -179,20 +179,131 @@ npm run dev
 
 ### Role Matrix
 
-| Feature | 👨‍👩 Parent | 🚗 Driver | 🚐 Assistant | 🏢 Transport Manager | 🏫 School Admin | ⛽ Fuel Manager |
-|---------|------------|-----------|--------------|---------------------|---------------|----------------|
-| **Children Management** | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| **Transport Calendar** | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
-| **Route Planning** | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| **Vehicle Management** | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| **Staff Management** | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| **Trip Management** | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Attendance Tracking** | View | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Incident Reporting** | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Fuel Requests** | ❌ | ✅ | ✅ | View | ❌ | ✅ |
-| **Compliance Documents** | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Student Lifecycle** | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| **Analytics & Reports** | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+<div align="center" style="overflow-x: auto;">
+  <table style="width: 100%; border-collapse: collapse; text-align: center;">
+    <thead>
+      <tr style="background-color: #f6f8fa;">
+        <th style="padding: 10px; border: 1px solid #dfe2e5;">Feature</th>
+        <th style="padding: 10px; border: 1px solid #dfe2e5;">👨‍👩 Parent</th>
+        <th style="padding: 10px; border: 1px solid #dfe2e5;">🚗 Driver</th>
+        <th style="padding: 10px; border: 1px solid #dfe2e5;">🚐 Assistant</th>
+        <th style="padding: 10px; border: 1px solid #dfe2e5;">🏢 Transport Manager</th>
+        <th style="padding: 10px; border: 1px solid #dfe2e5;">🏫 School Admin</th>
+        <th style="padding: 10px; border: 1px solid #dfe2e5;">⛽ Fuel Manager</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Children Management</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+      </tr>
+      <tr style="background-color: #fbfcfd;">
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Transport Calendar</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Route Planning</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+      </tr>
+      <tr style="background-color: #fbfcfd;">
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Vehicle Management</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Staff Management</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+      </tr>
+      <tr style="background-color: #fbfcfd;">
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Trip Management</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Attendance Tracking</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">View</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+      </tr>
+      <tr style="background-color: #fbfcfd;">
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Incident Reporting</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Fuel Requests</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">View</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+      </tr>
+      <tr style="background-color: #fbfcfd;">
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Compliance Documents</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Student Lifecycle</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+      </tr>
+      <tr style="background-color: #fbfcfd;">
+        <td style="padding: 8px; border: 1px solid #dfe2e5; font-weight: bold;">Analytics & Reports</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">❌</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+        <td style="padding: 8px; border: 1px solid #dfe2e5;">✅</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
 ### Role-Specific Dashboards
 
