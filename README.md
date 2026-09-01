@@ -981,6 +981,405 @@ The `tripStatusService` provides real-time monitoring:
 }
 ```
 
+### 🔍 Complete Trip Validation Process
+
+A trip becomes valid only after passing through a comprehensive 7-step validation pipeline:
+
+<div align="center">
+
+```mermaid
+graph TD
+    Start[Start Trip Validation] --> Cal[1. Transport Calendar Check]
+    Cal --> CalOK{Transport Enabled?}
+    CalOK -->|No| Fail1[❌ Fail: No Transport]
+    CalOK -->|Yes| Assign[2. Assignment Check]
+    
+    Assign --> AssignOK{Active Assignment?}
+    AssignOK -->|No| Fail2[❌ Fail: No Assignment]
+    AssignOK -->|Yes| Route[3. Route Status Check]
+    
+    Route --> RouteOK{Route Active?}
+    RouteOK -->|No| Fail3[❌ Fail: Route Inactive]
+    RouteOK -->|Yes| Vehicle[4. Vehicle Check]
+    
+    Vehicle --> VehicleOK{Vehicle Active?}
+    VehicleOK -->|No| Fail4[❌ Fail: Vehicle Inactive]
+    VehicleOK -->|Yes| Student[5. Student Check]
+    
+    Student --> StudentOK{Students Assigned?}
+    StudentOK -->|No| Fail5[❌ Fail: No Students]
+    StudentOK -->|Yes| Duplicate[6. Duplicate Check]
+    
+    Duplicate --> DupOK{Trip Exists?}
+    DupOK -->|Yes| Skip[⏭️ Skip: Duplicate]
+    DupOK -->|No| Staff[7. Staff Check]
+    
+    Staff --> StaffOK{Staff Assigned?}
+    StaffOK -->|No| Warn[⚠️ Warning: No Staff]
+    StaffOK -->|Yes| Success[✅ Valid Trip]
+    
+    Warn --> Success
+    
+    style Success fill:#4CAF50
+    style Fail1 fill:#f44336
+    style Fail2 fill:#f44336
+    style Fail3 fill:#f44336
+    style Fail4 fill:#f44336
+    style Fail5 fill:#f44336
+    style Skip fill:#FF9800
+    style Warn fill:#FFC107
+```
+
+</div>
+
+#### Step 1: Transport Calendar Validation
+
+```sql
+-- Check if transport is enabled for the target date
+SELECT transport_enabled, source 
+FROM transport_calendar 
+WHERE date = '2026-09-01'
+```
+
+**Valid when:** Transport is explicitly enabled or it's a weekday with default transport
+
+**Invalid when:** Holiday, weekend, school closure, or calendar event disables transport
+
+#### Step 2: Vehicle-Route Assignment Validation
+
+```sql
+-- Find active assignments for the date
+SELECT * FROM vehicle_route_assignments 
+WHERE effective_from <= '2026-09-01' 
+AND (effective_to IS NULL OR effective_to >= '2026-09-01') 
+AND status = 'Active'
+```
+
+**Valid when:** At least one active assignment covers the target date
+
+**Invalid when:** No assignments, all inactive, or date range doesn't include target date
+
+#### Step 3: Route Status Validation
+
+```sql
+-- Verify route is active and not deleted
+SELECT * FROM routes 
+WHERE id IN (6, 7, 9) 
+AND status = 'Active' 
+AND deleted_at IS NULL
+```
+
+**Valid when:** Route exists, status is Active, and not soft-deleted
+
+**Invalid when:** Route is Inactive, Deleted, or doesn't exist
+
+#### Step 4: Vehicle Availability Validation
+
+```sql
+-- Check vehicle operational status
+SELECT * FROM vehicles 
+WHERE vehicle_plate IN ('KBN 876F', 'KCA 123A') 
+AND status = 'Active'
+```
+
+**Valid when:** Vehicle exists and status is Active
+
+**Invalid when:** Vehicle is Inactive, Maintenance, or Out of Service
+
+#### Step 5: Student Assignment Validation
+
+```sql
+-- Check for active student-route assignments
+SELECT * FROM student_route_assignment 
+WHERE route_id IN (6, 7, 9) 
+AND status = 'Active'
+AND effective_from <= '2026-09-01' 
+AND (effective_to IS NULL OR effective_to >= '2026-09-01')
+AND (trip_type = 'Morning' OR trip_type = 'Both')
+```
+
+**Valid when:** At least one student is actively assigned to the route
+
+**Invalid when:** No students assigned or all assignments are inactive
+
+#### Step 6: Duplicate Trip Detection
+
+```sql
+-- Check for existing trip with same route, date, and session
+SELECT * FROM trip_monitoring 
+WHERE route_id = 6 
+AND DATE(departure_time) = '2026-09-01'
+AND session = 'Morning'
+```
+
+**Valid when:** No existing trip found for this combination
+
+**Invalid when:** Trip already exists (will be skipped for idempotency)
+
+#### Step 7: Staff Assignment Validation (Non-Blocking)
+
+```sql
+-- Check staff assignments (warning only, not blocking)
+SELECT driver_user_id, assistant_user_id 
+FROM vehicle_route_assignments 
+WHERE id = 4
+```
+
+**Valid when:** Staff assigned (recommended but not required)
+
+**Warning when:** No driver/assistant assigned (trip still created)
+
+### 🎯 Trip Creation Options
+
+#### Option 1: Automatic Daily Generation (Cron)
+
+The system automatically generates trips daily at 3:00 AM:
+
+```javascript
+// backend/src/jobs/dailyTrips.job.js
+cron.schedule('0 3 * * *', async () => {
+  await generateTripsForDate({ date: today });
+});
+```
+
+**When to use:** Standard daily operations - no manual intervention needed
+
+#### Option 2: Manual CLI Generation
+
+Generate trips on-demand from the command line:
+
+```bash
+cd backend
+node scripts/generateTodayTrips.js
+```
+
+**When to use:** 
+- After setting up new vehicle-route assignments
+- Testing trip generation
+- Recovering from missed cron jobs
+- Debugging generation issues
+
+#### Option 3: API Single Date Generation
+
+Generate trips for a specific date via REST API:
+
+```bash
+curl -X POST http://localhost:5000/api/trip-generation/generate \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"date": "2026-09-01"}'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Trips generated successfully",
+  "data": {
+    "date": "2026-09-01",
+    "transportEnabled": true,
+    "assignmentsProcessed": 3,
+    "tripsCreated": 6,
+    "tripsSkipped": 0,
+    "attendanceCreated": 9
+  }
+}
+```
+
+**When to use:**
+- Transport Manager needs to generate trips for a specific date
+- Integrating with external systems
+- Manual override for special circumstances
+
+#### Option 4: API Date Range Generation
+
+Generate trips for multiple dates at once:
+
+```bash
+curl -X POST http://localhost:5000/api/trip-generation/generate-range \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"startDate": "2026-09-01", "endDate": "2026-09-07"}'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Trips generated for date range",
+  "data": {
+    "summary": {
+      "totalDates": 7,
+      "totalTripsCreated": 42,
+      "totalAttendanceCreated": 63,
+      "successfulDates": 7,
+      "failedDates": 0
+    },
+    "results": [
+      {
+        "date": "2026-09-01",
+        "tripsCreated": 6,
+        "attendanceCreated": 9,
+        "success": true
+      }
+    ]
+  }
+}
+```
+
+**When to use:**
+- Setting up trips for an entire week/month
+- Recovering from extended system downtime
+- Bulk trip generation for planning
+
+#### Option 5: Force Regeneration
+
+Bypass duplicate detection and regenerate existing trips:
+
+```bash
+curl -X POST http://localhost:5000/api/trip-generation/generate \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"date": "2026-09-01", "force": true}'
+```
+
+**When to use:**
+- Correcting corrupted trip data
+- Regenerating after schema changes
+- Emergency trip reconstruction
+
+#### Option 6: Validation Before Generation
+
+Check prerequisites before generating trips:
+
+```bash
+curl -X GET "http://localhost:5000/api/trip-generation/validate?date=2026-09-01" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "valid": true,
+    "reason": "All prerequisites met",
+    "checks": {
+      "transportAvailable": true,
+      "assignmentsExist": true,
+      "studentsAssigned": true,
+      "routesActive": true,
+      "vehiclesAvailable": true
+    },
+    "details": {
+      "transport": {
+        "transportEnabled": true,
+        "source": "default_weekday"
+      },
+      "assignments": [
+        {
+          "id": 4,
+          "vehiclePlate": "KBN 876F",
+          "routeId": 6,
+          "routeName": "Magenche",
+          "timePeriod": "Both",
+          "status": "Active"
+        }
+      ],
+      "totalStudents": 5,
+      "activeRoutes": 3,
+      "activeVehicles": 3
+    }
+  }
+}
+```
+
+**When to use:**
+- Pre-flight checks before generation
+- Troubleshooting why trips aren't generating
+- Verifying system configuration
+
+### 📊 Complete Trip Generation Flow
+
+<div align="center">
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 User
+    participant API as 🔌 API
+    participant Service as ⚙️ Trip Service
+    participant Calendar as 🗓️ Calendar
+    participant DB as 🗄️ Database
+    participant Audit as 📝 Audit Log
+    
+    User->>API: Request trip generation
+    API->>Service: generateTripsForDate()
+    
+    Service->>Calendar: Check transport availability
+    Calendar-->>Service: Transport enabled/disabled
+    
+    alt Transport Disabled
+        Service-->>API: Skip generation
+        API-->>User: Transport disabled message
+    else Transport Enabled
+        Service->>DB: Get active assignments
+        DB-->>Service: 3 assignments found
+        
+        loop For each assignment
+            Service->>DB: Validate route status
+            DB-->>Service: Route active
+            
+            Service->>DB: Validate vehicle status
+            DB-->>Service: Vehicle operational
+            
+            Service->>DB: Check student assignments
+            DB-->>Service: 5 students assigned
+            
+            Service->>DB: Check for duplicate trip
+            DB-->>Service: No duplicate found
+            
+            Service->>DB: BEGIN TRANSACTION
+            Service->>DB: Create trip record
+            Service->>DB: Create attendance records
+            Service->>DB: COMMIT
+            Service->>Audit: Log generation success
+        end
+        
+        Service-->>API: Generation complete
+        API-->>User: Success with statistics
+    end
+```
+
+</div>
+
+### 🛠️ Troubleshooting Trip Generation
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| **No trips generated** | No active assignments | Create vehicle-route assignments with date ranges |
+| **Transport disabled** | Holiday/weekend | Check transport calendar configuration |
+| **Route inactive** | Route marked inactive | Activate route in Routes module |
+| **Vehicle inactive** | Vehicle in maintenance | Update vehicle status to Active |
+| **No students** | No students assigned to route | Assign students to routes |
+| **Duplicate trips** | Running generation twice | System is idempotent - duplicates are skipped |
+| **Missing staff** | No driver/assistant assigned | Assign staff (warning only, not blocking) |
+
+### 🧪 Testing Trip Generation
+
+Run the comprehensive test suite:
+
+```bash
+cd backend
+node scripts/testTripGeneration.js
+```
+
+This validates:
+- ✅ Prerequisites validation
+- ✅ Trip generation
+- ✅ Idempotency (no duplicates)
+- ✅ Force regeneration
+- ✅ Attendance creation
+
 ---
 
 <div align="center">
