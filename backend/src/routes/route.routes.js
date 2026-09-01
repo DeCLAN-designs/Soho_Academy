@@ -2,6 +2,15 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/db.js");
 const { authenticate, authorizeRoles } = require("../middlewares/auth.middleware.js");
+const {
+  getAllAssignments,
+  getVehicleAssignments,
+  getRouteAssignment,
+  postAssignment,
+  patchAssignment,
+  deleteAssignmentHandler,
+  getAssignmentHistoryHandler,
+} = require("../controllers/vehicleRouteAssignment.controller.js");
 
 // All routes require authentication and Transport Manager or School Admin role
 router.use(authenticate, authorizeRoles("Transport Manager", "School Admin"));
@@ -128,5 +137,28 @@ router.post("/routes/:routeId/students", async (req, res) => {
     res.status(500).json({ message: "Failed to assign students" });
   }
 });
+
+// ==================== Vehicle-Route Assignments ====================
+
+// Get all assignments for a date
+router.get("/vehicle-assignments", getAllAssignments);
+
+// Get assignments for a specific vehicle
+router.get("/vehicle-assignments/vehicle/:vehiclePlate", getVehicleAssignments);
+
+// Get assignment for a specific route and time period
+router.get("/vehicle-assignments/route/:routeId", getRouteAssignment);
+
+// Get assignment history
+router.get("/vehicle-assignments/history", getAssignmentHistoryHandler);
+
+// Create a new assignment
+router.post("/vehicle-assignments", postAssignment);
+
+// Update an assignment
+router.patch("/vehicle-assignments/:id", patchAssignment);
+
+// Delete an assignment
+router.delete("/vehicle-assignments/:id", deleteAssignmentHandler);
 
 module.exports = router;

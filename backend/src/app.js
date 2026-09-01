@@ -45,6 +45,7 @@ const violationsRoutes = require('./routes/violations.routes.js');
 const announcementsRoutes = require('./routes/announcements.routes.js');
 const messagesRoutes = require('./routes/messages.routes.js');
 const notificationsRoutes = require('./routes/notifications.routes.js');
+const tripGenerationRoutes = require('./routes/tripGeneration.routes.js');
 
 const app = express();
 // API endpoints should not rely on ETag-based caching. Disabling ETag avoids
@@ -131,6 +132,7 @@ app.use('/api/messages', messagesRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/realtime', realtimeRoutes);
 app.use('/api/scheduler', schedulerRoutes);
+app.use('/api/trip-generation', tripGenerationRoutes);
 
 // Health check
 app.get("/health", (_, res) => {

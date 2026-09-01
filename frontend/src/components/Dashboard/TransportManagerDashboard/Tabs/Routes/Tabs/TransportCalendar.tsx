@@ -97,7 +97,9 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
     const createYear = async () => {
         try {
             const response = await transportManagerApi.createAcademicYear(newYear)
-            setAcademicYears((s) => [response.data, ...s])
+            if (response.data) {
+                setAcademicYears((s) => [response.data, ...s].filter((item): item is AcademicYearRecord => item !== undefined))
+            }
             setNewYear({ name: '', startDate: '', endDate: '' })
         } catch (err) {
             console.error('Failed to create academic year', err)
@@ -105,13 +107,19 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
     }
 
     const createTerm = async () => {
+        if (!newTerm.academicYearId) {
+            console.error('Academic Year ID is required')
+            return
+        }
         try {
             const termData = {
                 ...newTerm,
-                academicYearId: newTerm.academicYearId ? parseInt(newTerm.academicYearId) : undefined,
+                academicYearId: parseInt(newTerm.academicYearId),
             }
             const response = await transportManagerApi.createAcademicTerm(termData)
-            setTerms((s) => [response.data, ...s])
+            if (response.data) {
+                setTerms((s) => [response.data, ...s].filter((item): item is AcademicTermRecord => item !== undefined))
+            }
             setNewTerm({ academicYearId: '', name: '', startDate: '', endDate: '', transportEnabled: true, status: 'Active' })
         } catch (err) {
             console.error('Failed to create term', err)
@@ -126,7 +134,9 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
                 academicYearId: newTerm.academicYearId ? parseInt(newTerm.academicYearId) : undefined,
             }
             const response = await transportManagerApi.updateAcademicTerm(editingTerm.id, termData)
-            setTerms((s) => s.map(t => t.id === editingTerm.id ? response.data : t))
+            if (response.data) {
+                setTerms((s) => s.map(t => t.id === editingTerm.id ? response.data : t).filter((item): item is AcademicTermRecord => item !== undefined))
+            }
             setEditingTerm(null)
             setNewTerm({ academicYearId: '', name: '', startDate: '', endDate: '', transportEnabled: true, status: 'Active' })
         } catch (err) {
@@ -137,7 +147,7 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
     const deleteTerm = async (id: number) => {
         try {
             await transportManagerApi.deleteAcademicTerm(id)
-            setTerms((s) => s.filter(t => t.id !== id))
+            setTerms((s) => s.filter(t => t.id !== id).filter((item): item is AcademicTermRecord => item !== undefined))
         } catch (err) {
             console.error('Failed to delete term', err)
         }
@@ -166,7 +176,9 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
             }
             
             const response = await transportManagerApi.createCalendarEvent(eventData)
-            setEvents((s) => [response.data, ...s])
+            if (response.data) {
+                setEvents((s) => [response.data, ...s].filter((item): item is CalendarEventRecord => item !== undefined))
+            }
             setNewEvent({ 
                 academicYearId: '', 
                 academicTermId: '', 
@@ -192,7 +204,9 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
                 academicTermId: newEvent.academicTermId ? parseInt(newEvent.academicTermId) : undefined,
             }
             const response = await transportManagerApi.updateCalendarEvent(editingEvent.id, eventData)
-            setEvents((s) => s.map(e => e.id === editingEvent.id ? response.data : e))
+            if (response.data) {
+                setEvents((s) => s.map(e => e.id === editingEvent.id ? response.data : e).filter((item): item is CalendarEventRecord => item !== undefined))
+            }
             setEditingEvent(null)
             setNewEvent({ 
                 academicYearId: '', 
@@ -213,7 +227,7 @@ const TransportCalendar: React.FC<TransportCalendarProps> = ({ section }) => {
     const deleteEvent = async (id: number) => {
         try {
             await transportManagerApi.deleteCalendarEvent(id)
-            setEvents((s) => s.filter(e => e.id !== id))
+            setEvents((s) => s.filter(e => e.id !== id).filter((item): item is CalendarEventRecord => item !== undefined))
         } catch (err) {
             console.error('Failed to delete event', err)
         }

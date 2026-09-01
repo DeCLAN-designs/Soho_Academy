@@ -22,8 +22,9 @@
 - [🔧 Tech Stack](#-tech-stack)
 - [👥 User Roles](#-user-roles)
 - [✨ Features](#-features)
-- [� Vehicle-Route Assignments & Automation](#-vehicle-route-assignments--automation)
-- [�📁 Project Structure](#-project-structure)
+- [🚐 Vehicle-Route Assignments & Automation](#-vehicle-route-assignments--automation)
+- [🤖 Trip Generation Service](#-trip-generation-service)
+- [📁 Project Structure](#-project-structure)
 - [🏗️ Architecture](#️-architecture)
 - [📊 Database Schema](#-database-schema)
 - [🚢 API Documentation](#-api-documentation)
@@ -425,11 +426,562 @@ graph LR
 - **Flexible Assignments**: One vehicle, multiple routes
 - **Date Ranges**: Seasonal assignment changes
 - **Audit Trail**: Complete assignment history tracking
+- **Academic Term Preset**: Quick assignment for entire academic terms via UI
 
 #### **🚌 Automated Trip Generation**
 - **Daily Scheduling**: Automatic generation of trips based on route assignments and transport calendar.
 - **Calendar Integration**: Respects academic terms, holidays, and priority events (make-up, exam, sports days).
 - **Manual Overrides**: On-demand execution (`generateTodayTrips.js`) for trip generation and debugging.
+
+---
+
+## 🚐 Vehicle-Route Assignments & Automation
+
+### 📅 How Vehicle-Route Assignments Work
+
+Vehicle-route assignments are designed to be set up **once** with date ranges, not recreated daily. The system automatically generates daily trips and attendance records based on these assignments.
+
+### 🔄 Assignment Date Ranges
+
+| Field | Purpose | Example |
+|-------|---------|---------|
+| `effective_from` | When the assignment starts | `2026-08-28` |
+| `effective_to` | When the assignment ends (optional) | `2026-12-15` or `NULL` |
+| `status` | Current state | `Active` |
+| `time_period` | Trip sessions covered | `Morning`, `Evening`, or `Both` |
+
+### 🎯 Setup Options
+
+#### Option 1: Academic Term Coverage (Recommended)
+```sql
+-- Covers an entire academic term
+INSERT INTO vehicle_route_assignments (
+  vehicle_plate, route_id, time_period, status, 
+  effective_from, effective_to, created_by_user_id
+) VALUES (
+  'KBN 876F', 6, 'Both', 'Active', 
+  '2026-08-28', '2026-12-15', 4
+);
+```
+
+#### Option 2: Indefinite Assignment
+```sql
+-- No end date - assignment continues until manually deactivated
+INSERT INTO vehicle_route_assignments (
+  vehicle_plate, route_id, time_period, status, 
+  effective_from, created_by_user_id
+) VALUES (
+  'KBN 876F', 6, 'Both', 'Active', 
+  '2026-08-28', 4
+);
+```
+
+#### Option 3: Seasonal Changes
+```sql
+-- Different assignments for different seasons
+-- Semester 1
+INSERT INTO vehicle_route_assignments (...) VALUES (..., '2026-08-28', '2026-12-15', ...);
+
+-- Semester 2 (created in advance)
+INSERT INTO vehicle_route_assignments (...) VALUES (..., '2027-01-10', '2027-06-30', ...);
+```
+
+### 🤖 Automated Trip Generation Flow
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "Assignment Setup"
+        Assign[Vehicle-Route Assignments]
+        Date[Date Range Configuration]
+        Status[Active Status]
+    end
+    
+    subgraph "Daily Automation"
+        Cron[3:00 AM Cron Job]
+        Calendar[Transport Calendar Check]
+        Active[Find Active Assignments]
+        Trips[Generate Daily Trips]
+        Attendance[Create Attendance Records]
+    end
+    
+    subgraph "Results"
+        TodayTrips[Trips for Today]
+        StudentAttendance[Student Attendance Records]
+        Ready[Ready for Check-in]
+    end
+    
+    Assign --> Date
+    Date --> Status
+    Status --> Cron
+    Cron --> Calendar
+    Calendar --> Active
+    Active --> Trips
+    Trips --> Attendance
+    Attendance --> TodayTrips
+    Attendance --> StudentAttendance
+    TodayTrips --> Ready
+    StudentAttendance --> Ready
+    
+    style Assign fill:#61DAFB
+    style Cron fill:#4CAF50
+    style Trips fill:#FF9800
+    style Attendance fill:#9C27B0
+    style Ready fill:#4CAF50
+```
+
+</div>
+
+### 📊 Assignment Criteria
+
+The daily trips job automatically finds active assignments where:
+
+```sql
+effective_from <= today 
+AND (effective_to IS NULL OR effective_to >= today) 
+AND status = 'Active'
+```
+
+### 🔄 Daily Automation Process
+
+Every day at **3:00 AM**, the system automatically:
+
+1. **Checks transport availability** for the date via transport calendar
+2. **Finds active vehicle-route assignments** matching today's date
+3. **Generates trips** for each assignment (Morning and/or Evening sessions)
+4. **Creates attendance records** for students assigned to those routes
+5. **Handles holidays** automatically by skipping disabled transport days
+
+### 🚐 Attendance Generation Sequence
+
+<div align="center">
+
+```mermaid
+sequenceDiagram
+    participant Admin as 👨‍💼 Admin
+    participant Assign as 📋 Assignments
+    participant Cron as ⏰ Cron Job
+    participant Calendar as 📅 Calendar
+    participant Trips as 🚐 Trips
+    participant Attendance as 📝 Attendance
+    participant Staff as 👥 Staff
+    
+    Admin->>Assign: Create Vehicle-Route Assignment
+    Assign->>Assign: Set Date Range (e.g., 2026-08-28 to 2026-12-15)
+    Note over Assign,Cron: Assignment active for entire term
+    
+    loop Every Day at 3:00 AM
+        Cron->>Calendar: Check transport availability
+        Calendar-->>Cron: Transport enabled/disabled
+        alt Transport Available
+            Cron->>Assign: Find active assignments for today
+            Assign-->>Cron: 3 active assignments
+            Cron->>Trips: Generate trips (Morning + Evening)
+            Trips-->>Cron: 6 trips created
+            Cron->>Attendance: Create attendance records
+            Attendance-->>Cron: 9 student records created
+            Note over Attendance,Staff: Staff can now check in students
+        else Transport Disabled
+            Cron->>Cron: Skip trip generation
+            Note over Cron: Holiday or no-transport day
+        end
+    end
+    
+    Staff->>Attendance: Check in students
+    Attendance-->>Staff: Real-time attendance tracking
+```
+
+</div>
+
+### 🎨 UI Implementation
+
+The system includes a comprehensive **Vehicle Assignments** interface with:
+
+- **Academic Term Preset**: Quick assignment for entire academic terms
+- **Manual Date Range**: Custom start and end dates
+- **Real-time Preview**: See assignments for any date
+- **Staff Assignment**: Link drivers and assistants to routes
+- **Visual Management**: Card-based interface for easy management
+
+### 🛠️ Manual Trip Generation
+
+If you need to generate trips manually (e.g., after setting up assignments during the day):
+
+```bash
+cd backend
+node scripts/generateTodayTrips.js
+```
+
+#### Using the Trip Generation API
+
+The system provides REST API endpoints for manual trip generation and monitoring:
+
+```bash
+# Validate prerequisites before generation
+curl -X GET "http://localhost:5000/api/trip-generation/validate?date=2026-08-28" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Generate trips for a single date
+curl -X POST http://localhost:5000/api/trip-generation/generate \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"date": "2026-08-28"}'
+
+# Generate trips for a date range
+curl -X POST http://localhost:5000/api/trip-generation/generate-range \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"startDate": "2026-08-28", "endDate": "2026-09-01"}'
+
+# Force regeneration (bypass duplicate detection)
+curl -X POST http://localhost:5000/api/trip-generation/generate \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"date": "2026-08-28", "force": true}'
+```
+
+#### Live Progress Monitoring
+
+Monitor trip generation and attendance in real-time:
+
+```bash
+# Get live trip progress for a date
+curl -X GET "http://localhost:5000/api/trip-generation/progress?date=2026-08-28" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Get dashboard metrics
+curl -X GET "http://localhost:5000/api/trip-generation/dashboard-metrics?date=2026-08-28" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Get detailed attendance for a specific trip
+curl -X GET "http://localhost:5000/api/trip-generation/trips/17/attendance" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### 🔄 Assignment Management
+
+#### Temporary Deactivation
+```sql
+-- Deactivate temporarily for maintenance
+UPDATE vehicle_route_assignments 
+SET status = 'Inactive' 
+WHERE vehicle_plate = 'KBN 876F';
+
+-- Reactivate when ready
+UPDATE vehicle_route_assignments 
+SET status = 'Active' 
+WHERE vehicle_plate = 'KBN 876F';
+```
+
+#### Term Management
+```sql
+-- Create next term's assignments in advance
+INSERT INTO vehicle_route_assignments (...) VALUES (..., '2027-01-10', '2027-06-30', ...);
+```
+
+### 📈 System Benefits
+
+| Benefit | Description |
+|---------|-------------|
+| ⚡ **Automation** | No manual daily setup required |
+| 📅 **Date Ranges** | One setup covers entire terms |
+| 🎯 **Smart Scheduling** | Respects holidays and transport calendar |
+| 🔄 **Automatic Attendance** | Students records created automatically |
+| 🛡️ **Reliability** | Cron job ensures daily generation |
+| 📊 **Audit Trail** | Complete history of assignments and changes |
+
+### 🚨 Troubleshooting
+
+#### Issue: No trips showing for today
+**Solution:** Check that vehicle-route assignments exist and are active for today's date:
+```sql
+SELECT * FROM vehicle_route_assignments 
+WHERE effective_from <= CURDATE() 
+AND (effective_to IS NULL OR effective_to >= CURDATE()) 
+AND status = 'Active';
+```
+
+#### Issue: No attendance records
+**Solution:** Ensure:
+1. Trips have been generated for today
+2. Students are assigned to routes
+3. Student-route assignments are active
+4. Transport is available for today
+
+#### Issue: Holidays not respected
+**Solution:** Configure holiday events in the transport calendar:
+```sql
+INSERT INTO calendar_events (date, title, event_type, transport_available) 
+VALUES ('2026-12-25', 'Christmas Day', 'Holiday', false);
+```
+
+---
+
+## 🤖 Trip Generation Service
+
+The **Trip Generation Service** is a centralized, idempotent system for generating daily trips and attendance records. It ensures consistent behavior across cron jobs, manual scripts, and API calls.
+
+### 🎯 Core Principles
+
+| Principle | Description |
+|-----------|-------------|
+| **Idempotent** | Safe to run multiple times without creating duplicates |
+| **Centralized** | Single service used by cron, CLI, and API |
+| **Auditable** | Tracks generation source, timestamp, and user |
+| **Validated** | Prerequisites checked before generation |
+| **Transactional** | Atomic trip and attendance creation |
+
+### 📊 Service Architecture
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "Generation Sources"
+        Cron[Cron Job<br/>3:00 AM Daily]
+        CLI[Manual Script<br/>generateTodayTrips.js]
+        API[REST API<br/>/api/trip-generation]
+    end
+    
+    subgraph "Central Service"
+        Service[Trip Generation Service]
+        Validate[Prerequisites Validation]
+        Generate[Trip Creation]
+        Audit[Generation Audit]
+    end
+    
+    subgraph "Database"
+        Assign[Vehicle-Route Assignments]
+        Calendar[Transport Calendar]
+        Trips[Trip Monitoring]
+        Attendance[Student Attendance]
+        AuditLog[Trip Generation Audit]
+    end
+    
+    Cron --> Service
+    CLI --> Service
+    API --> Service
+    
+    Service --> Validate
+    Validate --> Calendar
+    Validate --> Assign
+    Calendar --> Service
+    Assign --> Service
+    
+    Service --> Generate
+    Generate --> Trips
+    Generate --> Attendance
+    
+    Service --> Audit
+    Audit --> AuditLog
+    
+    style Service fill:#61DAFB
+    style Validate fill:#FF9800
+    style Generate fill:#4CAF50
+    style Audit fill:#9C27B0
+```
+
+</div>
+
+### 🔍 Prerequisites Validation
+
+Before generating trips, the service validates:
+
+1. **Transport Availability**: Checks if transport is enabled for the target date
+2. **Active Assignments**: Confirms vehicle-route assignments exist for the date
+3. **Student Assignments**: Verifies students are assigned to routes
+4. **Route Status**: Ensures routes are active
+5. **Vehicle Availability**: Confirms vehicles are operational
+
+```javascript
+{
+  "valid": true,
+  "reason": "All prerequisites met",
+  "checks": {
+    "transportAvailable": true,
+    "assignmentsExist": true,
+    "studentsAssigned": true,
+    "routesActive": true,
+    "vehiclesAvailable": true
+  }
+}
+```
+
+### 🚀 Generation Process
+
+<div align="center">
+
+```mermaid
+sequenceDiagram
+    participant Client as Client
+    participant Service as Trip Generation Service
+    participant DB as Database
+    participant Audit as Audit Log
+    
+    Client->>Service: generateTripsForDate({date})
+    Service->>DB: Check transport availability
+    DB-->>Service: Available/Not Available
+    
+    alt Transport Available
+        Service->>DB: Find active assignments
+        DB-->>Service: 3 assignments found
+        
+        loop For each assignment
+            Service->>DB: Check for existing trip
+            DB-->>Service: Trip exists/not exists
+            
+            alt No existing trip
+                Service->>DB: Create trip record
+                Service->>DB: Create attendance records
+                Service->>Audit: Log generation
+            else Trip exists
+                Service->>Service: Skip (idempotent)
+                Service->>Audit: Log skip reason
+            end
+        end
+        
+        Service-->>Client: Generation complete
+    else Transport Disabled
+        Service-->>Client: Skipped (no transport)
+    end
+```
+
+</div>
+
+### 📝 Generation Output
+
+The service returns detailed statistics:
+
+```json
+{
+  "date": "2026-09-01",
+  "transportEnabled": true,
+  "assignmentsProcessed": 3,
+  "tripsCreated": 6,
+  "tripsSkipped": 0,
+  "attendanceCreated": 9,
+  "duplicatePreventions": []
+}
+```
+
+For idempotent runs (when trips already exist):
+
+```json
+{
+  "date": "2026-09-01",
+  "transportEnabled": true,
+  "assignmentsProcessed": 3,
+  "tripsCreated": 0,
+  "tripsSkipped": 6,
+  "attendanceCreated": 0,
+  "duplicatePreventions": [
+    {
+      "routeId": 6,
+      "routeName": "Magenche",
+      "period": "Morning",
+      "reason": "existing_trip",
+      "existingTripId": 23
+    }
+  ]
+}
+```
+
+### 🧪 Testing the Service
+
+Run the comprehensive test suite:
+
+```bash
+cd backend
+node scripts/testTripGeneration.js
+```
+
+This validates:
+- ✅ Prerequisites validation
+- ✅ Trip generation
+- ✅ Idempotency (no duplicates)
+- ✅ Force regeneration
+- ✅ Attendance creation
+
+### 📡 API Endpoints
+
+| Endpoint | Method | Description | Auth |
+|----------|--------|-------------|------|
+| `/api/trip-generation/validate` | GET | Validate prerequisites | TM, SA |
+| `/api/trip-generation/generate` | POST | Generate trips for a date | TM, SA |
+| `/api/trip-generation/generate-range` | POST | Generate trips for date range | TM, SA |
+| `/api/trip-generation/progress` | GET | Get live trip progress | TM, SA |
+| `/api/trip-generation/trips/:tripId/attendance` | GET | Get trip attendance details | TM, SA |
+| `/api/trip-generation/dashboard-metrics` | GET | Get dashboard metrics | TM, SA |
+
+**Note:** TM = Transport Manager, SA = School Admin
+
+### 🔒 Database Audit Trail
+
+The service maintains an audit trail in `trip_generation_audit`:
+
+```sql
+CREATE TABLE trip_generation_audit (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  generation_date DATE NOT NULL,
+  source ENUM('cron', 'api', 'cli') NOT NULL,
+  user_id INT,
+  trips_generated INT DEFAULT 0,
+  trips_skipped INT DEFAULT 0,
+  attendance_created INT DEFAULT 0,
+  error_message TEXT,
+  generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### 🛠️ Service Files
+
+| File | Purpose |
+|------|---------|
+| `backend/src/services/tripGenerationService.js` | Core generation logic |
+| `backend/src/services/tripStatusService.js` | Live progress tracking |
+| `backend/src/controllers/tripGeneration.controller.js` | API request handlers |
+| `backend/src/routes/tripGeneration.routes.js` | API route definitions |
+| `backend/src/jobs/dailyTrips.job.js` | Cron job integration |
+| `backend/scripts/generateTodayTrips.js` | Manual CLI script |
+| `backend/scripts/testTripGeneration.js` | Test suite |
+
+### 🎨 Live Progress Tracking
+
+The `tripStatusService` provides real-time monitoring:
+
+```javascript
+{
+  "date": "2026-09-01",
+  "summary": {
+    "totalTrips": 6,
+    "totalStudents": 9,
+    "totalBoarded": 5,
+    "totalDroppedOff": 3,
+    "totalRemaining": 4,
+    "activeTrips": 2,
+    "completedTrips": 1,
+    "overallProgress": 56
+  },
+  "trips": [
+    {
+      "tripId": 23,
+      "routeName": "Magenche",
+      "vehiclePlate": "KBN 876F",
+      "status": "On Time",
+      "session": "Morning",
+      "progress": {
+        "totalStudents": 3,
+        "boarded": 2,
+        "absent": 1,
+        "percentage": 67
+      }
+    }
+  ]
+}
+```
+
+---
 
 <div align="center">
 
@@ -448,6 +1000,7 @@ sequenceDiagram
     API->>DB: Create Trip Records (Morning/Evening)
     API->>DB: Generate Student Attendance Snapshots
     DB-->>API: Success Confirmation
+    Note over Cron,DB: Trips and attendance ready for the day
 ```
 
 </div>

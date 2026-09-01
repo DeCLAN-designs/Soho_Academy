@@ -1328,6 +1328,7 @@ export type AcademicTermRecord = {
   start_date: string;
   end_date: string;
   transport_enabled: boolean;
+  status?: string;
 };
 
 export type CalendarEventRecord = {

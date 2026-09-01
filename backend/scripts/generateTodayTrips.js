@@ -1,12 +1,16 @@
 require('dotenv').config();
-const { generateDailyTrips } = require('../src/jobs/dailyTrips.job.js');
+const { generateTripsForDate } = require('../src/services/tripGenerationService.js');
 
 const today = new Date().toISOString().slice(0, 10);
 console.log(`Generating trips for: ${today}`);
 
-generateDailyTrips({ date: today })
-  .then(() => {
-    console.log('✅ Trips generated successfully');
+generateTripsForDate({ 
+  date: today,
+  generationSource: 'cli'
+})
+  .then((result) => {
+    console.log('✅ Trip generation completed');
+    console.log('📊 Stats:', JSON.stringify(result.stats, null, 2));
     process.exit(0);
   })
   .catch(err => {

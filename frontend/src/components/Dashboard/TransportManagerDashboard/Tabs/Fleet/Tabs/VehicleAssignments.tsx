@@ -45,6 +45,14 @@ interface Assistant {
   lastName: string
 }
 
+interface AcademicYear {
+  id: number
+  name: string
+  start_date: string
+  end_date: string
+  status: string
+}
+
 interface Props {
   section: RoleSection
 }
@@ -69,9 +77,11 @@ const VehicleAssignments: React.FC<Props> = ({ section }) => {
   const [routes, setRoutes] = useState<Route[]>([])
   const [drivers, setDrivers] = useState<Driver[]>([])
   const [assistants, setAssistants] = useState<Assistant[]>([])
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10))
+  const [selectedPreset, setSelectedPreset] = useState<'manual' | 'term'>('manual')
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -100,12 +110,13 @@ const VehicleAssignments: React.FC<Props> = ({ section }) => {
       setLoading(true)
       setError(null)
       
-      const [assignmentsRes, vehiclesRes, routesRes, driversRes, assistantsRes] = await Promise.all([
+      const [assignmentsRes, vehiclesRes, routesRes, driversRes, assistantsRes, academicYearsRes] = await Promise.all([
         axiosInstance.get('/transport-manager/vehicle-assignments', { params: { date: selectedDate } }),
-        axiosInstance.get('/fleet'),
-        axiosInstance.get('/routes'),
-        axiosInstance.get('/users?role=Driver'),
-        axiosInstance.get('/users?role=Bus Assistant')
+        axiosInstance.get('/transport-manager/fleet'),
+        axiosInstance.get('/transport-manager/routes'),
+        axiosInstance.get('/transport-manager/users?role=Driver'),
+        axiosInstance.get('/transport-manager/users?role=Bus Assistant'),
+        axiosInstance.get('/transport-calendar/academic-years')
       ])
       
       setAssignments(assignmentsRes.data?.data || [])
@@ -113,6 +124,7 @@ const VehicleAssignments: React.FC<Props> = ({ section }) => {
       setRoutes(routesRes.data?.data?.routes || routesRes.data?.routes || [])
       setDrivers(driversRes.data?.data?.users || driversRes.data?.users || [])
       setAssistants(assistantsRes.data?.data?.users || assistantsRes.data?.users || [])
+      setAcademicYears(academicYearsRes.data?.data || academicYearsRes.data || [])
     } catch (err) {
       console.error('Error fetching data:', err)
       setError('Failed to load data. Please try again later.')
@@ -123,6 +135,7 @@ const VehicleAssignments: React.FC<Props> = ({ section }) => {
 
   const handleOpenAddModal = () => {
     setModalMode('add')
+    setSelectedPreset('manual')
     setFormData({
       vehiclePlate: '',
       routeId: '',
@@ -161,6 +174,31 @@ const VehicleAssignments: React.FC<Props> = ({ section }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handlePresetChange = (preset: 'manual' | 'term') => {
+    setSelectedPreset(preset)
+    if (preset === 'term' && academicYears.length > 0) {
+      const activeYear = academicYears.find(y => y.status === 'Active') || academicYears[0]
+      if (activeYear) {
+        setFormData(prev => ({
+          ...prev,
+          effectiveFrom: activeYear.start_date,
+          effectiveTo: activeYear.end_date
+        }))
+      }
+    }
+  }
+
+  const handleAcademicYearChange = (yearId: string) => {
+    const selectedYear = academicYears.find(y => y.id === Number(yearId))
+    if (selectedYear) {
+      setFormData(prev => ({
+        ...prev,
+        effectiveFrom: selectedYear.start_date,
+        effectiveTo: selectedYear.end_date
+      }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -322,6 +360,43 @@ const VehicleAssignments: React.FC<Props> = ({ section }) => {
             
             <form className="va-modal-body" onSubmit={handleSubmit}>
               {error && <div className="va-error">{error}</div>}
+              
+              <div className="va-form-group">
+                <label>Duration Preset</label>
+                <div className="va-preset-buttons">
+                  <button
+                    type="button"
+                    className={`va-preset-btn ${selectedPreset === 'manual' ? 'va-preset-btn--active' : ''}`}
+                    onClick={() => handlePresetChange('manual')}
+                  >
+                    Manual Date Range
+                  </button>
+                  <button
+                    type="button"
+                    className={`va-preset-btn ${selectedPreset === 'term' ? 'va-preset-btn--active' : ''}`}
+                    onClick={() => handlePresetChange('term')}
+                  >
+                    Academic Term
+                  </button>
+                </div>
+              </div>
+
+              {selectedPreset === 'term' && academicYears.length > 0 && (
+                <div className="va-form-group">
+                  <label>Academic Year</label>
+                  <select
+                    value={formData.effectiveFrom}
+                    onChange={(e) => handleAcademicYearChange(e.target.value)}
+                    className="va-form-input"
+                  >
+                    {academicYears.map(year => (
+                      <option key={year.id} value={year.start_date}>
+                        {year.name} ({year.start_date} to {year.end_date})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               
               <div className="va-form-group">
                 <label>Vehicle *</label>

@@ -422,6 +422,42 @@
   margin-top: var(--spacing-xs);
 }
 
+/* Preset Buttons */
+.va-preset-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.va-preset-btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: white;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: var(--transition-default);
+}
+
+.va-preset-btn:hover {
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-text-muted);
+}
+
+.va-preset-btn--active {
+  background-color: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.va-preset-btn--active:hover {
+  background-color: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
 .va-modal-footer {
   padding: var(--spacing-lg);
   border-top: 1px solid var(--color-border);
