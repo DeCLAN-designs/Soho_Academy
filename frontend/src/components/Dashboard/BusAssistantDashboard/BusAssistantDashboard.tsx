@@ -3,6 +3,7 @@ import BusAssistantDashboardMenuItem from './BusAssistantMenuItems/Dashboard/Das
 import BusAssistantAttendanceMenuItem from './BusAssistantMenuItems/Attendance/Attendance'
 import BusAssistantAccidentsReportsMenuItem from './BusAssistantMenuItems/AccidentsReports/AccidentsReports'
 import BusAssistantComplaintsIncidentsMenuItem from './BusAssistantMenuItems/ComplaintsIncidents/ComplaintsIncidents'
+import BusAssistantMessagingMenuItem from './BusAssistantMenuItems/Messaging/Messaging'
 import DriverFuelMaintenanceMenuItem from '../DriverDashboard/DriverMenuItems/Fuel & Maintenance/Fuel&Maintence'
 import BusAssistantProfileMenuItem from './BusAssistantMenuItems/Profile/Profile'
 import './BusAssistantDashboard.css'
@@ -24,6 +25,8 @@ const BusAssistantDashboard = ({ activeSection }: BusAssistantDashboardProps) =>
                 return <BusAssistantAccidentsReportsMenuItem />
             case 'complaints-incidents':
                 return <BusAssistantComplaintsIncidentsMenuItem />
+            case 'messaging':
+                return <BusAssistantMessagingMenuItem />
             case 'profile':
                 return <BusAssistantProfileMenuItem />
             default:
@@ -49,6 +52,7 @@ export const busAssistantDashboardConfig: DashboardRoleConfig = {
         { id: 'fuelMaintenance', label: 'Fuel & Maintenance' },
         { id: 'accidents-reports', label: 'Accidents and Reports' },
         { id: 'complaints-incidents', label: 'Complaints and Incidents' },
+        { id: 'messaging', label: 'Message' },
         { id: 'profile', label: 'Profile' },
     ],
     sections: {
@@ -75,6 +79,11 @@ export const busAssistantDashboardConfig: DashboardRoleConfig = {
         'complaints-incidents': {
             heading: 'Complaints and Incidents',
             description: 'Handle complaints and incident reports.',
+            cards: [],
+        },
+        messaging: {
+            heading: 'Messaging',
+            description: 'Send and receive messages with transport team and management.',
             cards: [],
         },
         profile: {

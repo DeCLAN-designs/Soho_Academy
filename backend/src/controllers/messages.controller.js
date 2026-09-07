@@ -10,8 +10,10 @@ const getMessages = async (req, res) => {
         m.*,
         sender.firstName as sender_first_name,
         sender.lastName as sender_last_name,
+        sender.role as sender_role,
         receiver.firstName as receiver_first_name,
-        receiver.lastName as receiver_last_name
+        receiver.lastName as receiver_last_name,
+        receiver.role as receiver_role
       FROM messages m
       LEFT JOIN users sender ON m.sender_id = sender.id
       LEFT JOIN users receiver ON m.receiver_id = receiver.id

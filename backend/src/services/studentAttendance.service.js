@@ -181,7 +181,17 @@ const updateAttendanceRecord = async ({ id, payload }) => {
           const assignment = await getAssignmentForRouteAndPeriod({ routeId: trip.route_id, timePeriod, date: tripDate });
           if (assignment) {
             const actorId = Number(payload.confirmed_by_user_id);
-            if (actorId !== Number(assignment.driverUserId) && actorId !== Number(assignment.assistantUserId)) {
+            const driverUserId = assignment.driverUserId ? Number(assignment.driverUserId) : null;
+            const assistantUserId = assignment.assistantUserId ? Number(assignment.assistantUserId) : null;
+            
+            // Allow update if user is the assigned driver or assistant
+            // OR if no driver/assistant is assigned (permissive mode)
+            const isAuthorized = 
+              actorId === driverUserId || 
+              actorId === assistantUserId ||
+              (driverUserId === null && assistantUserId === null);
+            
+            if (!isAuthorized) {
               const err = new Error('User is not authorized to update this attendance record.');
               err.code = 'FORBIDDEN';
               throw err;

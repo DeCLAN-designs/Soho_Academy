@@ -25,6 +25,25 @@ const getUsers = async (req, res) => {
   }
 };
 
+const getTransportTeamUsers = async (req, res) => {
+  try {
+    const users = await listUsers({ role: 'Transport Manager' });
+    const users2 = await listUsers({ role: 'School Admin' });
+    const users3 = await listUsers({ role: 'Driver' });
+    const users4 = await listUsers({ role: 'Bus Assistant' });
+    
+    const allTransportTeam = [...users, ...users2, ...users3, ...users4];
+    
+    return res.status(200).json({
+      success: true,
+      message: "Transport team users retrieved successfully.",
+      data: { users: allTransportTeam },
+    });
+  } catch (error) {
+    return handleUsersError(res, error, "Failed to fetch transport team users.");
+  }
+};
+
 const updateUserController = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -55,6 +74,7 @@ const deleteUserController = async (req, res) => {
 
 module.exports = {
   getUsers,
+  getTransportTeamUsers,
   updateUserController,
   deleteUserController,
 };

@@ -15,6 +15,7 @@ interface Message {
   sender_last_name: string;
   receiver_first_name: string;
   receiver_last_name: string;
+  receiver_role?: string;
 }
 
 interface User {
@@ -31,6 +32,8 @@ const InternalMessaging = () => {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'All' | 'Sent' | 'Read' | 'Archived'>('All');
   const [showComposeModal, setShowComposeModal] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [formData, setFormData] = useState({
     receiverId: '',
     subject: '',
@@ -51,7 +54,7 @@ const InternalMessaging = () => {
           headers: { Authorization: `Bearer ${token}` },
           params: filter !== 'All' ? { status: filter } : {},
         }),
-        axios.get('/api/users', {
+        axios.get('/api/users/transport-team', {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -95,7 +98,7 @@ const InternalMessaging = () => {
     try {
       const token = localStorage.getItem('soho_auth_token');
       await axios.post('/api/messages', {
-        receiverId: parseInt(formData.receiverId),
+        receiver_id: parseInt(formData.receiverId),
         subject: formData.subject,
         content: formData.content,
       }, {
@@ -108,6 +111,19 @@ const InternalMessaging = () => {
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to send message');
     }
+  };
+
+  const handleOpenMessage = (message: Message) => {
+    setSelectedMessage(message);
+    setShowMessageModal(true);
+    if (message.status === 'Sent') {
+      handleMarkAsRead(message.id);
+    }
+  };
+
+  const handleCloseMessageModal = () => {
+    setShowMessageModal(false);
+    setSelectedMessage(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -148,14 +164,26 @@ const InternalMessaging = () => {
           <div className="no-data">No messages found</div>
         ) : (
           messages.map((message) => (
-            <div key={message.id} className={`message-card ${message.status === 'Sent' ? 'unread' : ''}`}>
+            <div 
+              key={message.id} 
+              className={`message-card ${message.status === 'Sent' ? 'unread' : ''}`}
+              onClick={() => handleOpenMessage(message)}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="message-header">
                 <div className="message-info">
                   <h3>{message.subject}</h3>
-                  <span className="message-direction">
-                    {message.sender_first_name === 'Your' ? 'To: ' : 'From: '}
-                    {message.sender_first_name} {message.sender_last_name}
-                  </span>
+                  <div className="message-direction">
+                    <span className="direction-label">To: </span>
+                    <span className="recipient-name">
+                      {message.receiver_first_name} {message.receiver_last_name}
+                    </span>
+                    {message.receiver_role && (
+                      <span className="recipient-role">
+                        {message.receiver_role}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <span 
                   className="status-badge"
@@ -165,23 +193,10 @@ const InternalMessaging = () => {
                 </span>
               </div>
               <div className="message-body">
-                <p>{message.content}</p>
+                <p>{message.content.substring(0, 100)}{message.content.length > 100 ? '...' : ''}</p>
                 <div className="message-meta">
                   <span>{new Date(message.sent_at).toLocaleString()}</span>
-                  {message.read_at && (
-                    <span>Read: {new Date(message.read_at).toLocaleString()}</span>
-                  )}
                 </div>
-              </div>
-              <div className="message-actions">
-                {message.status === 'Sent' && (
-                  <button className="btn-read" onClick={() => handleMarkAsRead(message.id)}>
-                    Mark as Read
-                  </button>
-                )}
-                <button className="btn-delete" onClick={() => handleDelete(message.id)}>
-                  Delete
-                </button>
               </div>
             </div>
           ))
@@ -229,6 +244,47 @@ const InternalMessaging = () => {
               <div className="modal-actions">
                 <button className="btn-cancel" onClick={() => setShowComposeModal(false)}>Cancel</button>
                 <button className="btn-send" onClick={handleSend}>Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMessageModal && selectedMessage && (
+        <div className="modal-overlay" onClick={handleCloseMessageModal}>
+          <div className="modal-content message-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Message Details</h3>
+              <button className="close-btn" onClick={handleCloseMessageModal}>×</button>
+            </div>
+            <div className="modal-body message-details">
+              <div className="message-recipient">
+                <span className="recipient-label">To: </span>
+                <span className="recipient-name">
+                  {selectedMessage.receiver_first_name} {selectedMessage.receiver_last_name}
+                </span>
+                {selectedMessage.receiver_role && (
+                  <span className="recipient-role">
+                    {selectedMessage.receiver_role}
+                  </span>
+                )}
+              </div>
+              <div className="message-subject">{selectedMessage.subject}</div>
+              <div className="message-content">{selectedMessage.content}</div>
+              <div className="message-timestamps">
+                <span>Sent: {new Date(selectedMessage.sent_at).toLocaleString()}</span>
+                {selectedMessage.read_at && (
+                  <span>Read: {new Date(selectedMessage.read_at).toLocaleString()}</span>
+                )}
+              </div>
+              <div className="modal-actions">
+                <button className="btn-delete" onClick={() => {
+                  handleDelete(selectedMessage.id);
+                  handleCloseMessageModal();
+                }}>
+                  Delete
+                </button>
+                <button className="btn-cancel" onClick={handleCloseMessageModal}>Close</button>
               </div>
             </div>
           </div>

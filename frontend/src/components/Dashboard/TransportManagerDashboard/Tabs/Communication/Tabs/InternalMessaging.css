@@ -96,6 +96,31 @@
 .message-direction {
   font-size: 13px;
   color: var(--color-secondary-light);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.direction-label {
+  font-weight: 600;
+}
+
+.recipient-name {
+  font-weight: 600;
+  color: var(--color-tertiary);
+}
+
+.recipient-role {
+  background: rgba(14, 158, 195, 0.12);
+  border: 1px solid rgba(14, 158, 195, 0.2);
+  color: #0f6f8a;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .status-badge {
@@ -275,4 +300,70 @@
 
 .btn-send:hover {
   background: var(--color-primary-dark);
+}
+
+.message-modal {
+  max-width: 600px;
+}
+
+.message-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.message-recipient {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+.recipient-label {
+  font-weight: 600;
+  color: var(--color-secondary-light);
+}
+
+.message-recipient .recipient-name {
+  font-weight: 700;
+  color: var(--color-primary);
+  font-size: 1rem;
+}
+
+.message-recipient .recipient-role {
+  background: rgba(14, 158, 195, 0.12);
+  border: 1px solid rgba(14, 158, 195, 0.2);
+  color: #0f6f8a;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.message-subject {
+  font-weight: 700;
+  color: var(--color-tertiary);
+  font-size: 1.1rem;
+  line-height: 1.3;
+}
+
+.message-content {
+  color: var(--color-secondary);
+  line-height: 1.6;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.message-timestamps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-secondary-light);
+  margin-top: 0.5rem;
 }

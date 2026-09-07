@@ -98,6 +98,8 @@ app.use("/api", (_req, res, next) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/messages", messagesRoutes);
+app.use("/api/users", usersRoutes);
 app.use("/api", fleetRoutes);
 app.use("/api/compliance-documents", complianceDocumentRoutes);
 app.use("/api/complaints", complaintRoutes);
@@ -112,7 +114,6 @@ app.use("/api", studentAssignmentsRoutes);
 app.use("/api", studentAttendanceRoutes);
 app.use("/api", tripsRoutes);
 app.use("/api/students", studentRoutes);
-app.use("/api/users", usersRoutes);
 app.use("/api/transport-manager", tmRouteRoutes);
 app.use("/api/transport-manager", tmFleetRoutes);
 app.use("/api/transport-manager", tmStaffRoutes);
@@ -128,7 +129,6 @@ app.use('/api/transport-manager/reports', reportsRoutes);
 app.use('/api/transport-manager/safety-audits', safetyAuditsRoutes);
 app.use('/api/transport-manager/violations', violationsRoutes);
 app.use('/api/transport-manager/announcements', announcementsRoutes);
-app.use('/api/messages', messagesRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/realtime', realtimeRoutes);
 app.use('/api/scheduler', schedulerRoutes);

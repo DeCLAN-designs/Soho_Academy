@@ -1,0 +1,444 @@
+.driver-messaging {
+  --messaging-primary: #670122;
+  --messaging-secondary: #0e9ec3;
+  --messaging-border: #d8dee8;
+  --messaging-ink: #213039;
+  --messaging-muted: #56656f;
+  --messaging-surface: #ffffff;
+  --messaging-surface-alt: #f8f9fc;
+  --messaging-error-bg: #ffe9ec;
+  --messaging-error-border: #ffd2d9;
+  --messaging-error-text: #9c1732;
+
+  padding: clamp(0.95rem, 1.4vw, 1.2rem);
+  max-width: 1200px;
+  margin: 0 auto;
+  border: 1px solid var(--messaging-border);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top right, rgba(103, 1, 34, 0.06), transparent 24%),
+    linear-gradient(180deg, var(--messaging-surface) 0%, var(--messaging-surface-alt) 100%);
+  box-shadow: 0 18px 40px rgba(25, 35, 45, 0.06);
+}
+
+.driver-messaging-loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--messaging-muted);
+  font-weight: 500;
+}
+
+.driver-messaging-error {
+  background-color: var(--messaging-error-bg);
+  border: 1px solid var(--messaging-error-border);
+  color: var(--messaging-error-text);
+  padding: 12px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.driver-messaging-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 0.9rem;
+}
+
+.driver-messaging-header h2 {
+  margin: 0;
+  color: var(--messaging-primary);
+  font-size: 1.12rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.driver-messaging-compose-btn {
+  background: rgba(103, 1, 34, 0.08);
+  border: 1px solid rgba(103, 1, 34, 0.22);
+  color: var(--messaging-primary);
+  padding: 0.6rem 0.88rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.driver-messaging-compose-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(103, 1, 34, 0.12);
+  border-color: rgba(103, 1, 34, 0.3);
+}
+
+.driver-messaging-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--messaging-border);
+  padding-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.driver-messaging-filters button {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 12px;
+  color: var(--messaging-muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.driver-messaging-filters button.active {
+  background: rgba(103, 1, 34, 0.08);
+  color: var(--messaging-primary);
+  border: 1px solid rgba(103, 1, 34, 0.14);
+}
+
+.driver-messaging-filters button:hover:not(.active) {
+  background: rgba(103, 1, 34, 0.05);
+}
+
+.driver-messaging-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.driver-messaging-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--messaging-muted);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.driver-messaging-item {
+  background-color: var(--messaging-surface);
+  border: 1px solid var(--messaging-border);
+  border-radius: 16px;
+  padding: 15px;
+  transition: box-shadow 0.2s ease, transform 0.18s ease;
+}
+
+.driver-messaging-item:hover {
+  box-shadow: 0 2px 8px rgba(25, 35, 45, 0.08);
+  transform: translateY(-1px);
+}
+
+.driver-messaging-item.unread {
+  border-left: 4px solid var(--messaging-primary);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+}
+
+.driver-messaging-item.read {
+  border-left: 4px solid var(--messaging-border);
+  background-color: var(--messaging-surface-alt);
+}
+
+.driver-messaging-item-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 0.9rem;
+}
+
+.driver-messaging-sender-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.driver-messaging-sender {
+  font-weight: 700;
+  color: var(--messaging-ink);
+  font-size: 0.95rem;
+}
+
+.driver-messaging-sender-role {
+  background: rgba(14, 158, 195, 0.12);
+  border: 1px solid rgba(14, 158, 195, 0.2);
+  color: #0f6f8a;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.driver-messaging-date {
+  color: var(--messaging-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.driver-messaging-subject {
+  font-weight: 600;
+  color: var(--messaging-ink);
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.driver-messaging-content {
+  color: var(--messaging-muted);
+  line-height: 1.55;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.driver-messaging-content-preview {
+  color: var(--messaging-muted);
+  line-height: 1.55;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.driver-messaging-mark-read {
+  background: rgba(14, 158, 195, 0.12);
+  border: 1px solid rgba(14, 158, 195, 0.2);
+  color: #0f6f8a;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.driver-messaging-mark-read:hover {
+  background: rgba(14, 158, 195, 0.18);
+  border-color: rgba(14, 158, 195, 0.3);
+}
+
+.driver-messaging-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(25, 35, 45, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.driver-messaging-modal {
+  background-color: var(--messaging-surface);
+  border-radius: 18px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid var(--messaging-border);
+  box-shadow: 0 18px 40px rgba(25, 35, 45, 0.12);
+}
+
+.driver-messaging-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--messaging-border);
+}
+
+.driver-messaging-modal-header h3 {
+  margin: 0;
+  color: var(--messaging-primary);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.driver-messaging-modal-header button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--messaging-muted);
+  transition: color 0.18s ease;
+}
+
+.driver-messaging-modal-header button:hover {
+  color: var(--messaging-primary);
+}
+
+.driver-messaging-form {
+  padding: 20px;
+}
+
+.driver-messaging-form-group {
+  margin-bottom: 15px;
+}
+
+.driver-messaging-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--messaging-ink);
+  font-size: 0.9rem;
+}
+
+.driver-messaging-form-group select,
+.driver-messaging-form-group input,
+.driver-messaging-form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--messaging-border);
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background-color: var(--messaging-surface);
+  color: var(--messaging-ink);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.driver-messaging-form-group select:focus,
+.driver-messaging-form-group input:focus,
+.driver-messaging-form-group textarea:focus {
+  outline: none;
+  border-color: var(--messaging-primary);
+  box-shadow: 0 0 0 3px rgba(103, 1, 34, 0.08);
+}
+
+.driver-messaging-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.driver-messaging-modal-actions button {
+  padding: 10px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.driver-messaging-modal-actions button[type="button"] {
+  background-color: var(--messaging-surface-alt);
+  border: 1px solid var(--messaging-border);
+  color: var(--messaging-muted);
+}
+
+.driver-messaging-modal-actions button[type="button"]:hover {
+  background-color: var(--messaging-border);
+  transform: translateY(-1px);
+}
+
+.driver-messaging-modal-actions button[type="submit"] {
+  background: rgba(103, 1, 34, 0.08);
+  border: 1px solid rgba(103, 1, 34, 0.22);
+  color: var(--messaging-primary);
+}
+
+.driver-messaging-modal-actions button[type="submit"]:hover {
+  background: rgba(103, 1, 34, 0.12);
+  border-color: rgba(103, 1, 34, 0.3);
+  transform: translateY(-1px);
+}
+
+.driver-messaging-message-modal {
+  max-width: 600px;
+}
+
+.driver-messaging-message-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.driver-messaging-message-sender {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--messaging-border);
+  gap: 0.9rem;
+}
+
+.driver-messaging-message-sender .driver-messaging-sender-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.driver-messaging-sender-name {
+  font-weight: 700;
+  color: var(--messaging-primary);
+  font-size: 1rem;
+}
+
+.driver-messaging-message-date {
+  color: var(--messaging-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.driver-messaging-message-subject {
+  font-weight: 700;
+  color: var(--messaging-ink);
+  font-size: 1.1rem;
+  line-height: 1.3;
+}
+
+.driver-messaging-message-body {
+  color: var(--messaging-muted);
+  line-height: 1.6;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.driver-messaging-message-read-at {
+  color: var(--messaging-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: right;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .driver-messaging {
+    padding: 0.82rem;
+    border-radius: 16px;
+  }
+
+  .driver-messaging-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .driver-messaging-compose-btn {
+    width: 100%;
+  }
+
+  .driver-messaging-filters {
+    gap: 8px;
+  }
+
+  .driver-messaging-filters button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  .driver-messaging-modal {
+    width: 95%;
+    border-radius: 16px;
+  }
+}
