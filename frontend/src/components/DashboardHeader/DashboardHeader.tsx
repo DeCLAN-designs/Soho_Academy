@@ -1,4 +1,5 @@
 import './DashboardHeader.css'
+import NotificationBell from '../Notifications/NotificationBell'
 
 type DashboardHeaderProps = {
     role: string
@@ -8,6 +9,8 @@ type DashboardHeaderProps = {
     quickActions: string[]
     userName: string
     profilePhotoUrl: string | null
+    onMessagesClick?: () => void
+    onAnnouncementsClick?: () => void
 }
 
 const getInitials = (userName: string) => {
@@ -30,6 +33,8 @@ const DashboardHeader = ({
     quickActions,
     userName,
     profilePhotoUrl,
+    onMessagesClick = () => {},
+    onAnnouncementsClick = () => {},
 }: DashboardHeaderProps) => {
     return (
         <header className="dashboardHeader">
@@ -40,6 +45,11 @@ const DashboardHeader = ({
             </div>
 
             <div className="dashboardHeader__actions">
+                <NotificationBell 
+                    onMessagesClick={onMessagesClick}
+                    onAnnouncementsClick={onAnnouncementsClick}
+                />
+                
                 <div className="dashboardHeader__profileCard">
                     <div className="dashboardHeader__avatar" aria-hidden="true">
                         {profilePhotoUrl ? (

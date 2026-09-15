@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import axios from 'axios'
 import type { RoleSection } from '../../../../dashboard.types'
 import './VehicleAssignments.css'
@@ -351,7 +352,7 @@ const VehicleAssignments: React.FC<Props> = ({ section }) => {
       )}
 
       {isModalOpen && (
-        <div className="va-modal-overlay" onClick={handleCloseModal}>
+        createPortal(<div className="va-modal-overlay" onClick={handleCloseModal}>
           <div className="va-modal" onClick={(e) => e.stopPropagation()}>
             <div className="va-modal-header">
               <h2>{modalMode === 'add' ? 'Add Assignment' : 'Edit Assignment'}</h2>
@@ -529,7 +530,7 @@ const VehicleAssignments: React.FC<Props> = ({ section }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   )

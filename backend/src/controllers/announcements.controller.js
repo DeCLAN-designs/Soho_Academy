@@ -1,4 +1,5 @@
 const pool = require("../config/db.js");
+const { broadcastAnnouncement } = require("../utils/realtime.js");
 
 const getAnnouncements = async (req, res) => {
   try {
@@ -45,6 +46,51 @@ const getAnnouncements = async (req, res) => {
   }
 };
 
+const getPublicAnnouncements = async (req, res) => {
+  try {
+    const userRole = req.user.role;
+
+    let query = `
+      SELECT 
+        a.*,
+        creator.firstName as creator_first_name,
+        creator.lastName as creator_last_name
+      FROM announcements a
+      LEFT JOIN users creator ON a.created_by_user_id = creator.id
+      WHERE a.status = 'Published'
+        AND (
+          a.target_audience = 'All'
+          OR (a.target_audience = 'Parents' AND ? = 'Parent')
+          OR (a.target_audience = 'Drivers' AND ? = 'Driver')
+          OR (a.target_audience = 'Bus Assistants' AND ? = 'Bus Assistant')
+          OR (
+            a.target_audience = 'Staff'
+            AND ? IN ('Driver', 'Bus Assistant', 'Transport Manager', 'School Admin', 'Fuel Manager')
+          )
+        )
+    `;
+    const params = [userRole, userRole, userRole, userRole];
+
+    query += ` ORDER BY a.created_at DESC`;
+    
+    const [announcements] = await pool.query(query, params);
+    
+    return res.status(200).json({
+      success: true,
+      message: "Announcements retrieved successfully.",
+      data: {
+        announcements,
+      },
+    });
+  } catch (error) {
+    console.error("Get public announcements error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch announcements.",
+    });
+  }
+};
+
 const createAnnouncement = async (req, res) => {
   try {
     const { title, content, targetAudience, status } = req.body;
@@ -64,6 +110,25 @@ const createAnnouncement = async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?)`,
       [title, content, targetAudience || 'All', userId, status || 'Draft', publishedAt]
     );
+    
+    // Broadcast announcement if published
+    if (status === 'Published') {
+      const announcement = {
+        id: result.insertId,
+        title,
+        content,
+        target_audience: targetAudience || 'All',
+        created_by_user_id: userId,
+        status: 'Published',
+        published_at: publishedAt
+      };
+      
+      try {
+        await broadcastAnnouncement(announcement);
+      } catch (broadcastError) {
+        console.warn('Failed to broadcast announcement:', broadcastError);
+      }
+    }
     
     return res.status(201).json({
       success: true,
@@ -86,7 +151,8 @@ const updateAnnouncement = async (req, res) => {
     const { id } = req.params;
     const { title, content, targetAudience, status } = req.body;
     
-    const publishedAt = status === 'Published' && !await wasPreviouslyPublished(id) ? new Date() : null;
+    const wasPublished = await wasPreviouslyPublished(id);
+    const publishedAt = status === 'Published' && !wasPublished ? new Date() : null;
     
     const [result] = await pool.query(
       `UPDATE announcements 
@@ -101,6 +167,24 @@ const updateAnnouncement = async (req, res) => {
         success: false,
         message: "Announcement not found.",
       });
+    }
+    
+    // Broadcast announcement if being published from draft
+    if (status === 'Published' && !wasPublished) {
+      const announcement = {
+        id: parseInt(id),
+        title,
+        content,
+        target_audience: targetAudience || 'All',
+        status: 'Published',
+        published_at: publishedAt
+      };
+      
+      try {
+        await broadcastAnnouncement(announcement);
+      } catch (broadcastError) {
+        console.warn('Failed to broadcast announcement:', broadcastError);
+      }
     }
     
     return res.status(200).json({
@@ -149,6 +233,7 @@ async function wasPreviouslyPublished(id) {
 
 module.exports = {
   getAnnouncements,
+  getPublicAnnouncements,
   createAnnouncement,
   updateAnnouncement,
   deleteAnnouncement,

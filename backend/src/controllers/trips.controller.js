@@ -101,7 +101,22 @@ const postTrip = async (req, res) => {
 const generateTodayTrips = async (req, res) => {
   try {
     const userId = req.user ? Number(req.user.sub) : null;
-    await generateDailyTrips({ date: undefined });
+    const { period } = req.body || {};
+    const currentHour = Number(new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Nairobi',
+      hour: '2-digit',
+      hourCycle: 'h23',
+    }).format(new Date()));
+    const generationPeriod = period || (currentHour < 12 ? 'Morning' : 'Evening');
+
+    if (!['Morning', 'Evening'].includes(generationPeriod)) {
+      return res.status(400).json({
+        success: false,
+        message: 'period must be Morning or Evening.',
+      });
+    }
+
+    await generateDailyTrips({ date: undefined, period: generationPeriod });
 
     // Audit who initiated the manual generation
     try {
@@ -113,7 +128,11 @@ const generateTodayTrips = async (req, res) => {
       console.warn('Failed to write manual generation audit log', err);
     }
 
-    return res.status(200).json({ success: true, message: 'Manual trip generation initiated. Missing trips will be created.' });
+    return res.status(200).json({
+      success: true,
+      message: `Manual ${generationPeriod.toLowerCase()} trip generation initiated. Missing trips will be created.`,
+      period: generationPeriod,
+    });
   } catch (error) {
     console.error('Failed to run manual trip generation', error);
     return res.status(500).json({ success: false, message: 'Failed to generate trips.' });

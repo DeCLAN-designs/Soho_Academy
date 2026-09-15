@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import './ParentNotifications.css';
 
@@ -239,7 +240,7 @@ const ParentNotifications = () => {
       </div>
 
       {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+        createPortal(<div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Create Notification</h3>
@@ -295,7 +296,7 @@ const ParentNotifications = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   );

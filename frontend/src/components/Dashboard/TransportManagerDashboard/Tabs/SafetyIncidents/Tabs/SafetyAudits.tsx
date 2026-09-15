@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import './SafetyAudits.css';
 
@@ -253,7 +254,7 @@ const SafetyAudits = () => {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        createPortal(<div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingAudit ? 'Edit Safety Audit' : 'Add Safety Audit'}</h3>
@@ -354,7 +355,7 @@ const SafetyAudits = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   );

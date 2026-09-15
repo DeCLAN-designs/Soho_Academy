@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import axios from 'axios'
 import type { RoleSection } from '../../../../dashboard.types'
 import './Scheduling.css'
@@ -245,7 +246,7 @@ const Scheduling: React.FC<SchedulingProps> = ({ section }) => {
 
       {/* Create Trip Modal */}
       {isModalOpen && (
-        <div className="scheduling-modal-overlay">
+        createPortal(<div className="scheduling-modal-overlay">
           <div className="scheduling-modal">
             <div className="scheduling-modal-header">
               <h2>Create New Trip</h2>
@@ -361,7 +362,7 @@ const Scheduling: React.FC<SchedulingProps> = ({ section }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   )

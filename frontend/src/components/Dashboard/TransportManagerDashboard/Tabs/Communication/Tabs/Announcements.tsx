@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import './Announcements.css';
 
@@ -176,7 +177,7 @@ const Announcements = () => {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        createPortal(<div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingAnnouncement ? 'Edit Announcement' : 'Create Announcement'}</h3>
@@ -231,7 +232,7 @@ const Announcements = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   );

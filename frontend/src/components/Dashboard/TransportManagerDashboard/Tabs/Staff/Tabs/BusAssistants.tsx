@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import axios from 'axios'
 import type { RoleSection } from '../../../../dashboard.types'
 import './BusAssistants.css'
@@ -276,7 +277,7 @@ const BusAssistants: React.FC<BusAssistantsProps> = ({ section }) => {
 
       {/* Add/Edit Modal */}
       {isModalOpen && (
-        <div className="bus-assistants-modal-overlay">
+        createPortal(<div className="bus-assistants-modal-overlay">
           <div className="bus-assistants-modal">
             <div className="bus-assistants-modal-header">
               <h2>{modalMode === 'add' ? 'Add New Bus Assistant' : 'Edit Bus Assistant'}</h2>
@@ -331,12 +332,12 @@ const BusAssistants: React.FC<BusAssistantsProps> = ({ section }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>, document.body)
       )}
 
       {/* Delete Confirmation Modal */}
       {isDeleteConfirmOpen && (
-        <div className="bus-assistants-modal-overlay">
+        createPortal(<div className="bus-assistants-modal-overlay">
           <div className="bus-assistants-modal" style={{ maxWidth: '400px' }}>
             <div className="bus-assistants-modal-header">
               <h2>Confirm Deletion</h2>
@@ -360,7 +361,7 @@ const BusAssistants: React.FC<BusAssistantsProps> = ({ section }) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   )

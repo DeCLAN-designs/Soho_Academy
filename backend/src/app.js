@@ -9,7 +9,6 @@ const {
   requestErrorLogStream,
   requestLogStream,
 } = require("./utils/logger.js");
-
 const authRoutes = require("./routes/auth.routes.js");
 const complianceDocumentRoutes = require("./routes/complianceDocument.routes.js");
 const complaintRoutes = require("./routes/complaint.routes.js");
@@ -42,8 +41,8 @@ const settingsRoutes = require('./routes/settings.routes.js');
 const reportsRoutes = require('./routes/reports.routes.js');
 const safetyAuditsRoutes = require('./routes/safetyAudits.routes.js');
 const violationsRoutes = require('./routes/violations.routes.js');
-const announcementsRoutes = require('./routes/announcements.routes.js');
-const messagesRoutes = require('./routes/messages.routes.js');
+const announcementsRoutes = require("./routes/announcements.routes.js");
+const messagesRoutes = require("./routes/messages.routes.js");
 const notificationsRoutes = require('./routes/notifications.routes.js');
 const tripGenerationRoutes = require('./routes/tripGeneration.routes.js');
 
@@ -108,6 +107,8 @@ app.use("/api/fuel-requests", fuelRequestsRoutes);
 app.use("/api/incidents", incidentRoutes);
 app.use("/api/parent", parentRoutes);
 app.use("/api/staff", staffAttendanceRoutes);
+app.use('/api/announcements', announcementsRoutes);
+app.use('/api/transport-manager/announcements', announcementsRoutes);
 app.use("/api", routeRoutes);
 app.use("/api", stopRoutes);
 app.use("/api", studentAssignmentsRoutes);
@@ -128,7 +129,7 @@ app.use('/api/transport-manager', settingsRoutes);
 app.use('/api/transport-manager/reports', reportsRoutes);
 app.use('/api/transport-manager/safety-audits', safetyAuditsRoutes);
 app.use('/api/transport-manager/violations', violationsRoutes);
-app.use('/api/transport-manager/announcements', announcementsRoutes);
+
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/realtime', realtimeRoutes);
 app.use('/api/scheduler', schedulerRoutes);

@@ -181,16 +181,19 @@ class TripService {
         throw new Error(`Driver validation failed: ${validation.errors.join(', ')}`);
       }
 
+      // Determine trip type based on scheduled start time
+      const tripType = assignment.startTime < '12:00:00' ? 'Morning' : 'Evening';
+
       // Create trip
       const [result] = await connection.query(
         `INSERT INTO trips (
           routeId, routeAssignmentId, plate_number, driverUserId, assistantUserId,
-          tripDate, scheduledStartTime, status, createdByUserId
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'scheduled', ?)`,
+          tripDate, scheduledStartTime, trip_type, status, createdByUserId
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', ?)`,
         [
           assignment.routeId, routeAssignmentId, assignment.plate_number,
           assignment.driverUserId, assignment.assistantUserId,
-          tripDate, assignment.startTime, createdByUserId
+          tripDate, assignment.startTime, tripType, createdByUserId
         ]
       );
 

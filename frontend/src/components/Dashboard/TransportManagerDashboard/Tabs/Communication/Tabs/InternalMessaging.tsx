@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import './InternalMessaging.css';
 
@@ -204,7 +205,7 @@ const InternalMessaging = () => {
       </div>
 
       {showComposeModal && (
-        <div className="modal-overlay" onClick={() => setShowComposeModal(false)}>
+        createPortal(<div className="modal-overlay" onClick={() => setShowComposeModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Compose Message</h3>
@@ -247,11 +248,11 @@ const InternalMessaging = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
 
       {showMessageModal && selectedMessage && (
-        <div className="modal-overlay" onClick={handleCloseMessageModal}>
+        createPortal(<div className="modal-overlay" onClick={handleCloseMessageModal}>
           <div className="modal-content message-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Message Details</h3>
@@ -288,7 +289,7 @@ const InternalMessaging = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   );

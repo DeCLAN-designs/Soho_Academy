@@ -4,7 +4,7 @@ const { schedulerRuns, schedulerErrors } = require('../utils/metrics');
 
 /**
  * Generate automated daily trips based on vehicle-route assignments.
- * Run at 3:00 AM every day.
+ * Run at the configured morning and evening departure times every day.
  * 
  * This function now uses the centralized tripGenerationService for:
  * - Consistent validation logic
@@ -12,13 +12,14 @@ const { schedulerRuns, schedulerErrors } = require('../utils/metrics');
  * - Idempotent generation
  * - Proper error handling and rollback
  */
-const generateDailyTrips = async ({ date } = {}) => {
+const generateDailyTrips = async ({ date, period } = {}) => {
   console.log(`[Cron] [${new Date().toISOString()}] Running daily trips generation...`);
   try { schedulerRuns.inc(); } catch (e) { /* noop */ }
 
   try {
-    const result = await generateTripsForDate({ 
-      date
+    const result = await generateTripsForDate({
+      date,
+      period,
     });
     
     console.log(`[Cron] ${result.message}`);
@@ -53,14 +54,25 @@ const generateDailyTripsRange = async ({ startDate, endDate }) => {
 };
 
 const initCronJobs = () => {
-  // Schedule to run at 3:00 AM every day.
-  // The centralized service handles transport calendar checks.
-  cron.schedule("0 3 * * *", generateDailyTrips, {
+  // Schedule morning trips at 4:30 AM every day.
+  cron.schedule("30 4 * * *", () => generateDailyTrips({
+    date: new Date().toISOString().split('T')[0],
+    period: 'Morning'
+  }), {
     scheduled: true,
     timezone: "Africa/Nairobi"
   });
 
-  console.log("✅ Scheduled dailyTrips cron job (3:00 AM every day)");
+  // Schedule evening trips at 2:00 PM every day.
+  cron.schedule("0 14 * * *", () => generateDailyTrips({
+    date: new Date().toISOString().split('T')[0],
+    period: 'Evening'
+  }), {
+    scheduled: true,
+    timezone: "Africa/Nairobi"
+  });
+
+  console.log("✅ Scheduled dailyTrips cron jobs (Morning: 4:30 AM, Evening: 2:00 PM)");
 };
 
 module.exports = {

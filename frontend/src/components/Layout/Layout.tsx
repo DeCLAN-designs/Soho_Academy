@@ -101,6 +101,39 @@ export const Layout: React.FC = () => {
     }
   }
 
+  const handleMessagesClick = () => {
+    const navigationItems = getSidebarNavigationFlatItems(role)
+    const messagesSection = navigationItems.find((item) => 
+      item.id === 'messaging' || item.id === 'messages' || item.id === 'internal-messaging' || item.id === 'alerts'
+    )
+    
+    if (messagesSection) {
+      const targetPath = buildSectionPath(role, messagesSection.id)
+      closeMobileMenu()
+      navigate(targetPath)
+    }
+  }
+
+  const handleAnnouncementsClick = () => {
+    const navigationItems = getSidebarNavigationFlatItems(role)
+    const messagesSection = navigationItems.find((item) =>
+      item.id === 'messaging' || item.id === 'messages' || item.id === 'internal-messaging'
+    )
+    
+    if (messagesSection) {
+      const targetPath = `${buildSectionPath(role, messagesSection.id)}?tab=announcements`
+      closeMobileMenu()
+      navigate(targetPath)
+      return
+    }
+
+    const announcementsSection = navigationItems.find((item) => item.id === 'announcements')
+    if (announcementsSection) {
+      closeMobileMenu()
+      navigate(buildSectionPath(role, announcementsSection.id))
+    }
+  }
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMobileMenuOpen(false)
@@ -230,6 +263,8 @@ export const Layout: React.FC = () => {
             quickActions={quickActions}
             userName={fullName || displayName}
             profilePhotoUrl={user?.profilePhotoUrl || null}
+            onMessagesClick={handleMessagesClick}
+            onAnnouncementsClick={handleAnnouncementsClick}
           />
         </header>
         

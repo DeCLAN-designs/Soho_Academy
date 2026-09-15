@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import './EmergencyManagement.css';
 
@@ -251,7 +252,7 @@ const EmergencyManagement = () => {
       )}
 
       {showContactModal && (
-        <div className="modal-overlay" onClick={() => setShowContactModal(false)}>
+        createPortal(<div className="modal-overlay" onClick={() => setShowContactModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingContact ? 'Edit Contact' : 'Add Contact'}</h3>
@@ -307,11 +308,11 @@ const EmergencyManagement = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
 
       {showProtocolModal && (
-        <div className="modal-overlay" onClick={() => setShowProtocolModal(false)}>
+        createPortal(<div className="modal-overlay" onClick={() => setShowProtocolModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingProtocol ? 'Edit Protocol' : 'Add Protocol'}</h3>
@@ -353,7 +354,7 @@ const EmergencyManagement = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   );

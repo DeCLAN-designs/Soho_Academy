@@ -9,8 +9,9 @@ router.use(authenticate, authorizeRoles("Transport Manager", "School Admin"));
 // GET /api/transport-manager/trips - Get all trips
 router.get("/trips", async (req, res) => {
   try {
-    const [trips] = await pool.query(
-      `SELECT 
+    const { trip_type, date } = req.query;
+    
+    let query = `SELECT 
         t.id,
         t.routeId,
         t.routeAssignmentId,
@@ -21,6 +22,7 @@ router.get("/trips", async (req, res) => {
         r.endTime,
         t.tripDate,
         t.scheduledStartTime,
+        t.trip_type,
         t.numberPlate,
         t.driverUserId,
         t.assistantUserId,
@@ -37,9 +39,28 @@ router.get("/trips", async (req, res) => {
        FROM trips t
        JOIN routes r ON t.routeId = r.id
        LEFT JOIN users d ON t.driverUserId = d.id
-       LEFT JOIN users ba ON t.assistantUserId = ba.id
-       ORDER BY t.createdAt DESC`
-    );
+       LEFT JOIN users ba ON t.assistantUserId = ba.id`;
+    
+    const conditions = [];
+    const params = [];
+    
+    if (trip_type) {
+      conditions.push('t.trip_type = ?');
+      params.push(trip_type);
+    }
+    
+    if (date) {
+      conditions.push('t.tripDate = ?');
+      params.push(date);
+    }
+    
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    query += ' ORDER BY t.createdAt DESC';
+    
+    const [trips] = await pool.query(query, params);
 
     res.json({ trips });
   } catch (error) {
@@ -66,6 +87,7 @@ router.get("/trips/:tripId", async (req, res) => {
         r.endTime,
         t.tripDate,
         t.scheduledStartTime,
+        t.trip_type,
         t.numberPlate,
         t.driverUserId,
         t.assistantUserId,
@@ -159,13 +181,16 @@ router.post("/routes/:routeId/trips", async (req, res) => {
     );
     const route = routes[0];
 
+    // Determine trip type based on scheduled start time
+    const tripType = route.startTime < '12:00:00' ? 'Morning' : 'Evening';
+
     // Create trip
     const [tripResult] = await connection.query(
       `INSERT INTO trips (routeId, routeAssignmentId, numberPlate, driverUserId, assistantUserId, 
-        tripDate, scheduledStartTime, status, createdByUserId)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'scheduled', ?)`,
+        tripDate, scheduledStartTime, trip_type, status, createdByUserId)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', ?)`,
       [routeId, assignment.id, assignment.numberPlate, assignment.driverUserId, 
-       assignment.assistantUserId, route.routeDate, route.startTime, req.user.sub]
+       assignment.assistantUserId, route.routeDate, route.startTime, tripType, req.user.sub]
     );
 
     const tripId = tripResult.insertId;

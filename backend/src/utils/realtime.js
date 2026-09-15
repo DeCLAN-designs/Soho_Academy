@@ -82,6 +82,34 @@ const broadcastToClients = async (payload) => {
   }
 };
 
+const broadcastAnnouncement = async (announcement) => {
+  if (!wss) return;
+  const targetAudience = announcement.target_audience || 'All';
+  
+  for (const client of wss.clients) {
+    try {
+      if (client.readyState !== WebSocket.OPEN) continue;
+      const user = client.user;
+      if (!user) continue;
+
+      // Check if user's role matches target audience
+      const shouldReceive = targetAudience === 'All' || 
+                          targetAudience === user.role || 
+                          (targetAudience === 'Staff' && ['Driver', 'Bus Assistant', 'Transport Manager', 'School Admin'].includes(user.role)) ||
+                          (targetAudience === 'School Staff' && ['Transport Manager', 'School Admin'].includes(user.role));
+
+      if (shouldReceive) {
+        client.send(JSON.stringify({ 
+          type: 'announcement', 
+          data: announcement 
+        }));
+      }
+    } catch (err) {
+      console.warn('Realtime: failed to broadcast announcement to client', err);
+    }
+  }
+};
+
 const initRealtime = async (server) => {
   if (!WebSocket) {
     console.warn('Realtime: WebSocket package is unavailable, realtime support disabled');
@@ -119,6 +147,18 @@ const initRealtime = async (server) => {
     await broadcastToClients(payload);
   });
 
+  // Broadcast announcements to target audience
+  await subClient.subscribe('announcement', async (message) => {
+    let payload = null;
+    try {
+      payload = typeof message === 'string' ? JSON.parse(message) : message;
+    } catch (err) {
+      payload = message;
+    }
+
+    await broadcastAnnouncement(payload);
+  });
+
   wss.on('connection', (ws, req) => {
     try {
       const url = new URL(req.url, 'http://localhost');
@@ -136,7 +176,7 @@ const initRealtime = async (server) => {
         return;
       }
 
-      const allowedRoles = ['Admin', 'Transport Manager', 'Driver', 'Assistant', 'Bus Assistant'];
+      const allowedRoles = ['Admin', 'Transport Manager', 'School Admin', 'Driver', 'Assistant', 'Bus Assistant'];
       if (!payload || !payload.role || !allowedRoles.includes(payload.role)) {
         try { console.warn(`WS connection rejected for userId=${payload?.sub || 'unknown'} role=${payload?.role}`); } catch (e) {}
         ws.close(4003, 'Insufficient permissions for realtime connection');
@@ -202,4 +242,4 @@ const getTripProgress = async (tripId) => {
   }
 };
 
-module.exports = { initRealtime, publish, setTripProgress, getTripProgress };
+module.exports = { initRealtime, publish, setTripProgress, getTripProgress, broadcastAnnouncement };

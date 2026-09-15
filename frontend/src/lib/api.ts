@@ -217,7 +217,7 @@ export type StaffTripRecord = {
   assistantName: string;
   departureTime: string;
   status: string;
-  tripType: "Morning" | "Evening";
+  trip_type: "Morning" | "Evening";
   stopsCompleted: number;
   totalStops: number;
 };
@@ -1263,6 +1263,7 @@ export type TripRecord = {
   endTime: string | null;
   tripDate: string | null;
   scheduledStartTime: string | null;
+  trip_type: "Morning" | "Evening";
   numberPlate: string;
   driverUserId: number;
   assistantUserId: number | null;
@@ -1405,7 +1406,8 @@ export const transportManagerApi = {
   getStaff: () => get<{ staff: TransportStaffRecord[] }>("/transport-manager/staff"),
   getStudents: () =>
     get<{ students: TransportStudentRecord[] }>("/transport-manager/students"),
-  getTrips: () => get<{ trips: TripRecord[] }>("/transport-manager/trips"),
+  getTrips: (params?: { trip_type?: "Morning" | "Evening"; date?: string }) => 
+    get<{ trips: TripRecord[] }>("/transport-manager/trips", params as Record<string, string>),
   getTrip: (tripId: number) =>
     get<TripDetailRecord>(`/transport-manager/trips/${tripId}`),
   getParentRequests: () =>

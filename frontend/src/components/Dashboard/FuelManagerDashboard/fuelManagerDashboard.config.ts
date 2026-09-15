@@ -29,6 +29,10 @@ export const fuelManagerDashboardConfig: DashboardRoleConfig = {
       id: 'mileage-anomalies',
       label: 'Mileage Anomalies',
     },
+    {
+      id: 'messaging',
+      label: 'Messages',
+    },
   ],
   sections: {
     dashboard: {
@@ -60,6 +64,11 @@ export const fuelManagerDashboardConfig: DashboardRoleConfig = {
       heading: 'Mileage Anomalies',
       description: 'Monitor vehicles with unusual fuel consumption patterns.',
       cards: ['High risk', 'Medium risk', 'Low risk'],
+    },
+    messaging: {
+      heading: 'Messages',
+      description: 'View announcements and internal messages from the transport team.',
+      cards: ['Unread messages', 'Recent announcements', 'Message history'],
     },
   },
   role: 'Fuel Manager',

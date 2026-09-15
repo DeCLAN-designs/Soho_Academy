@@ -22,9 +22,10 @@ const { normalizeDate, getTodayDateInTimezone } = require('../utils/date.js');
  * @param {boolean} options.force - Force regeneration even if trips exist
  * @param {number} options.userId - User ID initiating manual generation
  * @param {string} options.generationSource - Source of generation ('cron', 'api', 'cli')
+ * @param {'Morning'|'Evening'} options.period - Optional period to generate
  * @returns {Object} Generation result with statistics
  */
-const generateTripsForDate = async ({ date, force = false, userId = null, generationSource = 'cli' }) => {
+const generateTripsForDate = async ({ date, force = false, userId = null, generationSource = 'cli', period = null }) => {
   const targetDate = normalizeDate(date) || getTodayDateInTimezone();
   const connection = await pool.getConnection();
   
@@ -79,25 +80,23 @@ const generateTripsForDate = async ({ date, force = false, userId = null, genera
       assignmentsProcessed++;
       
       // Determine time periods to generate
-      const timePeriods = assignment.timePeriod === 'Both' 
+      const timePeriods = period
+        ? [period]
+        : assignment.timePeriod === 'Both'
         ? ['Morning', 'Evening'] 
         : [assignment.timePeriod];
       
       for (const period of timePeriods) {
-        const departureTime = period === 'Morning' ? '06:30:00' : '15:30:00';
-        const returnTime = period === 'Morning' ? '08:30:00' : '17:30:00';
+        const departureTime = period === 'Morning' ? '04:30:00' : '14:00:00';
+        const returnTime = period === 'Morning' ? '09:00:00' : '19:30:00';
         const tripDateTime = `${targetDate} ${departureTime}`;
         
         // Check for existing trip (idempotency check)
-        const timeCondition = period === 'Morning'
-          ? "TIME(departure_time) < '12:00:00'"
-          : "TIME(departure_time) >= '12:00:00'";
-        
         const [existingTrip] = await connection.query(
           `SELECT id FROM trip_monitoring
-           WHERE route_id = ? AND DATE(departure_time) = ? AND ${timeCondition}
+           WHERE route_id = ? AND DATE(departure_time) = ? AND session = ?
            LIMIT 1`,
-          [assignment.routeId, targetDate]
+          [assignment.routeId, targetDate, period]
         );
         
         if (existingTrip.length > 0 && !force) {

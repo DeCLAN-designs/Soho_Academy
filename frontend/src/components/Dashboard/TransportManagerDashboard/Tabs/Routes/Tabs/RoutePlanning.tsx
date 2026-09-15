@@ -70,6 +70,24 @@ interface VehicleDetail {
   mileage?: number;
 }
 
+interface RawVehicleDetail {
+  id?: number;
+  plate_number?: string;
+  plateNumber?: string;
+  model?: string;
+  type?: VehicleDetail['type'];
+  year?: number;
+  capacity?: number;
+  color?: string;
+  fuelType?: VehicleDetail['fuelType'];
+  status?: VehicleDetail['status'];
+  assignedDriver?: string;
+  assignedAssistant?: string;
+  assignedRoute?: string;
+  lastService?: string;
+  mileage?: number;
+}
+
 interface StaffMember {
   id: number;
   firstName: string;
@@ -135,16 +153,16 @@ const apiService = {
   },
   getVehicleDetails: async (): Promise<VehicleDetail[]> => {
     const res = await axiosInstance.get('/vehicle-details');
-    const data = Array.isArray(res.data) ? res.data : [];
-    return data.map((v: any) => ({
-      id: v.id || v.plateNumber,
-      plate_number: v.plate_number || v.plateNumber,
+    const data: RawVehicleDetail[] = Array.isArray(res.data) ? res.data : [];
+    return data.map((v) => ({
+      id: v.id ?? 0,
+      plate_number: v.plate_number || v.plateNumber || '',
       model: v.model || '',
-      type: v.type || '',
+      type: v.type,
       year: v.year || 0,
       capacity: v.capacity || 0,
       color: v.color || '',
-      fuelType: v.fuelType || '',
+      fuelType: v.fuelType,
       status: v.status || 'Active',
       assignedDriver: v.assignedDriver || '',
       assignedAssistant: v.assignedAssistant || '',

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import './IncidentReports.css';
 
@@ -160,7 +161,7 @@ const IncidentReports = () => {
       </div>
 
       {selectedReport && !showStatusModal && (
-        <div className="modal-overlay" onClick={() => setSelectedReport(null)}>
+        createPortal(<div className="modal-overlay" onClick={() => setSelectedReport(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Incident Report Details</h3>
@@ -211,11 +212,11 @@ const IncidentReports = () => {
               )}
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
 
       {showStatusModal && selectedReport && (
-        <div className="modal-overlay" onClick={() => setShowStatusModal(false)}>
+        createPortal(<div className="modal-overlay" onClick={() => setShowStatusModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Update Incident Status</h3>
@@ -248,7 +249,7 @@ const IncidentReports = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   );

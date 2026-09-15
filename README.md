@@ -22,6 +22,7 @@
 - [🔧 Tech Stack](#-tech-stack)
 - [👥 User Roles](#-user-roles)
 - [✨ Features](#-features)
+- [📣 Communication & Announcements](#-communication--announcements)
 - [🚐 Vehicle-Route Assignments & Automation](#-vehicle-route-assignments--automation)
 - [🤖 Trip Generation Service](#-trip-generation-service)
 - [📁 Project Structure](#-project-structure)
@@ -431,7 +432,20 @@ graph LR
 #### **🚌 Automated Trip Generation**
 - **Daily Scheduling**: Automatic generation of trips based on route assignments and transport calendar.
 - **Calendar Integration**: Respects academic terms, holidays, and priority events (make-up, exam, sports days).
-- **Manual Overrides**: On-demand execution (`generateTodayTrips.js`) for trip generation and debugging.
+- **Manual Overrides**: On-demand, period-specific execution (`generateTodayTrips.js Morning|Evening`) for trip generation and recovery.
+
+### 📣 Communication & Announcements
+
+- **Messages and Announcements tabs** are available to Parent, Driver, Bus Assistant, Fuel Manager, School Admin, and Transport Manager messaging views where enabled by the dashboard.
+- Published announcements are read through `GET /api/announcements/public` and require authentication, but not a manager-only role.
+- Audience visibility is enforced server-side:
+  - `All`: every authenticated role
+  - `Parents`: Parent users
+  - `Drivers`: Driver users
+  - `Bus Assistants`: Bus Assistant users
+  - `Staff`: Drivers, Bus Assistants, Transport Managers, School Admins, and Fuel Managers
+- Announcement creation and management remain restricted to Transport Managers and School Admins.
+- Announcement details open in a portal-based modal above the dashboard header/sidebar, with Subject and content sections.
 
 ---
 
@@ -499,7 +513,7 @@ graph TB
     end
     
     subgraph "Daily Automation"
-        Cron[3:00 AM Cron Job]
+        Cron[4:30 AM / 2:00 PM Cron Jobs]
         Calendar[Transport Calendar Check]
         Active[Find Active Assignments]
         Trips[Generate Daily Trips]
@@ -545,11 +559,16 @@ AND status = 'Active'
 
 ### 🔄 Daily Automation Process
 
-Every day at **3:00 AM**, the system automatically:
+The system runs two daily jobs in the **Africa/Nairobi** timezone:
+
+- **4:30 AM**: generates only Morning trips.
+- **2:00 PM**: generates only Evening trips.
+
+Each scheduled run:
 
 1. **Checks transport availability** for the date via transport calendar
 2. **Finds active vehicle-route assignments** matching today's date
-3. **Generates trips** for each assignment (Morning and/or Evening sessions)
+3. **Generates trips** for the scheduled period only
 4. **Creates attendance records** for students assigned to those routes
 5. **Handles holidays** automatically by skipping disabled transport days
 
@@ -571,14 +590,17 @@ sequenceDiagram
     Assign->>Assign: Set Date Range (e.g., 2026-08-28 to 2026-12-15)
     Note over Assign,Cron: Assignment active for entire term
     
-    loop Every Day at 3:00 AM
+    loop Every Day
         Cron->>Calendar: Check transport availability
         Calendar-->>Cron: Transport enabled/disabled
         alt Transport Available
             Cron->>Assign: Find active assignments for today
             Assign-->>Cron: 3 active assignments
-            Cron->>Trips: Generate trips (Morning + Evening)
-            Trips-->>Cron: 6 trips created
+            alt 4:30 AM
+              Cron->>Trips: Generate Morning trips only
+            else 2:00 PM
+              Cron->>Trips: Generate Evening trips only
+            end
             Cron->>Attendance: Create attendance records
             Attendance-->>Cron: 9 student records created
             Note over Attendance,Staff: Staff can now check in students
@@ -608,9 +630,28 @@ The system includes a comprehensive **Vehicle Assignments** interface with:
 
 If you need to generate trips manually (e.g., after setting up assignments during the day):
 
+Run the script with exactly one period:
+
 ```bash
-cd backend
-node scripts/generateTodayTrips.js
+# Morning trips at 04:30
+node scripts/generateTodayTrips.js Morning
+
+# Evening trips at 14:00
+node scripts/generateTodayTrips.js Evening
+```
+
+The script requires exactly one period, uses today's date in `Africa/Nairobi`, checks transport-calendar availability, creates missing trips and attendance records, and skips existing route/date/period trips.
+
+```mermaid
+flowchart LR
+  Command[Manual CLI command] --> Morning[Morning]
+  Command --> Evening[Evening]
+  Morning --> M[04:30 departure]
+  Evening --> E[14:00 departure]
+  M --> Calendar[Transport calendar check]
+  E --> Calendar
+  Calendar --> Existing[Skip existing route/date/period trip]
+  Calendar --> Create[Create missing trip and attendance]
 ```
 
 #### Using the Trip Generation API
@@ -626,7 +667,7 @@ curl -X GET "http://localhost:5000/api/trip-generation/validate?date=2026-08-28"
 curl -X POST http://localhost:5000/api/trip-generation/generate \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"date": "2026-08-28"}'
+  -d '{"date": "2026-08-28", "period": "Morning"}'
 
 # Generate trips for a date range
 curl -X POST http://localhost:5000/api/trip-generation/generate-range \
@@ -638,7 +679,7 @@ curl -X POST http://localhost:5000/api/trip-generation/generate-range \
 curl -X POST http://localhost:5000/api/trip-generation/generate \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"date": "2026-08-28", "force": true}'
+  -d '{"date": "2026-08-28", "period": "Evening", "force": true}'
 ```
 
 #### Live Progress Monitoring
@@ -739,8 +780,8 @@ The **Trip Generation Service** is a centralized, idempotent system for generati
 ```mermaid
 graph TB
     subgraph "Generation Sources"
-        Cron[Cron Job<br/>3:00 AM Daily]
-        CLI[Manual Script<br/>generateTodayTrips.js]
+        Cron[Cron Jobs<br/>4:30 AM Morning / 2:00 PM Evening]
+        CLI[Manual Script<br/>generateTodayTrips.js Morning|Evening]
         API[REST API<br/>/api/trip-generation]
     end
     
@@ -819,7 +860,7 @@ sequenceDiagram
     participant DB as Database
     participant Audit as Audit Log
     
-    Client->>Service: generateTripsForDate({date})
+    Client->>Service: generateTripsForDate({date, period})
     Service->>DB: Check transport availability
     DB-->>Service: Available/Not Available
     
@@ -1133,12 +1174,19 @@ WHERE id = 4
 
 #### Option 1: Automatic Daily Generation (Cron)
 
-The system automatically generates trips daily at 3:00 AM:
+The system automatically generates trips in the `Africa/Nairobi` timezone:
+
+- `4:30 AM`: Morning trips only
+- `2:00 PM`: Evening trips only
 
 ```javascript
 // backend/src/jobs/dailyTrips.job.js
-cron.schedule('0 3 * * *', async () => {
-  await generateTripsForDate({ date: today });
+cron.schedule('30 4 * * *', async () => {
+  await generateTripsForDate({ date: today, period: 'Morning' });
+});
+
+cron.schedule('0 14 * * *', async () => {
+  await generateTripsForDate({ date: today, period: 'Evening' });
 });
 ```
 
@@ -1150,8 +1198,11 @@ Generate trips on-demand from the command line:
 
 ```bash
 cd backend
-node scripts/generateTodayTrips.js
+node scripts/generateTodayTrips.js Morning
+node scripts/generateTodayTrips.js Evening
 ```
+
+Pass exactly one period to generate only that session. The script uses the current date in `Africa/Nairobi`; transport-calendar availability and duplicate checks still apply.
 
 **When to use:** 
 - After setting up new vehicle-route assignments

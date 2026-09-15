@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useFuelManagement, type FuelRequest } from '../FuelManagement/FuelManagementContext';
 import './FuelRequestsTab.css';
 
@@ -168,7 +169,7 @@ const FuelRequestsTab = () => {
       </div>
 
       {showRejectModal && selectedRequest && (
-        <div className="fuel-modal-overlay" onClick={closeRejectModal}>
+        createPortal(<div className="fuel-modal-overlay" onClick={closeRejectModal}>
           <div className="fuel-modal fuel-modal-small" onClick={e => e.stopPropagation()}>
             <div className="fuel-modal-header">
               <div>
@@ -191,7 +192,7 @@ const FuelRequestsTab = () => {
               <button className="fuel-danger-button" onClick={handleReject}>Confirm Rejection</button>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   );

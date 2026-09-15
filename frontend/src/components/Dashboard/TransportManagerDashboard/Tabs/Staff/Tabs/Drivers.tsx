@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import axios from 'axios'
 import type { RoleSection } from '../../../../dashboard.types'
 import './Drivers.css'
@@ -279,7 +280,7 @@ const Drivers: React.FC<DriversProps> = ({ section }) => {
 
       {/* Add/Edit Modal */}
       {isModalOpen && (
-        <div className="drivers-modal-overlay">
+        createPortal(<div className="drivers-modal-overlay">
           <div className="drivers-modal">
             <div className="drivers-modal-header">
               <h2>{modalMode === 'add' ? 'Add New Driver' : 'Edit Driver'}</h2>
@@ -334,12 +335,12 @@ const Drivers: React.FC<DriversProps> = ({ section }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>, document.body)
       )}
 
       {/* Delete Confirmation Modal */}
       {isDeleteConfirmOpen && (
-        <div className="drivers-modal-overlay">
+        createPortal(<div className="drivers-modal-overlay">
           <div className="drivers-modal" style={{ maxWidth: '400px' }}>
             <div className="drivers-modal-header">
               <h2>Confirm Deletion</h2>
@@ -363,7 +364,7 @@ const Drivers: React.FC<DriversProps> = ({ section }) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   )

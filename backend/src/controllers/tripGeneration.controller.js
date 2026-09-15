@@ -10,14 +10,29 @@ const { getDashboardMetrics, getLiveTripProgress, getTripAttendanceDetails } = r
  */
 const generateTripsForDateHandler = async (req, res) => {
   try {
-    const { date, force } = req.body;
+    const { date, force, period } = req.body;
     const userId = req.user ? Number(req.user.sub) : null;
+
+    const currentHour = Number(new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Nairobi',
+      hour: '2-digit',
+      hourCycle: 'h23',
+    }).format(new Date()));
+    const generationPeriod = period || (currentHour < 12 ? 'Morning' : 'Evening');
+
+    if (!['Morning', 'Evening'].includes(generationPeriod)) {
+      return res.status(400).json({
+        success: false,
+        message: 'period must be Morning or Evening.',
+      });
+    }
     
     const result = await generateTripsForDate({ 
       date, 
       force: force === true,
       userId,
-      generationSource: 'api'
+      generationSource: 'api',
+      period: generationPeriod,
     });
     
     return res.status(200).json({

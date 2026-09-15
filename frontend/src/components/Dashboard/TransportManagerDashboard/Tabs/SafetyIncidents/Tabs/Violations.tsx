@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import './Violations.css';
 
@@ -298,7 +299,7 @@ const Violations = () => {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        createPortal(<div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingViolation ? 'Edit Violation' : 'Add Violation'}</h3>
@@ -361,11 +362,11 @@ const Violations = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
 
       {showActionModal && actionViolation && (
-        <div className="modal-overlay" onClick={() => setShowActionModal(false)}>
+        createPortal(<div className="modal-overlay" onClick={() => setShowActionModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Take Action on Violation</h3>
@@ -410,7 +411,7 @@ const Violations = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   );

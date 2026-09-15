@@ -17,6 +17,7 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'trips', label: 'Trips' },
         { id: 'requests', label: 'Request' },
         { id: 'alerts', label: 'Alerts' },
+        { id: 'messages', label: 'Messages' },
     ],
     Driver: [
         { id: 'dashboard', label: 'Dashboard' },
@@ -127,6 +128,7 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'contactChanges', label: 'Contact Changes' },
         { id: 'withdrawals', label: 'Withdrawals' },
         { id: 'masterData', label: 'Master Data' },
+        { id: 'messages', label: 'Messages' },
     ],
     'Fuel Manager': [
         { id: 'dashboard', label: 'Dashboard' },
@@ -135,6 +137,7 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'fuel-logs', label: 'Fuel Logs' },
         { id: 'analytics', label: 'Analytics' },
         { id: 'mileage-anomalies', label: 'Mileage Anomalies' },
+        { id: 'messages', label: 'Messages' },
     ],
 }
 
