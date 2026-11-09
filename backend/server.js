@@ -50,6 +50,9 @@ const startServer = async () => {
     tryListen(PORT, 5);
   } catch (error) {
     console.error("❌ Failed to connect to MySQL", error);
+    console.error(
+      "On Render this usually means MySQL env vars are missing or still point at localhost. Render does not host MySQL — set DB_HOST to an external MySQL hostname, plus DB_USER, DB_PASSWORD, DB_NAME, DB_PORT, and DB_SSL=true if the provider requires SSL."
+    );
     process.exit(1);
   }
 };
