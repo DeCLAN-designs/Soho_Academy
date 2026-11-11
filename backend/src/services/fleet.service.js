@@ -446,7 +446,9 @@ class FleetService {
     }
     
     if (isCompliant !== undefined) {
-      query += " AND v.isCompliant = ?";
+      query += ` AND (v.isCompliant
+        AND (v.insuranceExpiryDate IS NULL OR v.insuranceExpiryDate > CURDATE())
+        AND (v.inspectionExpiryDate IS NULL OR v.inspectionExpiryDate > CURDATE())) = ?`;
       params.push(isCompliant);
     }
     

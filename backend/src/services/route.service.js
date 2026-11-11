@@ -276,7 +276,11 @@ class RouteService {
 
       // Validate vehicle
       const [vehicle] = await connection.query(
-        `SELECT * FROM vehicles WHERE plate_number = ?`,
+        `SELECT *,
+          (isCompliant
+            AND (insuranceExpiryDate IS NULL OR insuranceExpiryDate > CURDATE())
+            AND (inspectionExpiryDate IS NULL OR inspectionExpiryDate > CURDATE())) AS isCompliant
+        FROM vehicles WHERE plate_number = ?`,
         [plate_number]
       );
 

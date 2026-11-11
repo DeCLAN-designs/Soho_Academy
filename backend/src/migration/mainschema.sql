@@ -109,11 +109,10 @@ CREATE TABLE IF NOT EXISTS vehicles (
     nextServiceMileage INT NULL,
     currentMileage INT NOT NULL DEFAULT 0 COMMENT 'Odometer reading',
     fuelCapacity DECIMAL(8,2) NULL COMMENT 'Tank capacity in liters',
+    -- MySQL forbids CURDATE() in generated columns; expiry dates are checked at query time.
     isCompliant BOOLEAN GENERATED ALWAYS AS (
-        (status NOT IN ('maintenance', 'breakdown', 'retired')) AND
-        (insuranceExpiryDate IS NULL OR insuranceExpiryDate > CURDATE()) AND
-        (inspectionExpiryDate IS NULL OR inspectionExpiryDate > CURDATE())
-    ) STORED COMMENT 'Computed: vehicle is fully compliant',
+        status NOT IN ('maintenance', 'breakdown', 'retired')
+    ) STORED COMMENT 'Computed: vehicle status allows operation',
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_vehicle_status (status),

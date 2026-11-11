@@ -1,0 +1,62 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# MySQL is external (e.g. freedb.tech); set DATABASE_URL in the Render dashboard.
+services:
+  - type: web
+    name: soho-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_TIMEZONE
+        value: "+03:00"
+      - key: APP_TIMEZONE
+        value: Africa/Nairobi
+      - key: TZ
+        value: Africa/Nairobi
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: R2_PUBLIC_BASE_URL
+        sync: false
+
+  - type: web
+    name: soho-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: /api
+      - key: VITE_API_URL
+        value: /api
+    routes:
+      # Proxy API calls to the backend so the browser stays same-origin.
+      - type: rewrite
+        source: /api/*
+        destination: https://soho-backend.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
