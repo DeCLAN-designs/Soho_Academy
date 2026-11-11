@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "keywords": [],
     "dev": "nodemon server.js",
     "start": "node server.js",
     "generate-trips-range": "node scripts/generateDailyTripsRange.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "db:setup": "node src/migration/setup_schema.js"
   },
   "keywords": [],
   "author": "",
