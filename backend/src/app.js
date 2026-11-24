@@ -51,19 +51,35 @@ const app = express();
 // 304 responses with empty bodies which can confuse fetch clients.
 app.set("etag", false);
 
-const frontendOrigin =
-  process.env.FRONTEND_ORIGIN ||
-  process.env.FRONTEND_URL ||
-  "http://localhost:5173";
+const allowedOrigins = [
+  process.env.FRONTEND_ORIGIN,
+  process.env.FRONTEND_URL,
+  process.env.PROD_FRONTEND_ORIGIN,
+  process.env.PROD_FRONTEND_URL,
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:3000",
+  "https://soho-academy-frontend.onrender.com"
+].filter(Boolean);
 
 // Security middleware
 app.use(helmet());
 
-// CORS — restrict in production
+// CORS — allow the configured frontend origins and local development hosts.
 app.use(
   cors({
-    origin: frontendOrigin,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Cookie"],
   })
 );
 
