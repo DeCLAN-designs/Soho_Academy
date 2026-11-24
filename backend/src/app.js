@@ -60,7 +60,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:3000",
-  "https://soho-academy-frontend.onrender.com"
+  "https://soho-academy-frontend.onrender.com",
 ].filter(Boolean);
 
 // Security middleware
