@@ -1,4 +1,4 @@
-const configuredApiBaseUrl = import.meta.env.example.VITE_API_BASE_URL?.trim();
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
 const API_BASE_URL =
   (configuredApiBaseUrl && configuredApiBaseUrl.length > 0
     ? configuredApiBaseUrl
