@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../../../../../lib/api';
 import type { RoleSection } from '../../../../dashboard.types';
 import './RouteOptimization.css';
 
@@ -38,8 +39,6 @@ const RouteOptimization: React.FC<RouteOptimizationProps> = ({ section }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api`;
 
   const axiosInstance = axios.create({
     baseURL: API_BASE_URL,

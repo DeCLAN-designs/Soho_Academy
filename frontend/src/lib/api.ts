@@ -1,9 +1,11 @@
-const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-const API_BASE_URL =
-  (configuredApiBaseUrl && configuredApiBaseUrl.length > 0
-    ? configuredApiBaseUrl
-    : "/api"
-  ).replace(/\/$/, "");
+const configuredApiBaseUrl =
+  import.meta.env.VITE_API_BASE_URL?.trim() ||
+  import.meta.env.VITE_API_URL?.trim();
+const configuredBackendUrl = import.meta.env.VITE_BACKEND_URL?.trim();
+export const API_BASE_URL = (
+  configuredApiBaseUrl ||
+  `${configuredBackendUrl || "https://soho-academy-backendv1.onrender.com"}/api`
+).replace(/\/$/, "");
 const AUTH_TOKEN_KEY = "soho_auth_token";
 
 type ApiEnvelope<T> = {

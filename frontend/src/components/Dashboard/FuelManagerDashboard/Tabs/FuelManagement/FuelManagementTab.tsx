@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../../../../../lib/api';
 import type { RoleSection } from '../../../dashboard.types';
 import './FuelManagementTab.css';
 
@@ -140,7 +141,7 @@ const isApiStatusError = (err: unknown): err is ApiStatusError =>
 
 // ─── API Service ──────────────────────────────────────────────────────────────
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:5000/api';
+
 
 const getAuthToken = () => {
   if (typeof window === 'undefined') return null;

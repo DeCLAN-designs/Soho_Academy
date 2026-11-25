@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { API_BASE_URL } from '../lib/api';
 
 interface WebSocketContextType {
   socket: WebSocket | null;
@@ -18,8 +19,11 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     const token = localStorage.getItem('soho_auth_token');
     if (!token) return;
 
-    const wsUrl = `ws://localhost:5000/ws?token=${token}`;
-    const ws = new WebSocket(wsUrl);
+    const wsUrl = new URL(API_BASE_URL);
+    wsUrl.protocol = wsUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    wsUrl.pathname = '/ws';
+    wsUrl.search = new URLSearchParams({ token }).toString();
+    const ws = new WebSocket(wsUrl.toString());
 
     ws.onopen = () => {
       console.log('WebSocket connected');

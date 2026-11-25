@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../../../../lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -110,7 +111,7 @@ const isApiStatusError = (err: unknown): err is ApiStatusError =>
 
 // ─── API Service ──────────────────────────────────────────────────────────────
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:5000/api';
+
 
 const getAuthToken = () => {
   if (typeof window === 'undefined') return null;

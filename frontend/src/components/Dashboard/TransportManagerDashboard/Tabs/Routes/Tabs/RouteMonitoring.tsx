@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../../../../../../lib/api';
 import type { RoleSection } from '../../../../dashboard.types';
 import './RouteMonitoring.css';
 
@@ -79,8 +80,7 @@ const isApiError = (err: unknown): err is ApiError =>
 
 // ─── API Setup ────────────────────────────────────────────────────────────────
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_URL as string) || 'http://localhost:5000/api';
+
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
