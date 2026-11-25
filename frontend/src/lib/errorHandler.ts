@@ -53,23 +53,9 @@ export const redirectToLogin = (): void => {
 export const handleApiError = (error: any): void => {
   console.error('API Error:', error)
 
-  // Check if it's a connection/server error
-  if (isConnectionError(error)) {
-    console.log('Connection error detected, clearing auth data and redirecting to login')
-    redirectToLogin()
-    return
-  }
-
   // Handle authentication errors (401)
   if (error instanceof ApiError && error.status === 401) {
     console.log('Authentication error detected, clearing auth data and redirecting to login')
-    redirectToLogin()
-    return
-  }
-
-  // Handle forbidden errors (403)
-  if (error instanceof ApiError && error.status === 403) {
-    console.log('Forbidden error detected, clearing auth data and redirecting to login')
     redirectToLogin()
     return
   }
@@ -169,23 +155,11 @@ export const setupGlobalErrorHandlers = (): void => {
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason)
-    
-    // If it's a connection error, handle it
-    if (isConnectionError(event.reason)) {
-      event.preventDefault()
-      redirectToLogin()
-    }
   })
 
   // Handle uncaught errors
   window.addEventListener('error', (event) => {
     console.error('Uncaught error:', event.error)
-    
-    // If it's a connection error, handle it
-    if (isConnectionError(event.error)) {
-      event.preventDefault()
-      redirectToLogin()
-    }
   })
 }
 

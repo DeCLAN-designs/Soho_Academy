@@ -50,14 +50,6 @@ const isNetworkError = (error: any): boolean => {
   )
 }
 
-const isServerError = (error: any): boolean => {
-  return error instanceof ApiError && (error.status >= 500 || error.status === 0)
-}
-
-const isConnectionError = (error: any): boolean => {
-  return isNetworkError(error) || isServerError(error)
-}
-
 // Clear all authentication data
 const clearAuthData = (): void => {
   if (typeof window === 'undefined') return
@@ -91,25 +83,10 @@ const redirectToLogin = (): void => {
 const handleApiError = (error: any): void => {
   console.error('API Error:', error)
 
-  // Check if it's a connection/server error
-  if (isConnectionError(error)) {
-    console.log('Connection error detected, clearing auth data and redirecting to login')
-    redirectToLogin()
-    return
-  }
-
-  // Handle authentication errors (401)
+  // Only an unauthorized response means the stored session is invalid.
   if (error instanceof ApiError && error.status === 401) {
     console.log('Authentication error detected, clearing auth data and redirecting to login')
     redirectToLogin()
-    return
-  }
-
-  // Handle forbidden errors (403)
-  if (error instanceof ApiError && error.status === 403) {
-    console.log('Forbidden error detected, clearing auth data and redirecting to login')
-    redirectToLogin()
-    return
   }
 }
 

@@ -66,16 +66,6 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    // Check if it's a connection error
-    if (isConnectionError(error)) {
-      console.log('Connection error detected in ErrorBoundary, clearing auth data and redirecting to login')
-      // Clear auth data and redirect
-      clearAuthData()
-      setTimeout(() => {
-        redirectToLogin()
-      }, 100)
-    }
-
     return { hasError: true, error }
   }
 
