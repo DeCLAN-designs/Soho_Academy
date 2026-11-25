@@ -5,7 +5,8 @@ This runbook describes deployment, migrations, health checks, monitoring, and re
 Prerequisites
 - MySQL instance accessible (ensure credentials in env: `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`).
 - Redis instance accessible (env: `REDIS_URL`).
-- Environment variables: `JWT_SECRET`, `APP_TIMEZONE` (default Africa/Nairobi), optional `PORT`, `NODE_ENV`.
+- Environment variables: `JWT_SECRET`, `APP_TIMEZONE` (default Africa/Nairobi), optional `PORT`, `NODE_ENV`, and `DB_CONNECTION_LIMIT` (default 2).
+- Keep the combined connection limits across backend instances below MySQL's per-user connection limit.
 - Prometheus scraping the `/metrics` endpoint on the backend.
 
 Apply database migrations

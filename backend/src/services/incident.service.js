@@ -95,11 +95,49 @@ const incidentReportUploadsTableSql =
     )
   `;
 
+const ensureIncidentActionTakenColumn = async () => {
+  const [columns] = await pool.query(
+    `
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'incident_reports'
+        AND COLUMN_NAME IN ('actionTaken', 'immediateActionTaken')
+    `
+  );
+  const columnNames = new Set(columns.map((column) => column.COLUMN_NAME));
+
+  if (columnNames.has("actionTaken")) {
+    return;
+  }
+
+  try {
+    await pool.query(
+      "ALTER TABLE incident_reports ADD COLUMN actionTaken TEXT NULL AFTER description"
+    );
+  } catch (error) {
+    if (error.code !== "ER_DUP_FIELDNAME") {
+      throw error;
+    }
+  }
+
+  if (columnNames.has("immediateActionTaken")) {
+    await pool.query(
+      `
+        UPDATE incident_reports
+        SET actionTaken = immediateActionTaken
+        WHERE actionTaken IS NULL
+      `
+    );
+  }
+};
+
 const ensureIncidentTables = () => {
   if (!ensureIncidentTablesPromise) {
     ensureIncidentTablesPromise = (async () => {
       await ensureUsersTable();
       await pool.query(incidentReportsTableSql);
+      await ensureIncidentActionTakenColumn();
       await pool.query(uploadsTableSql);
       await pool.query(incidentReportUploadsTableSql);
     })();

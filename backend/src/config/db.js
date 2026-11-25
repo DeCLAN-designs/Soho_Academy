@@ -50,7 +50,7 @@ const pool = mysql.createPool({
   database,
   timezone: process.env.DB_TIMEZONE || "+03:00",
   waitForConnections: true,
-  connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
+  connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 2),
   queueLimit: 0,
   connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT || 15000),
   ssl: useSsl
