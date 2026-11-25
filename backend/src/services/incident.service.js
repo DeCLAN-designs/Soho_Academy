@@ -170,6 +170,43 @@ const ensureIncidentNumberPlateColumn = async () => {
   }
 };
 
+const ensureIncidentReviewColumns = async () => {
+  const [columns] = await pool.query(
+    `
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'incident_reports'
+        AND COLUMN_NAME IN ('confirmedBy', 'status')
+    `
+  );
+  const columnNames = new Set(columns.map((column) => column.COLUMN_NAME));
+
+  if (!columnNames.has("confirmedBy")) {
+    try {
+      await pool.query(
+        "ALTER TABLE incident_reports ADD COLUMN confirmedBy VARCHAR(255) NULL AFTER numberPlate"
+      );
+    } catch (error) {
+      if (error.code !== "ER_DUP_FIELDNAME") {
+        throw error;
+      }
+    }
+  }
+
+  if (!columnNames.has("status")) {
+    try {
+      await pool.query(
+        "ALTER TABLE incident_reports ADD COLUMN status ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending' AFTER confirmedBy"
+      );
+    } catch (error) {
+      if (error.code !== "ER_DUP_FIELDNAME") {
+        throw error;
+      }
+    }
+  }
+};
+
 const ensureIncidentTables = () => {
   if (!ensureIncidentTablesPromise) {
     ensureIncidentTablesPromise = (async () => {
@@ -177,6 +214,7 @@ const ensureIncidentTables = () => {
       await pool.query(incidentReportsTableSql);
       await ensureIncidentActionTakenColumn();
       await ensureIncidentNumberPlateColumn();
+      await ensureIncidentReviewColumns();
       await pool.query(uploadsTableSql);
       await pool.query(incidentReportUploadsTableSql);
     })();

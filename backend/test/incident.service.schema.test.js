@@ -20,6 +20,10 @@ describe("incident.service schema compatibility", () => {
           return [[{ COLUMN_NAME: "plate_number" }], []];
         }
 
+        if (query.includes("'confirmedBy', 'status'")) {
+          return [[], []];
+        }
+
         return [[{ COLUMN_NAME: "immediateActionTaken" }], []];
       }
 
@@ -27,7 +31,7 @@ describe("incident.service schema compatibility", () => {
     });
   });
 
-  test("adds the legacy actionTaken column and preserves existing values", async () => {
+  test("adds legacy incident columns and preserves existing values", async () => {
     await ensureIncidentTables();
 
     expect(pool.query).toHaveBeenCalledWith(
@@ -43,6 +47,16 @@ describe("incident.service schema compatibility", () => {
     );
     expect(pool.query).toHaveBeenCalledWith(
       expect.stringContaining("SET numberPlate = plate_number")
+    );
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "ADD COLUMN confirmedBy VARCHAR(255) NULL AFTER numberPlate"
+      )
+    );
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "ADD COLUMN status ENUM('Pending', 'Approved', 'Rejected')"
+      )
     );
   });
 });
