@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
+import { apiUrl } from '../../../../../../lib/api';
 import './InternalMessaging.css';
 
 interface Message {
@@ -51,11 +52,11 @@ const InternalMessaging = () => {
       const token = localStorage.getItem('soho_auth_token');
       
       const [messagesRes, usersRes] = await Promise.all([
-        axios.get('/api/messages', {
+        axios.get(apiUrl('/messages'), {
           headers: { Authorization: `Bearer ${token}` },
           params: filter !== 'All' ? { status: filter } : {},
         }),
-        axios.get('/api/users/transport-team', {
+        axios.get(apiUrl('/users/transport-team'), {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -72,7 +73,7 @@ const InternalMessaging = () => {
   const handleMarkAsRead = async (id: number) => {
     try {
       const token = localStorage.getItem('soho_auth_token');
-      await axios.patch(`/api/messages/${id}/read`, {}, {
+      await axios.patch(`${apiUrl('/messages')}/${id}/read`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchData();
@@ -86,7 +87,7 @@ const InternalMessaging = () => {
     
     try {
       const token = localStorage.getItem('soho_auth_token');
-      await axios.delete(`/api/messages/${id}`, {
+      await axios.delete(`${apiUrl('/messages')}/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchData();
@@ -98,7 +99,7 @@ const InternalMessaging = () => {
   const handleSend = async () => {
     try {
       const token = localStorage.getItem('soho_auth_token');
-      await axios.post('/api/messages', {
+      await axios.post(apiUrl('/messages'), {
         receiver_id: parseInt(formData.receiverId),
         subject: formData.subject,
         content: formData.content,

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import axios from 'axios';
+import { apiUrl } from '../lib/api';
 
 interface NotificationContextType {
   unreadMessages: number;
@@ -22,7 +23,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       const token = localStorage.getItem('soho_auth_token');
       
       // Get unread messages
-      const messagesRes = await axios.get('/api/messages', {
+      const messagesRes = await axios.get(apiUrl('/messages'), {
         headers: { Authorization: `Bearer ${token}` }
       });
       const messages = messagesRes.data?.data?.messages || [];
@@ -30,7 +31,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       setUnreadMessages(unreadMessagesCount);
 
       // Get unread announcements (published in last 7 days) - use public endpoint for all roles
-      const announcementsRes = await axios.get('/api/announcements/public', {
+      const announcementsRes = await axios.get(apiUrl('/announcements/public'), {
         headers: { Authorization: `Bearer ${token}` },
         params: { status: 'Published' }
       });

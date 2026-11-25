@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
+import { apiUrl } from '../../../lib/api';
 import './MessagingView.css';
 
 interface Message {
@@ -91,14 +92,14 @@ const MessagingView = ({ allowedRecipients = ['Transport Manager', 'School Admin
       const token = localStorage.getItem('soho_auth_token');
       
       const [messagesRes, announcementsRes, usersRes] = await Promise.all([
-        axios.get('/api/messages', {
+        axios.get(apiUrl('/messages'), {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get('/api/announcements/public', {
+        axios.get(apiUrl('/announcements/public'), {
           headers: { Authorization: `Bearer ${token}` },
           params: { status: 'Published' }
         }),
-        axios.get('/api/users/transport-team', {
+        axios.get(apiUrl('/users/transport-team'), {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -120,7 +121,7 @@ const MessagingView = ({ allowedRecipients = ['Transport Manager', 'School Admin
     try {
       const token = localStorage.getItem('soho_auth_token');
       
-      await axios.post('/api/messages', {
+      await axios.post(apiUrl('/messages'), {
         receiver_id: parseInt(formData.receiverId),
         subject: formData.subject,
         content: formData.content,
@@ -141,7 +142,7 @@ const MessagingView = ({ allowedRecipients = ['Transport Manager', 'School Admin
     try {
       const token = localStorage.getItem('soho_auth_token');
       
-      await axios.patch(`/api/messages/${messageId}/read`, {}, {
+      await axios.patch(`${apiUrl('/messages')}/${messageId}/read`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

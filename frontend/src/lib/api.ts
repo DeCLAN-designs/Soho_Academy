@@ -611,7 +611,7 @@ export type NumberPlateRecord = {
   updated_at: string;
 };
 
-const toUrl = (path: string) => {
+export const apiUrl = (path: string) => {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${API_BASE_URL}${normalizedPath}`;
 };
@@ -697,7 +697,7 @@ const post = async <TPayload, TResponse>(
   payload: TPayload
 ): Promise<ApiEnvelope<TResponse>> => {
   try {
-    const response = await enhancedFetch(toUrl(path), {
+    const response = await enhancedFetch(apiUrl(path), {
       method: "POST",
       headers: buildHeaders(true),
       credentials: "include",
@@ -739,7 +739,7 @@ const postFormData = async <TResponse>(
   payload: FormData
 ): Promise<ApiEnvelope<TResponse>> => {
   try {
-    const response = await enhancedFetch(toUrl(path), {
+    const response = await enhancedFetch(apiUrl(path), {
       method: "POST",
       headers: buildHeaders(false),
       credentials: "include",
@@ -781,7 +781,7 @@ const patch = async <TPayload, TResponse>(
   payload: TPayload
 ): Promise<ApiEnvelope<TResponse>> => {
   try {
-    const response = await enhancedFetch(toUrl(path), {
+    const response = await enhancedFetch(apiUrl(path), {
       method: "PATCH",
       headers: buildHeaders(true),
       credentials: "include",
@@ -823,7 +823,7 @@ const patchFormData = async <TResponse>(
   payload: FormData
 ): Promise<ApiEnvelope<TResponse>> => {
   try {
-    const response = await enhancedFetch(toUrl(path), {
+    const response = await enhancedFetch(apiUrl(path), {
       method: "PATCH",
       headers: buildHeaders(false),
       credentials: "include",
@@ -864,7 +864,7 @@ const put = async <TPayload, TResponse>(
   path: string,
   payload: TPayload
 ): Promise<ApiEnvelope<TResponse>> => {
-  const response = await fetch(toUrl(path), {
+  const response = await fetch(apiUrl(path), {
     method: "PUT",
     headers: buildHeaders(true),
     credentials: "include",
@@ -897,7 +897,7 @@ const put = async <TPayload, TResponse>(
 
 const get = async <TResponse>(path: string): Promise<ApiEnvelope<TResponse>> => {
   try {
-    const response = await enhancedFetch(toUrl(path), {
+    const response = await enhancedFetch(apiUrl(path), {
       method: "GET",
       headers: buildHeaders(false),
       credentials: "include",
@@ -936,7 +936,7 @@ const get = async <TResponse>(path: string): Promise<ApiEnvelope<TResponse>> => 
 };
 
 const getRaw = async <TResponse>(path: string): Promise<TResponse> => {
-  const response = await fetch(toUrl(path), {
+  const response = await fetch(apiUrl(path), {
     method: "GET",
     headers: buildHeaders(false),
     credentials: "include",
@@ -968,7 +968,7 @@ const getRaw = async <TResponse>(path: string): Promise<TResponse> => {
 };
 
 const del = async <TResponse>(path: string): Promise<ApiEnvelope<TResponse>> => {
-  const response = await fetch(toUrl(path), {
+  const response = await fetch(apiUrl(path), {
     method: "DELETE",
     headers: buildHeaders(false),
     credentials: "include",
