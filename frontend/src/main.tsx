@@ -14,8 +14,6 @@ import {
   preloadCriticalResources,
   runAllLCPOptimizations
 } from './components/LCPOptimizer/LCPOptimizer'
-import { WebSocketProvider } from './contexts/WebSocketContext'
-import AnnouncementNotification from './components/Notifications/AnnouncementNotification'
 
 // Performance monitoring component with minimal blocking
 const PerformanceMonitor = ({ children }: { children: React.ReactNode }) => {
@@ -79,12 +77,9 @@ const initializeApp = () => {
   
   root.render(
     <StrictMode>
-      <WebSocketProvider>
-        <PerformanceMonitor>
-          <App />
-          <AnnouncementNotification />
-        </PerformanceMonitor>
-      </WebSocketProvider>
+      <PerformanceMonitor>
+        <App />
+      </PerformanceMonitor>
     </StrictMode>
   )
 

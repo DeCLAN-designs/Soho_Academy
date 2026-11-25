@@ -9,7 +9,6 @@ import type {
 } from '../../../lib/api'
 import type { DashboardRoleConfig } from '../dashboard.types'
 import Loader from '../../Loader/Loader'
-import MessagingView from '../shared/MessagingView'
 import './SchoolAdminDashboard.css'
 
 type SchoolAdminDashboardProps = {
@@ -69,7 +68,6 @@ export const schoolAdminDashboardConfig: DashboardRoleConfig = {
         { id: 'contactChanges', label: 'Contact Changes' },
         { id: 'withdrawals', label: 'Withdrawals' },
         { id: 'masterData', label: 'Master Data' },
-        { id: 'messages', label: 'Messages' },
     ],
     sections: {
         overview: {
@@ -116,11 +114,6 @@ export const schoolAdminDashboardConfig: DashboardRoleConfig = {
                 'Correct admission profile fields',
                 'Keep student directory current',
             ],
-        },
-        messages: {
-            heading: 'Messages',
-            description: 'View announcements and internal messages from the school administration.',
-            cards: ['Unread messages', 'Recent announcements', 'Message history'],
         },
     },
 }
@@ -949,10 +942,6 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
         </div>
     )
 
-    const renderMessagesContent = () => (
-        <MessagingView allowedRecipients={['Transport Manager']} />
-    )
-
     const renderSectionContent = () => {
         if (isLoading) {
             return <Loader variant="section" label="Loading student data" />
@@ -967,8 +956,6 @@ const SchoolAdminDashboard = ({ activeSection }: SchoolAdminDashboardProps) => {
                 return renderWithdrawalsContent()
             case 'masterData':
                 return renderMasterDataContent()
-            case 'messages':
-                return renderMessagesContent()
             case 'overview':
             default:
                 return renderOverviewContent()

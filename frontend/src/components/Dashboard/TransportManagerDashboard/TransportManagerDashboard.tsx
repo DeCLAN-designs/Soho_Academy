@@ -6,7 +6,6 @@ import { isStudentsSubTab } from './Tabs/Students/studentsSubTabs'
 import { isStaffSubTab } from './Tabs/Staff/staffSubTabs'
 import { isSafetyIncidentsSubTab } from './Tabs/SafetyIncidents/safetyIncidentsSubTabs'
 import { isRequestsSubTab } from './Tabs/Requests/requestsSubTabs'
-import { isCommunicationSubTab } from './Tabs/Communication/communicationSubTabs'
 import { isReportsSubTab } from './Tabs/Reports/reportsSubTabs'
 import Loader from '../../Loader/Loader'
 import { transportManagerDashboardConfig } from './transportManagerDashboard.config'
@@ -19,7 +18,6 @@ import StudentsTab from './Tabs/Students/StudentsTab'
 import StaffTab from './Tabs/Staff/StaffTab'
 import SafetyIncidentsTab from './Tabs/SafetyIncidents/SafetyIncidentsTab'
 import RequestsTab from './Tabs/Requests/RequestsTab'
-import CommunicationTab from './Tabs/Communication/CommunicationTab'
 import ReportsTab from './Tabs/Reports/ReportsTab'
 import AuditLogsTab from './Tabs/AuditLogs/AuditLogsTab'
 import SettingsTab from './Tabs/Settings/SettingsTab'
@@ -78,11 +76,6 @@ const TransportManagerDashboard = ({ activeSection }: TransportManagerDashboardP
         // Requests section and sub-tabs
         if (sectionId === 'requests' || isRequestsSubTab(sectionId)) {
             return <RequestsTab section={section} activeSection={sectionId} />
-        }
-
-        // Communication section and sub-tabs
-        if (sectionId === 'communication' || isCommunicationSubTab(sectionId)) {
-            return <CommunicationTab section={section} activeSection={sectionId} />
         }
 
         // Reports section and sub-tabs

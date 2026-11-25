@@ -2,7 +2,6 @@ import './App.css'
 import React, { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import AuthProvider, { useAuth } from './contexts/AuthContext'
-import { NotificationProvider } from './contexts/NotificationContext'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import Loader from './components/Loader/Loader'
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary'
@@ -71,9 +70,7 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          <NotificationProvider>
-            <AppRoutes />
-          </NotificationProvider>
+          <AppRoutes />
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

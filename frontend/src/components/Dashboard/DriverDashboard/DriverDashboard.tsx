@@ -5,7 +5,6 @@ import DriverComplianceDocumentsUploadsMenuItem from './DriverMenuItems/Complian
 import DriverDashboardMenuItem from './DriverMenuItems/Dashboard/Dashboard'
 import DriverFuelMaintenanceMenuItem from './DriverMenuItems/Fuel & Maintenance/Fuel&Maintence'
 import DriverIncidentsAndAccidentsMenuItem from './DriverMenuItems/IncidentsAndAccidents/IncidentsAndAccidents'
-import DriverMessagingMenuItem from './DriverMenuItems/Messaging/Messaging'
 import DriverMyActivityMenuItem from './DriverMenuItems/MyActivity/MyActivity'
 import DriverProfileMenuItem from './DriverMenuItems/Profile/Profile'
 import './DriverDashboard.css'
@@ -26,7 +25,6 @@ export const driverDashboardConfig: DashboardRoleConfig = {
         { id: 'complianceDocuments', label: 'Compliance Documents' },
         { id: 'incidents', label: 'Incidents & Accidents' },
         { id: 'compliantsReports', label: 'Compliants & Reports' },
-        { id: 'messaging', label: 'Message' },
         { id: 'myActivity', label: 'My Activity' },
         { id: 'profile', label: 'Profile' },
     ],
@@ -61,11 +59,6 @@ export const driverDashboardConfig: DashboardRoleConfig = {
             description: 'Review compliants tasks and route reporting summaries.',
             cards: [],
         },
-        messaging: {
-            heading: 'Messaging',
-            description: 'Send and receive messages with transport team and management.',
-            cards: [],
-        },
         myActivity: {
             heading: 'My Activity',
             description: 'Review your latest driver records and reporting history.',
@@ -98,8 +91,6 @@ const DriverDashboard = ({ activeSection }: DriverDashboardProps) => {
                 return <DriverIncidentsAndAccidentsMenuItem />
             case 'compliantsReports':
                 return <DriverCompliantsReportsMenuItem />
-            case 'messaging':
-                return <DriverMessagingMenuItem />
             case 'myActivity':
                 return <DriverMyActivityMenuItem />
             case 'profile':

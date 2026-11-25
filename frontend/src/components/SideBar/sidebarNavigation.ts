@@ -17,7 +17,6 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'trips', label: 'Trips' },
         { id: 'requests', label: 'Request' },
         { id: 'alerts', label: 'Alerts' },
-        { id: 'messages', label: 'Messages' },
     ],
     Driver: [
         { id: 'dashboard', label: 'Dashboard' },
@@ -26,7 +25,6 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'complianceDocuments', label: 'Compliance Documents' },
         { id: 'incidents', label: 'Incidents & Accidents' },
         { id: 'compliantsReports', label: 'Compliants & Reports' },
-        { id: 'messaging', label: 'Message' },
         { id: 'myActivity', label: 'My Activity' },
         { id: 'profile', label: 'Profile' },
     ],
@@ -36,7 +34,6 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'fuelMaintenance', label: 'Fuel & Maintenance' },
         { id: 'accidents-reports', label: 'Accidents and Reports' },
         { id: 'complaints-incidents', label: 'Complaints and Incidents' },
-        { id: 'messaging', label: 'Message' },
         { id: 'profile', label: 'Profile' },
     ],
     'Transport Manager': [
@@ -101,15 +98,6 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
             ],
         },
         {
-            id: 'communication',
-            label: 'Communication',
-            children: [
-                { id: 'announcements', label: 'Announcements' },
-                { id: 'parent-notifications', label: 'Parent Notifications' },
-                { id: 'internal-messaging', label: 'Internal Messaging' },
-            ],
-        },
-        {
             id: 'reports',
             label: 'Reports',
             children: [
@@ -128,7 +116,6 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'contactChanges', label: 'Contact Changes' },
         { id: 'withdrawals', label: 'Withdrawals' },
         { id: 'masterData', label: 'Master Data' },
-        { id: 'messages', label: 'Messages' },
     ],
     'Fuel Manager': [
         { id: 'dashboard', label: 'Dashboard' },
@@ -137,7 +124,6 @@ const ROLE_NAVIGATION_ITEMS: Record<string, NavigationItem[]> = {
         { id: 'fuel-logs', label: 'Fuel Logs' },
         { id: 'analytics', label: 'Analytics' },
         { id: 'mileage-anomalies', label: 'Mileage Anomalies' },
-        { id: 'messages', label: 'Messages' },
     ],
 }
 

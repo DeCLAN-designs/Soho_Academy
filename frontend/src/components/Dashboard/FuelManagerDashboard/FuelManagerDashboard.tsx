@@ -10,7 +10,6 @@ import FuelApprovalsTab from './Tabs/FuelApprovals/FuelApprovalsTab'
 import FuelLogsTab from './Tabs/FuelLogs/FuelLogsTab'
 import AnalyticsTab from './Tabs/Analytics/AnalyticsTab'
 import MileageAnomaliesTab from './Tabs/MileageAnomalies/MileageAnomaliesTab'
-import MessagesTab from './Tabs/Messages/MessagesTab'
 
 import './FuelManagerDashboard.css'
 
@@ -25,7 +24,6 @@ const TAB_COMPONENTS: Record<string, React.ComponentType> = {
     'fuel-logs': FuelLogsTab,
     analytics: AnalyticsTab,
     'mileage-anomalies': MileageAnomaliesTab,
-    messaging: MessagesTab,
 }
 
 const TabFallback = () => <Loader variant="inline" label="Loading" />

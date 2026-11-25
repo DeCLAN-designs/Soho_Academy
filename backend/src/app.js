@@ -41,9 +41,6 @@ const settingsRoutes = require('./routes/settings.routes.js');
 const reportsRoutes = require('./routes/reports.routes.js');
 const safetyAuditsRoutes = require('./routes/safetyAudits.routes.js');
 const violationsRoutes = require('./routes/violations.routes.js');
-const announcementsRoutes = require("./routes/announcements.routes.js");
-const messagesRoutes = require("./routes/messages.routes.js");
-const notificationsRoutes = require('./routes/notifications.routes.js');
 const tripGenerationRoutes = require('./routes/tripGeneration.routes.js');
 
 const app = express();
@@ -111,9 +108,18 @@ app.use("/api", (_req, res, next) => {
   next();
 });
 
+const communicationDisabledResponse = (_req, res) =>
+  res.status(503).json({
+    success: false,
+    message: "Messaging and announcements are temporarily disabled.",
+  });
+
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/messages", messagesRoutes);
+app.use("/api/messages", communicationDisabledResponse);
+app.use('/api/notifications', communicationDisabledResponse);
+app.use('/api/announcements', communicationDisabledResponse);
+app.use('/api/transport-manager/announcements', communicationDisabledResponse);
 app.use("/api/users", usersRoutes);
 app.use("/api", fleetRoutes);
 app.use("/api/compliance-documents", complianceDocumentRoutes);
@@ -123,8 +129,6 @@ app.use("/api/fuel-requests", fuelRequestsRoutes);
 app.use("/api/incidents", incidentRoutes);
 app.use("/api/parent", parentRoutes);
 app.use("/api/staff", staffAttendanceRoutes);
-app.use('/api/announcements', announcementsRoutes);
-app.use('/api/transport-manager/announcements', announcementsRoutes);
 app.use("/api", routeRoutes);
 app.use("/api", stopRoutes);
 app.use("/api", studentAssignmentsRoutes);
@@ -146,7 +150,6 @@ app.use('/api/transport-manager/reports', reportsRoutes);
 app.use('/api/transport-manager/safety-audits', safetyAuditsRoutes);
 app.use('/api/transport-manager/violations', violationsRoutes);
 
-app.use('/api/notifications', notificationsRoutes);
 app.use('/api/realtime', realtimeRoutes);
 app.use('/api/scheduler', schedulerRoutes);
 app.use('/api/trip-generation', tripGenerationRoutes);

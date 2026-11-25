@@ -12,7 +12,6 @@ import {
     type ParentTransportStopRecord,
 } from '../../../lib/api'
 import Loader from '../../Loader/Loader'
-import MessagingView from '../shared/MessagingView'
 import './ParentDashboard.css'
 
 type ParentDashboardProps = {
@@ -83,7 +82,6 @@ export const parentDashboardConfig: DashboardRoleConfig = {
         { id: 'trips', label: 'Trips' },
         { id: 'requests', label: 'Request' },
         { id: 'alerts', label: 'Alerts' },
-        { id: 'messages', label: 'Messages' },
     ],
     sections: {
         overview: {
@@ -123,18 +121,13 @@ export const parentDashboardConfig: DashboardRoleConfig = {
             ],
         },
         alerts: {
-            heading: 'Alerts & Messages',
+            heading: 'Workflow Alerts',
             description: 'Track reviewed requests and workflow updates.',
             cards: [
                 'Latest decisions',
                 'Manager review notes',
                 'Audit trail visibility',
             ],
-        },
-        messages: {
-            heading: 'Messages',
-            description: 'View announcements and messages from the transport team.',
-            cards: ['Unread messages', 'Recent announcements', 'Message history'],
         },
     },
 }
@@ -986,10 +979,6 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
         </div>
     )
 
-    const renderMessagesContent = () => (
-        <MessagingView allowedRecipients={['Transport Manager', 'School Admin']} />
-    )
-
     const renderSectionContent = () => {
         switch (resolvedSectionId) {
             case 'children':
@@ -1000,8 +989,6 @@ const ParentDashboard = ({ activeSection }: ParentDashboardProps) => {
                 return renderRequestsContent()
             case 'alerts':
                 return renderAlertsContent()
-            case 'messages':
-                return renderMessagesContent()
             case 'overview':
             default:
                 return renderOverviewContent()

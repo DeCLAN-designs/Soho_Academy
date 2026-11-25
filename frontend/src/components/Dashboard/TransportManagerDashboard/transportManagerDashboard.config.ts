@@ -63,15 +63,6 @@ const transportManagerNavigation: DashboardRoleConfig['navigation'] = [
         ],
     },
     {
-        id: 'communication',
-        label: 'Communication',
-        children: [
-            { id: 'announcements', label: 'Announcements' },
-            { id: 'parent-notifications', label: 'Parent Notifications' },
-            { id: 'internal-messaging', label: 'Internal Messaging' },
-        ],
-    },
-    {
         id: 'reports',
         label: 'Reports',
         children: [
@@ -250,26 +241,6 @@ export const transportManagerDashboardConfig: DashboardRoleConfig = {
             heading: 'Route Requests',
             description: 'Assess requested route changes, additions, and removals.',
             cards: ['Route change queue', 'Impact review', 'Approved route updates'],
-        },
-        communication: {
-            heading: 'Communication',
-            description: 'Coordinate announcements, parent updates, and internal messages.',
-            cards: ['Pending announcements', 'Parent notification status', 'Unread internal messages'],
-        },
-        announcements: {
-            heading: 'Announcements',
-            description: 'Create and manage transport-wide announcements.',
-            cards: ['Draft announcements', 'Scheduled announcements', 'Sent announcements'],
-        },
-        'parent-notifications': {
-            heading: 'Parent Notifications',
-            description: 'Send targeted updates to parents and guardians.',
-            cards: ['Pending parent alerts', 'Delivery status', 'Failed notifications'],
-        },
-        'internal-messaging': {
-            heading: 'Internal Messaging',
-            description: 'Coordinate transport team communication.',
-            cards: ['Unread messages', 'Team threads', 'Escalated conversations'],
         },
         reports: {
             heading: 'Reports Center',
