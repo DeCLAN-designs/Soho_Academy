@@ -16,6 +16,10 @@ describe("incident.service schema compatibility", () => {
   beforeEach(() => {
     pool.query.mockImplementation(async (query) => {
       if (query.includes("information_schema.COLUMNS")) {
+        if (query.includes("'numberPlate', 'plate_number'")) {
+          return [[{ COLUMN_NAME: "plate_number" }], []];
+        }
+
         return [[{ COLUMN_NAME: "immediateActionTaken" }], []];
       }
 
@@ -31,6 +35,14 @@ describe("incident.service schema compatibility", () => {
     );
     expect(pool.query).toHaveBeenCalledWith(
       expect.stringContaining("SET actionTaken = immediateActionTaken")
+    );
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "ADD COLUMN numberPlate VARCHAR(20) NULL AFTER actionTaken"
+      )
+    );
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining("SET numberPlate = plate_number")
     );
   });
 });

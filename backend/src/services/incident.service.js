@@ -132,12 +132,51 @@ const ensureIncidentActionTakenColumn = async () => {
   }
 };
 
+const ensureIncidentNumberPlateColumn = async () => {
+  const [columns] = await pool.query(
+    `
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'incident_reports'
+        AND COLUMN_NAME IN ('numberPlate', 'plate_number')
+    `
+  );
+  const columnNames = new Set(columns.map((column) => column.COLUMN_NAME));
+
+  if (columnNames.has("numberPlate")) {
+    return;
+  }
+
+  try {
+    await pool.query(
+      "ALTER TABLE incident_reports ADD COLUMN numberPlate VARCHAR(20) NULL AFTER actionTaken"
+    );
+  } catch (error) {
+    if (error.code !== "ER_DUP_FIELDNAME") {
+      throw error;
+    }
+  }
+
+  if (columnNames.has("plate_number")) {
+    await pool.query(
+      `
+        UPDATE incident_reports
+        SET numberPlate = plate_number
+        WHERE numberPlate IS NULL
+          AND plate_number IS NOT NULL
+      `
+    );
+  }
+};
+
 const ensureIncidentTables = () => {
   if (!ensureIncidentTablesPromise) {
     ensureIncidentTablesPromise = (async () => {
       await ensureUsersTable();
       await pool.query(incidentReportsTableSql);
       await ensureIncidentActionTakenColumn();
+      await ensureIncidentNumberPlateColumn();
       await pool.query(uploadsTableSql);
       await pool.query(incidentReportUploadsTableSql);
     })();
