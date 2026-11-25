@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useCallback, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import axios from 'axios';
 import { apiUrl } from '../lib/api';
+import { useAuth } from './AuthContext';
 
 interface NotificationContextType {
   unreadMessages: number;
@@ -17,10 +18,14 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState(0);
+  const { isAuthenticated } = useAuth();
 
-  const refreshNotifications = async () => {
+  const refreshNotifications = useCallback(async () => {
+    if (!isAuthenticated) return;
+
     try {
       const token = localStorage.getItem('soho_auth_token');
+      if (!token) return;
       
       // Get unread messages
       const messagesRes = await axios.get(apiUrl('/messages'), {
@@ -45,16 +50,18 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
-  };
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    refreshNotifications();
+    if (!isAuthenticated) return;
+
+    void refreshNotifications();
     
     // Refresh notifications every 30 seconds
-    const interval = setInterval(refreshNotifications, 30000);
+    const interval = setInterval(() => void refreshNotifications(), 30000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated, refreshNotifications]);
 
   const markMessagesAsRead = () => {
     setUnreadMessages(0);

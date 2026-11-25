@@ -15,7 +15,6 @@ import {
   runAllLCPOptimizations
 } from './components/LCPOptimizer/LCPOptimizer'
 import { WebSocketProvider } from './contexts/WebSocketContext'
-import { NotificationProvider } from './contexts/NotificationContext'
 import AnnouncementNotification from './components/Notifications/AnnouncementNotification'
 
 // Performance monitoring component with minimal blocking
@@ -81,12 +80,10 @@ const initializeApp = () => {
   root.render(
     <StrictMode>
       <WebSocketProvider>
-        <NotificationProvider>
-          <PerformanceMonitor>
-            <App />
-            <AnnouncementNotification />
-          </PerformanceMonitor>
-        </NotificationProvider>
+        <PerformanceMonitor>
+          <App />
+          <AnnouncementNotification />
+        </PerformanceMonitor>
       </WebSocketProvider>
     </StrictMode>
   )
